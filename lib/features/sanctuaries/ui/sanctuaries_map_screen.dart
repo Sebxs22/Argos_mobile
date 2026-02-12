@@ -4,10 +4,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 
-// --- UI COMPONENTS ---
+// --- COMPONENTES Y LOGICA ---
 import '../../../core/ui/glass_box.dart';
-
-// --- DATA & NETWORKING ---
 import '../data/mock_sanctuaries_data.dart';
 import '../../../core/network/api_service.dart';
 
@@ -20,11 +18,11 @@ class SanctuariesMapScreen extends StatefulWidget {
 
 class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
     with AutomaticKeepAliveClientMixin, TickerProviderStateMixin, WidgetsBindingObserver {
-  // ^ Agregamos WidgetsBindingObserver para detectar cuando entras a la app
 
   final MapController _mapController = MapController();
   final ApiService _apiService = ApiService();
 
+  // Coordenada inicial (Riobamba)
   LatLng _currentCenter = const LatLng(-1.67098, -78.64712);
 
   bool _isLoadingLocation = true;
@@ -32,42 +30,45 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
   late AnimationController _radarController;
   Timer? _autoRefreshTimer;
 
+  // Lista de zonas de peligro de Supabase
   List<DangerZoneModel> _activeDangerZones = [];
+
+  // Filtros activos (Todos por defecto)
+  final Set<String> _activeFilters = {
+    'Peligro', 'Policía', 'Salud', 'Farmacia', 'Educación', 'Tienda', 'Parque', 'Iglesia'
+  };
 
   @override
   void initState() {
     super.initState();
-    // Registramos el observador para saber si la app se minimiza o abre
+    // Registrar observador para detectar cuando el usuario vuelve a la app
     WidgetsBinding.instance.addObserver(this);
 
     _radarController = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat();
 
-    // 1. CARGA INICIAL
+    // 1. Carga de datos de la nube
     _loadMapData();
 
-    // 2. POLLING (Actualización silenciosa cada 5s)
+    // 2. Actualización automática cada 5 segundos
     _startAutoRefresh();
 
-    // 3. GPS ALTA PRECISIÓN
+    // 3. Obtener ubicación GPS
     _getCurrentLocation();
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this); // Dejamos de observar
+    WidgetsBinding.instance.removeObserver(this);
     _radarController.dispose();
     _autoRefreshTimer?.cancel();
     super.dispose();
   }
 
-  // --- DETECTOR DE ENTRADA A LA APP ---
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Si la app pasa de "Segundo Plano" a "Visible" (Resumed)
     if (state == AppLifecycleState.resumed) {
-      print("MAPA: Regresaste a la app. Actualizando datos...");
-      _loadMapData(); // ¡Actualización Inmediata!
-      _getCurrentLocation(); // Refinamos GPS también
+      _loadMapData();
+      _getCurrentLocation();
     }
   }
 
@@ -79,6 +80,7 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
 
   Future<void> _loadMapData() async {
     try {
+      // ApiService ya gestiona la agrupación inteligente y el tiempo real
       List<DangerZoneModel> realAlerts = await _apiService.obtenerAlertas();
       if (mounted) {
         setState(() {
@@ -86,39 +88,46 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
         });
       }
     } catch (e) {
-      // Fallo silencioso
+      debugPrint("Error recargando alertas: $e");
     }
   }
 
   Future<void> _getCurrentLocation() async {
-    // Solo esperamos la primera vez para la animación
-    if (_isLoadingLocation) await Future.delayed(const Duration(milliseconds: 1000));
+    try {
+      bool enabled = await Geolocator.isLocationServiceEnabled();
+      if (!enabled) return;
 
-    bool enabled = await Geolocator.isLocationServiceEnabled();
-    if (enabled) {
-      try {
-        LocationPermission permission = await Geolocator.checkPermission();
-        if (permission == LocationPermission.denied) permission = await Geolocator.requestPermission();
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
 
-        if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
-          Position position = await Geolocator.getCurrentPosition(
-              desiredAccuracy: LocationAccuracy.bestForNavigation // Precisión Militar (<5m)
-          );
+      if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
+        Position position = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.bestForNavigation
+        );
 
-          if (mounted) {
-            setState(() => _currentCenter = LatLng(position.latitude, position.longitude));
-            if (_isLoadingLocation) {
-              _mapController.move(_currentCenter, 16.0);
-            }
+        if (mounted) {
+          setState(() => _currentCenter = LatLng(position.latitude, position.longitude));
+
+          // Movemos el mapa con seguridad (evitando LateInitializationError)
+          try {
+            _mapController.move(_currentCenter, 16.0);
+          } catch (e) {
+            debugPrint("MapController no listo, moviendo en el siguiente frame.");
           }
         }
-      } catch (e) { print("Error GPS: $e"); }
+      }
+    } catch (e) {
+      debugPrint("Error GPS: $e");
+    } finally {
+      // Siempre finalizamos la carga para que el radar desaparezca
+      _finishLoading();
     }
-    _finishLoading();
   }
 
   void _finishLoading() {
-    if (mounted) {
+    if (mounted && _isLoadingLocation) {
       setState(() => _isLoadingLocation = false);
       Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted) setState(() => _showHud = true);
@@ -126,7 +135,10 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
     }
   }
 
+  // --- LOGICA DE CLICKS EN EL MAPA ---
   void _handleMapTap(TapPosition tapPosition, LatLng point) {
+    if (!_activeFilters.contains('Peligro')) return;
+
     const Distance distance = Distance();
     for (var zone in _activeDangerZones) {
       if (distance.as(LengthUnit.Meter, point, zone.center) <= zone.radius) {
@@ -140,11 +152,13 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (context) {
         return GlassBox(
           borderRadius: 30, opacity: 0.1, blur: 20,
           child: Container(
-            padding: const EdgeInsets.all(20), height: 400,
+            padding: const EdgeInsets.all(20),
+            height: MediaQuery.of(context).size.height * 0.5,
             decoration: BoxDecoration(
                 color: const Color(0xFF1E293B).withOpacity(0.95),
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
@@ -156,17 +170,18 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
                 Row(children: [
                   const Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 30),
                   const SizedBox(width: 10),
-                  const Text("ALERTA ZONA DE RIESGO", style: TextStyle(color: Color(0xFFFFCDD2), fontWeight: FontWeight.bold, fontSize: 18)),
+                  const Text("HISTORIAL DE RIESGO", style: TextStyle(color: Color(0xFFFFCDD2), fontWeight: FontWeight.bold, fontSize: 18)),
                   const Spacer(),
                   IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close, color: Colors.white54))
                 ]),
                 const Divider(color: Colors.white24),
                 const SizedBox(height: 10),
-                Text("${zone.reports.length} reportes activos:", style: const TextStyle(color: Colors.white70)),
+                Text("${zone.reports.length} reportes registrados aquí:", style: const TextStyle(color: Colors.white70)),
                 const SizedBox(height: 10),
                 Expanded(
                     child: ListView.builder(
                         itemCount: zone.reports.length,
+                        physics: const BouncingScrollPhysics(),
                         itemBuilder: (context, index) {
                           final report = zone.reports[index];
                           return Container(
@@ -178,17 +193,13 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
                                   border: Border.all(color: Colors.white10)
                               ),
                               child: Row(children: [
-                                Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(color: Colors.red.withOpacity(0.2), shape: BoxShape.circle),
-                                    child: Icon(report.icon, color: Colors.redAccent, size: 20)
-                                ),
+                                Icon(report.icon, color: Colors.redAccent, size: 20),
                                 const SizedBox(width: 15),
                                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                   Text(report.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                                   Text(report.description, style: const TextStyle(color: Colors.white60, fontSize: 12))
                                 ])),
-                                Text(report.timeAgo, style: const TextStyle(color: Colors.white38, fontSize: 10))
+                                Text(report.timeAgo, style: const TextStyle(color: Colors.white38, fontSize: 10, fontStyle: FontStyle.italic))
                               ])
                           );
                         }
@@ -209,14 +220,14 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(
-      backgroundColor: const Color(0xFF262626),
+      backgroundColor: const Color(0xFF1A1A1A), // Fondo oscuro real para evitar cuadros blancos
 
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80.0),
+        padding: const EdgeInsets.only(bottom: 90.0),
         child: FloatingActionButton(
-          heroTag: "btnGps",
+          heroTag: "btnCenter",
           mini: true,
-          onPressed: () => _mapController.move(_currentCenter, 16.0),
+          onPressed: _getCurrentLocation, // Centra y actualiza GPS
           backgroundColor: const Color(0xFFE53935),
           child: const Icon(Icons.my_location, color: Colors.white),
         ),
@@ -225,6 +236,7 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
       body: Stack(
         children: [
           if (_isLoadingLocation) _buildLoadingRadar() else _buildMap(),
+          _buildFilterBar(),
         ],
       ),
     );
@@ -248,106 +260,143 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
             ),
           ),
           const SizedBox(height: 20),
-          const Text("SINTONIZANDO RED ARGOS...", style: TextStyle(color: Colors.blueAccent, fontSize: 12, letterSpacing: 2, fontWeight: FontWeight.bold)),
+          const Text("SINTONIZANDO RED ARGOS...", style: TextStyle(color: Colors.blueAccent, fontSize: 10, letterSpacing: 2, fontWeight: FontWeight.bold)),
         ],
       ),
     );
   }
 
   Widget _buildMap() {
-    return Stack(
+    return FlutterMap(
+      mapController: _mapController,
+      options: MapOptions(
+        initialCenter: _currentCenter,
+        initialZoom: 15.0,
+        minZoom: 10.0,
+        maxZoom: 18.0,
+        backgroundColor: const Color(0xFF1A1A1A),
+        onTap: _handleMapTap,
+      ),
       children: [
-        FlutterMap(
-          mapController: _mapController,
-          options: MapOptions(
-            initialCenter: _currentCenter,
-            initialZoom: 15.0,
-            minZoom: 10.0,
-            maxZoom: 18.0,
-            backgroundColor: const Color(0xFF262626),
-            onTap: _handleMapTap,
-          ),
-          children: [
-            TileLayer(
-                urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-                userAgentPackageName: 'com.argos.mobile_app',
-                subdomains: const ['a', 'b', 'c', 'd'],
-                tileDisplay: const TileDisplay.fadeIn(duration: Duration(milliseconds: 600))
-            ),
-
-            CircleLayer(
-              circles: _activeDangerZones.map((zone) {
-                return CircleMarker(
-                  point: zone.center,
-                  radius: zone.radius,
-                  useRadiusInMeter: true,
-                  color: Colors.red.withOpacity(0.15),
-                  borderColor: Colors.red.withOpacity(0.4),
-                  borderStrokeWidth: 1,
-                );
-              }).toList(),
-            ),
-
-            MarkerLayer(
-              markers: [
-                Marker(point: _currentCenter, width: 50, height: 50, child: _buildMyPositionMarker()),
-                ...kSanctuariesDB.map((site) => Marker(
-                    point: site.location,
-                    width: 60,
-                    height: 60,
-                    child: _buildDynamicMarkerIcon(site)
-                )),
-              ],
-            ),
-          ],
+        TileLayer(
+            urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+            userAgentPackageName: 'com.argos.mobile_app',
+            subdomains: const ['a', 'b', 'c', 'd'],
+            tileDisplay: const TileDisplay.fadeIn(duration: Duration(milliseconds: 600))
         ),
 
-        // --- LEYENDA (HUD) SUPERIOR COMPLETA Y DESLIZABLE ---
-        Align(
-          alignment: Alignment.topCenter,
-          child: Padding(
-            padding: const EdgeInsets.only(top: 60),
-            child: AnimatedOpacity(
-                opacity: _showHud ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 800),
-                child: GlassBox(
-                    borderRadius: 20,
-                    opacity: 0.1,
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    // Usamos SingleChildScrollView para que quepan todos
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _buildLegendItem(Icons.warning, Colors.red, "Peligro"),
-                            const SizedBox(width: 12),
-                            _buildLegendItem(Icons.local_police, Colors.greenAccent, "UPC"),
-                            const SizedBox(width: 12),
-                            _buildLegendItem(Icons.local_pharmacy, Colors.pinkAccent, "Farmacia"),
-                            const SizedBox(width: 12),
-                            _buildLegendItem(Icons.local_hospital, Colors.blue, "Salud"),
-                            const SizedBox(width: 12),
-                            _buildLegendItem(Icons.school, Colors.orange, "Edu"),
-                            const SizedBox(width: 12),
-                            _buildLegendItem(Icons.store, Colors.purpleAccent, "Tienda"),
-                            const SizedBox(width: 12),
-                            _buildLegendItem(Icons.park, Colors.tealAccent, "Parque"),
-                            const SizedBox(width: 12),
-                            _buildLegendItem(Icons.church, Colors.amber, "Iglesia"),
-                          ]
-                      ),
-                    )
-                )
-            ),
+        // Capa de Zonas de Peligro (Nube)
+        if (_activeFilters.contains('Peligro'))
+          CircleLayer(
+            circles: _activeDangerZones.map((zone) {
+              return CircleMarker(
+                point: zone.center,
+                radius: zone.radius,
+                useRadiusInMeter: true,
+                color: Colors.red.withOpacity(0.15),
+                borderColor: Colors.red.withOpacity(0.5),
+                borderStrokeWidth: 1.5,
+              );
+            }).toList(),
           ),
+
+        // Capa de Marcadores (Santuarios + Yo)
+        MarkerLayer(
+          markers: [
+            Marker(point: _currentCenter, width: 50, height: 50, child: _buildMyPositionMarker()),
+
+            // Santuarios filtrables
+            ...kSanctuariesDB.where((s) => _activeFilters.contains(_getFilterName(s.type))).map((site) => Marker(
+                point: site.location,
+                width: 50, height: 50,
+                child: _buildDynamicMarkerIcon(site)
+            )),
+          ],
         ),
       ],
     );
   }
 
+  // --- BARRA DE FILTROS EN CAPSULAS ---
+  Widget _buildFilterBar() {
+    final filters = [
+      {'id': 'Peligro', 'icon': Icons.warning, 'color': Colors.red},
+      {'id': 'Policía', 'icon': Icons.local_police, 'color': Colors.greenAccent},
+      {'id': 'Salud', 'icon': Icons.local_hospital, 'color': Colors.blue},
+      {'id': 'Farmacia', 'icon': Icons.local_pharmacy, 'color': Colors.pinkAccent},
+      {'id': 'Tienda', 'icon': Icons.store, 'color': Colors.purpleAccent},
+      {'id': 'Educación', 'icon': Icons.school, 'color': Colors.orange},
+      {'id': 'Parque', 'icon': Icons.park, 'color': Colors.tealAccent}, // Icono árbol
+      {'id': 'Iglesia', 'icon': Icons.church, 'color': Colors.amber},
+    ];
+
+    return Align(
+      alignment: Alignment.topCenter,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 60),
+        child: AnimatedOpacity(
+          opacity: _showHud ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 800),
+          child: SizedBox(
+            height: 45,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              itemCount: filters.length,
+              itemBuilder: (context, index) {
+                final item = filters[index];
+                final String id = item['id'] as String;
+                final bool isActive = _activeFilters.contains(id);
+                final Color baseColor = item['color'] as Color;
+
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      if (isActive) _activeFilters.remove(id);
+                      else _activeFilters.add(id);
+                    });
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    margin: const EdgeInsets.only(right: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isActive ? baseColor.withOpacity(0.2) : Colors.black.withOpacity(0.4),
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(color: isActive ? baseColor : Colors.white10),
+                      boxShadow: isActive ? [BoxShadow(color: baseColor.withOpacity(0.3), blurRadius: 8)] : [],
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(item['icon'] as IconData, size: 16, color: isActive ? baseColor : Colors.white54),
+                        const SizedBox(width: 8),
+                        Text(id, style: TextStyle(color: isActive ? Colors.white : Colors.white54, fontSize: 12, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   // --- WIDGETS AUXILIARES ---
+
+  String _getFilterName(SanctuaryType type) {
+    switch (type) {
+      case SanctuaryType.police: return 'Policía';
+      case SanctuaryType.health: return 'Salud';
+      case SanctuaryType.pharmacy: return 'Farmacia';
+      case SanctuaryType.education: return 'Educación';
+      case SanctuaryType.store: return 'Tienda';
+      case SanctuaryType.park: return 'Parque';
+      case SanctuaryType.church: return 'Iglesia';
+    }
+  }
 
   Widget _buildDynamicMarkerIcon(SanctuaryModel site) {
     IconData icon; Color color;
@@ -360,34 +409,27 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
       case SanctuaryType.pharmacy: icon = Icons.local_pharmacy; color = Colors.pinkAccent; break;
       case SanctuaryType.church: icon = Icons.church; color = Colors.amber; break;
     }
-    return Column(children: [
-      Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-              color: const Color(0xFF262626).withOpacity(0.9),
-              shape: BoxShape.circle,
-              border: Border.all(color: color)
-          ),
-          child: Icon(icon, color: color, size: 14)
-      )
-    ]);
-  }
-
-  Widget _buildLegendItem(IconData icon, Color color, String text) {
-    return Row(children: [
-      Icon(icon, color: color, size: 14),
-      const SizedBox(width: 4),
-      Text(text, style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold))
-    ]);
+    return Container(
+      decoration: BoxDecoration(
+          color: const Color(0xFF262626).withOpacity(0.9),
+          shape: BoxShape.circle,
+          border: Border.all(color: color, width: 1.5)
+      ),
+      child: Icon(icon, color: color, size: 16),
+    );
   }
 
   Widget _buildMyPositionMarker() {
-    return Stack(
-        alignment: Alignment.center,
-        children: [
-          Container(width: 50, height: 50, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.blue.withOpacity(0.15))),
-          Container(width: 14, height: 14, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.blue, border: Border.all(color: Colors.white, width: 2), boxShadow: [BoxShadow(color: Colors.blue.withOpacity(0.6), blurRadius: 8)]))
-        ]
+    return Center(
+      child: Container(
+        width: 14, height: 14,
+        decoration: BoxDecoration(
+            color: Colors.blue,
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 2),
+            boxShadow: [BoxShadow(color: Colors.blue.withOpacity(0.5), blurRadius: 6, spreadRadius: 2)]
+        ),
+      ),
     );
   }
 }

@@ -1,18 +1,31 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+// --- NUEVAS PANTALLAS Y SERVICIOS ---
 import 'features/eye_guardian/ui/eye_guardian_screen.dart';
-// IMPORTANTE: Asegúrate de importar tu nueva pantalla de mapa
+import 'features/routes/ui/routes_screen.dart';
 import 'features/sanctuaries/ui/sanctuaries_map_screen.dart';
+import 'features/auth/ui/login_screen.dart'; // Asegúrate de crear este archivo
+import 'features/auth/ui/register_screen.dart';
+import 'core/network/auth_service.dart';
 import 'core/ui/glass_box.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Barra de estado 100% transparente
+
+  // --- INICIALIZACIÓN DE LA NUBE ---
+  await Supabase.initialize(
+    url: 'https://qfmhruseaxfnudvgmhto.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmbWhydXNlYXhmbnVkdmdtaHRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MTQyOTEsImV4cCI6MjA4NTk5MDI5MX0.APn0xT7r1kPM3j2ZYl3gRABiyX-1jWS9lzz9tsKO48s',
+  );
+
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.light,
   ));
+
   runApp(const ArgosApp());
 }
 
@@ -21,6 +34,9 @@ class ArgosApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Verificamos si hay una sesión activa en Supabase
+    final session = Supabase.instance.client.auth.currentSession;
+
     return MaterialApp(
       title: 'ARGOS',
       debugShowCheckedModeBanner: false,
@@ -31,7 +47,8 @@ class ArgosApp extends StatelessWidget {
         useMaterial3: true,
         fontFamily: 'Roboto',
       ),
-      home: const MainNavigator(),
+      // LÓGICA DE ENTRADA: Si hay sesión va al Navigator, si no al Login
+      home: session != null ? const MainNavigator() : const LoginScreen(),
     );
   }
 }
@@ -46,11 +63,19 @@ class MainNavigator extends StatefulWidget {
 class _MainNavigatorState extends State<MainNavigator> {
   int _selectedIndex = 0;
   late PageController _pageController;
+  final AuthService _auth = AuthService();
+  Map<String, dynamic>? _perfilData;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
+    _cargarPerfil();
+  }
+
+  Future<void> _cargarPerfil() async {
+    final data = await _auth.obtenerMiPerfil();
+    if (mounted) setState(() => _perfilData = data);
   }
 
   @override
@@ -59,62 +84,59 @@ class _MainNavigatorState extends State<MainNavigator> {
     super.dispose();
   }
 
-  // LISTA DE PÁGINAS
   final List<Widget> _pages = const [
-    EyeGuardianScreen(), // Índice 0
-    SanctuariesMapScreen(), // Índice 1 (Tu nuevo mapa táctico)
-    Center(child: Text("Rutas (En construcción)", style: TextStyle(color: Colors.white))), // Índice 2
+    EyeGuardianScreen(),
+    SanctuariesMapScreen(),
+    RoutesScreen(),
   ];
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
-      // CAMBIO: Usamos jumpToPage en lugar de animateToPage
-      // Esto hace el cambio instantáneo sin pasar por las pantallas del medio
       _pageController.jumpToPage(index);
     });
   }
 
   void _onPageChanged(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    setState(() => _selectedIndex = index);
   }
 
   void _showProfileMenu() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF0F172A).withOpacity(0.9),
-        title: const Text("Perfil de Usuario", style: TextStyle(color: Colors.white)),
-        content: const Column(
+        backgroundColor: const Color(0xFF0F172A).withOpacity(0.95),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text("Perfil de Usuario", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: Icon(Icons.person, color: Colors.blue),
-              title: Text("Luis Shagñay", style: TextStyle(color: Colors.white)),
-              subtitle: Text("Plan Gratuito", style: TextStyle(color: Colors.grey)),
+              leading: const CircleAvatar(backgroundColor: Colors.blue, child: Icon(Icons.person, color: Colors.white)),
+              title: Text(_perfilData?['nombre_completo'] ?? "Cargando...", style: const TextStyle(color: Colors.white)),
+              subtitle: Text("Código: ${_perfilData?['codigo_familia'] ?? '...'}", style: const TextStyle(color: Colors.white54, fontSize: 12)),
+            ),
+            const Divider(color: Colors.white10),
+            ListTile(
+              onTap: () {
+                // Aquí podrías navegar a la pantalla de Círculo Familiar
+                Navigator.pop(context);
+              },
+              leading: const Icon(Icons.group, color: Colors.greenAccent),
+              title: const Text("Círculo Familiar", style: TextStyle(color: Colors.white70, fontSize: 14)),
             ),
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cerrar", style: TextStyle(color: Colors.grey)),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cerrar", style: TextStyle(color: Colors.grey))),
           ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Cerrando sesión...")),
-              );
+            onPressed: () async {
+              await _auth.cerrarSesion();
+              if (mounted) Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (c) => const LoginScreen()), (route) => false);
             },
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.logout, size: 18),
             label: const Text("Cerrar Sesión"),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red.shade900,
-              foregroundColor: Colors.white,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade900, foregroundColor: Colors.white),
           )
         ],
       ),
@@ -123,15 +145,12 @@ class _MainNavigatorState extends State<MainNavigator> {
 
   @override
   Widget build(BuildContext context) {
-    // Variable para saber si estamos en el Guardián (índice 0)
     bool isGuardianScreen = _selectedIndex == 0;
 
     return Scaffold(
       backgroundColor: const Color(0xFF050511),
       extendBodyBehindAppBar: true,
       extendBody: true,
-
-      // APP BAR CONDICIONAL: Solo aparece en la pantalla 0 (Guardián)
       appBar: isGuardianScreen ? AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -141,61 +160,27 @@ class _MainNavigatorState extends State<MainNavigator> {
             child: GestureDetector(
               onTap: _showProfileMenu,
               child: Container(
-                width: 40,
-                height: 40,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.05),
-                  border: Border.all(color: Colors.white12),
-                ),
+                width: 40, height: 40,
+                decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withOpacity(0.05), border: Border.all(color: Colors.white12)),
                 child: const Icon(Icons.person_outline, color: Colors.white, size: 20),
               ),
             ),
           )
         ],
-      ) : null, // Si no es el Guardián, no mostramos AppBar
+      ) : null,
 
       body: Stack(
         children: [
-          // --- CAPA 1: FONDO AURORA ---
-          // Solo mostramos la Aurora si NO estamos en el Mapa (índice 1)
-          // Esto ahorra batería y recursos gráficos
           if (_selectedIndex != 1)
             RepaintBoundary(
               child: Stack(
                 children: [
-                  Positioned(
-                    top: -100, left: -100,
-                    child: Container(
-                      width: 350, height: 350,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: const Color(0xFFE53935).withOpacity(0.25),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: -100, right: -100,
-                    child: Container(
-                      width: 350, height: 350,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: const Color(0xFF2962FF).withOpacity(0.15),
-                      ),
-                    ),
-                  ),
-                  BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
-                    child: Container(color: Colors.transparent),
-                  ),
+                  Positioned(top: -100, left: -100, child: Container(width: 350, height: 350, decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFFE53935).withOpacity(0.25)))),
+                  Positioned(bottom: -100, right: -100, child: Container(width: 350, height: 350, decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFF2962FF).withOpacity(0.15)))),
+                  BackdropFilter(filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50), child: Container(color: Colors.transparent)),
                 ],
               ),
             ),
-
-          // --- CAPA 2: CONTENIDO PRINCIPAL ---
-          // Usamos AnimatedContainer para ajustar el padding superior suavemente
-          // Si hay AppBar (Guardián), bajamos 80px. Si no (Mapa), subimos a 0px.
           AnimatedPadding(
             duration: const Duration(milliseconds: 300),
             padding: EdgeInsets.only(top: isGuardianScreen ? 80 : 0),
@@ -209,13 +194,10 @@ class _MainNavigatorState extends State<MainNavigator> {
         ],
       ),
 
-      // --- CAPA 3: BARRA INFERIOR FLOTANTE ---
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.fromLTRB(25, 0, 25, 30),
         child: GlassBox(
-          borderRadius: 40,
-          blur: 15,
-          opacity: 0.1,
+          borderRadius: 40, blur: 15, opacity: 0.1,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -236,24 +218,13 @@ class _MainNavigatorState extends State<MainNavigator> {
       onTap: () => _onItemTapped(index),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: isSelected
-            ? BoxDecoration(
-            color: Colors.white.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(20))
-            : null,
+        decoration: isSelected ? BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(20)) : null,
         child: Row(
           children: [
-            Icon(
-              isSelected ? iconOn : iconOff,
-              color: isSelected ? const Color(0xFFFF5252) : Colors.white60,
-              size: 24,
-            ),
+            Icon(isSelected ? iconOn : iconOff, color: isSelected ? const Color(0xFFFF5252) : Colors.white60, size: 24),
             if (isSelected) ...[
               const SizedBox(width: 8),
-              Text(
-                label,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
-              ),
+              Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
             ]
           ],
         ),

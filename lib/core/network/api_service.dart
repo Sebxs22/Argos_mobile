@@ -2,114 +2,228 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+// --- IMPORTANTE: Asegúrate de que esta ruta sea correcta según tu proyecto ---
 import '../../features/sanctuaries/data/mock_sanctuaries_data.dart';
 
 class ApiService {
-  //final String baseUrl = "http://192.168.1.102:8000";
-  final String baseUrl = 'http://192.168.182.217:8000';
+  // Usamos el cliente de Supabase ya inicializado en el main.dart
+  final SupabaseClient _supabase = Supabase.instance.client;
 
-  // 1. ENVIAR (POST)
+  // 1. ENVIAR ALERTA (POST DIRECTO A SUPABASE)
+  // Se encarga de guardar el reporte de pánico en la nube.
   Future<void> enviarAlertaEmergencia(double lat, double long) async {
     try {
-      final url = Uri.parse('$baseUrl/alertas');
-      await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "latitud": lat,
-          "longitud": long,
-          "tipo": "emergencia"
-        }),
-      );
+      await _supabase.from('alertas').insert({
+        'latitud': lat,
+        'longitud': long,
+        'tipo': 'emergencia',
+        'mensaje': 'S.O.S. Ayuda solicitada desde dispositivo móvil',
+        // Guardamos en UTC para evitar desfases de horario entre países
+        'fecha': DateTime.now().toUtc().toIso8601String(),
+      });
+      debugPrint("✅ Registro en Supabase exitoso.");
     } catch (e) {
-      print("Error enviando: $e");
+      debugPrint("❌ Error al insertar en Supabase: $e");
     }
   }
 
-  // 2. RECIBIR Y AGRUPAR (Lógica Inteligente)
+  // 2. OBTENER ALERTAS CON AGRUPAMIENTO INTELIGENTE
+  // Trae los datos de la nube y une reportes cercanos en una sola "Zona de Riesgo".
   Future<List<DangerZoneModel>> obtenerAlertas() async {
     try {
-      final url = Uri.parse('$baseUrl/alertas');
-      final response = await http.get(url);
+      final List<dynamic> data = await _supabase
+          .from('alertas')
+          .select()
+          .order('fecha', ascending: false);
+
+      List<DangerZoneModel> zonasAgrupadas = [];
+      const Distance distanceCalc = Distance();
+
+      for (var item in data) {
+        if (item['latitud'] == null || item['longitud'] == null) continue;
+
+        LatLng puntoAlerta = LatLng(item['latitud'], item['longitud']);
+        String fechaStr = item['fecha'] ?? "";
+        String tiempoTexto = _calcularTiempoTranscurrido(fechaStr);
+        String tipo = item['tipo'] ?? "ALERTA";
+
+        ReportModel nuevoReporte = ReportModel(
+          tipo.toUpperCase(),
+          tiempoTexto,
+          item['mensaje'] ?? "Alerta de seguridad",
+          Icons.warning_amber_rounded,
+        );
+
+        // Algoritmo de Clustering: Si hay un reporte a menos de 100m, se agrupan.
+        int indexZonaCercana = -1;
+        for (int i = 0; i < zonasAgrupadas.length; i++) {
+          if (distanceCalc.as(LengthUnit.Meter, puntoAlerta, zonasAgrupadas[i].center) < 100) {
+            indexZonaCercana = i;
+            break;
+          }
+        }
+
+        if (indexZonaCercana != -1) {
+          // Agregar al historial de la zona existente
+          var zonaExistente = zonasAgrupadas[indexZonaCercana];
+          List<ReportModel> listaActualizada = List.from(zonaExistente.reports)..add(nuevoReporte);
+
+          zonasAgrupadas[indexZonaCercana] = DangerZoneModel(
+              center: zonaExistente.center,
+              radius: zonaExistente.radius,
+              reports: listaActualizada
+          );
+        } else {
+          // Crear una zona nueva
+          zonasAgrupadas.add(DangerZoneModel(
+              center: puntoAlerta,
+              radius: 150, // Radio visual en metros
+              reports: [nuevoReporte]
+          ));
+        }
+      }
+      return zonasAgrupadas;
+    } catch (e) {
+      debugPrint("Error de red con Supabase: $e");
+      return [];
+    }
+  }
+
+  // 3. BUSCADOR DE DIRECCIONES (NOMINATIM OSM)
+  // Busca calles reales. Prioriza Riobamba para mayor exactitud.
+  Future<List<Map<String, dynamic>>> buscarDirecciones(String consulta) async {
+    if (consulta.length < 3) return [];
+
+    try {
+      // Optimizamos la búsqueda añadiendo el contexto de la ciudad
+      final String queryFinal = "$consulta, Riobamba, Ecuador";
+      final url = Uri.parse(
+          'https://nominatim.openstreetmap.org/search?q=${Uri.encodeComponent(queryFinal)}&format=json&limit=5&addressdetails=1');
+
+      final response = await http.get(url, headers: {
+        'User-Agent': 'Argos_Security_App' // Requerido por OSM
+      });
 
       if (response.statusCode == 200) {
         List<dynamic> data = jsonDecode(response.body);
-        List<DangerZoneModel> zonasAgrupadas = [];
-        const Distance distanceCalc = Distance();
-
-        // Ordenamos por fecha (del más reciente al más antiguo)
-        // Esto asume que el backend manda la fecha, si no, lo dejamos como viene
-        // data.sort((a, b) => b['fecha'].compareTo(a['fecha']));
-
-        for (var item in data) {
-          if (item['latitud'] == null || item['longitud'] == null) continue;
-
-          LatLng puntoAlerta = LatLng(item['latitud'], item['longitud']);
-          String fechaStr = item['fecha'] ?? DateTime.now().toIso8601String();
-          String tiempoTexto = _calcularTiempoTranscurrido(fechaStr);
-
-          // Creamos el reporte individual
-          ReportModel nuevoReporte = ReportModel(
-            "S.O.S. ACTIVADO",
-            tiempoTexto,
-            "Alerta de pánico recibida.",
-            Icons.warning_amber_rounded,
-          );
-
-          // ¿Existe alguna zona cercana (menos de 100m) donde meter este reporte?
-          int indexZonaCercana = -1;
-          for (int i = 0; i < zonasAgrupadas.length; i++) {
-            if (distanceCalc.as(LengthUnit.Meter, puntoAlerta, zonasAgrupadas[i].center) < 100) {
-              indexZonaCercana = i;
-              break;
-            }
-          }
-
-          if (indexZonaCercana != -1) {
-            // SI YA EXISTE ZONA CERCA: Agregamos el reporte a esa zona
-            // (Tenemos que crear una copia nueva porque las listas suelen ser inmutables en props)
-            var zonaExistente = zonasAgrupadas[indexZonaCercana];
-            List<ReportModel> listaActualizada = List.from(zonaExistente.reports)..add(nuevoReporte);
-
-            zonasAgrupadas[indexZonaCercana] = DangerZoneModel(
-                center: zonaExistente.center, // Mantenemos el centro original
-                radius: zonaExistente.radius,
-                reports: listaActualizada
-            );
-          } else {
-            // SI NO EXISTE: Creamos una zona nueva
-            zonasAgrupadas.add(DangerZoneModel(
-                center: puntoAlerta,
-                radius: 200, // Radio visual del círculo rojo
-                reports: [nuevoReporte]
-            ));
-          }
-        }
-        return zonasAgrupadas;
+        return data.map((item) => {
+          'display_name': item['display_name'],
+          'lat': double.parse(item['lat']),
+          'lon': double.parse(item['lon']),
+        }).toList();
       }
     } catch (e) {
-      print("Error obteniendo alertas: $e");
+      debugPrint("Error en el autocompletado: $e");
     }
     return [];
   }
 
+  // 4. VISIÓN DE ARGOS (Cálculo de Ruta Segura con perfiles OSRM correctos)
+  Future<Map<String, dynamic>> calcularRutaSegura(LatLng origen, LatLng destino, {String modo = 'foot'}) async {
+    try {
+      // CONVERSIÓN A PERFILES CORRECTOS DE OSRM
+      String perfilOSRM;
+      switch (modo) {
+        case 'car':
+          perfilOSRM = 'driving';
+          break;
+        case 'foot':
+          perfilOSRM = 'foot-walking';
+          break;
+        case 'bicycle':
+          perfilOSRM = 'cycling';
+          break;
+        default:
+          perfilOSRM = 'foot-walking';
+      }
+
+      final url = Uri.parse(
+          'https://router.project-osrm.org/route/v1/$perfilOSRM/${origen.longitude},${origen.latitude};${destino.longitude},${destino.latitude}?overview=full&geometries=geojson');
+
+      debugPrint("🚀 Consultando OSRM con perfil: $perfilOSRM");
+      debugPrint("📍 URL: $url");
+
+      final response = await http.get(url);
+
+      if (response.statusCode != 200) {
+        debugPrint("❌ Error HTTP ${response.statusCode}: ${response.body}");
+        return {'error': 'Error en servicio de mapas (HTTP ${response.statusCode})'};
+      }
+
+      final data = jsonDecode(response.body);
+
+      if (data['routes'] == null || data['routes'].isEmpty) {
+        debugPrint("❌ No se encontraron rutas en la respuesta");
+        return {'error': 'No se encontró una ruta válida'};
+      }
+
+      final List<dynamic> coordinates = data['routes'][0]['geometry']['coordinates'];
+      List<LatLng> points = coordinates.map((c) => LatLng(c[1], c[0])).toList();
+
+      final double duracion = (data['routes'][0]['duration'] ?? 0).toDouble();
+      final double distancia = (data['routes'][0]['distance'] ?? 0).toDouble();
+
+      debugPrint("⏱️ Duración: $duracion segundos (${(duracion / 60).toStringAsFixed(1)} min)");
+      debugPrint("📏 Distancia: $distancia metros (${(distancia / 1000).toStringAsFixed(2)} km)");
+
+      final alertas = await obtenerAlertas();
+      int puntosDeRiesgo = 0;
+      const Distance distance = Distance();
+
+      for (var puntoRuta in points) {
+        for (var zona in alertas) {
+          if (distance.as(LengthUnit.Meter, puntoRuta, zona.center) < zona.radius) {
+            puntosDeRiesgo++;
+          }
+        }
+      }
+
+      double score = 100 - (puntosDeRiesgo * 1.5);
+      if (score < 0) score = 0;
+
+      debugPrint("✅ Ruta calculada - Score: $score, Puntos de riesgo: $puntosDeRiesgo");
+
+      return {
+        'points': points,
+        'score': score,
+        'duracion': duracion,
+        'distancia': distancia,
+      };
+    } catch (e) {
+      debugPrint("❌ Excepción en calcularRutaSegura: $e");
+      return {'error': e.toString()};
+    }
+  }
+
+  // 5. TRADUCTOR DE TIEMPO (RELATIVO)
+  // Corrige el desfase de 5 horas y devuelve texto amigable.
   String _calcularTiempoTranscurrido(String fechaIso) {
     try {
-      DateTime? fechaAlerta = DateTime.tryParse(fechaIso);
-      if (fechaAlerta == null) return "Hora desc.";
+      if (fechaIso.isEmpty) return "Hace instantes";
 
+      // Convertimos de UTC (Nube) a Hora Local (Ecuador)
+      DateTime fechaAlerta = DateTime.parse(fechaIso).toLocal();
       DateTime ahora = DateTime.now();
       Duration diferencia = ahora.difference(fechaAlerta);
 
-      if (diferencia.isNegative) return "Hace instantes"; // Corrección de reloj
-      if (diferencia.inSeconds < 60) return "Hace ${diferencia.inSeconds} seg";
-      if (diferencia.inMinutes < 60) return "Hace ${diferencia.inMinutes} min";
-      if (diferencia.inHours < 24) return "Hace ${diferencia.inHours} horas";
-      return "Hace ${diferencia.inDays} días";
+      if (diferencia.isNegative) return "Hace instantes";
+
+      if (diferencia.inSeconds < 60) {
+        return "Hace ${diferencia.inSeconds} seg";
+      } else if (diferencia.inMinutes < 60) {
+        int min = diferencia.inMinutes;
+        return "Hace $min ${min == 1 ? 'minuto' : 'minutos'}";
+      } else if (diferencia.inHours < 24) {
+        int horas = diferencia.inHours;
+        return "Hace $horas ${horas == 1 ? 'hora' : 'horas'}";
+      } else {
+        int dias = diferencia.inDays;
+        return "Hace $dias ${dias == 1 ? 'día' : 'días'}";
+      }
     } catch (e) {
       return "Hace instantes";
     }
   }
 }
-
-
