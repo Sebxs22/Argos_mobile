@@ -8,7 +8,6 @@ import 'features/eye_guardian/ui/eye_guardian_screen.dart';
 import 'features/routes/ui/routes_screen.dart';
 import 'features/sanctuaries/ui/sanctuaries_map_screen.dart';
 import 'features/auth/ui/login_screen.dart'; // Asegúrate de crear este archivo
-import 'features/auth/ui/register_screen.dart';
 import 'core/network/auth_service.dart';
 import 'core/ui/glass_box.dart';
 

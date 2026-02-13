@@ -1,5 +1,4 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter/material.dart';
 
 class AuthService {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -39,7 +38,7 @@ class AuthService {
         password: password,
       );
       return res.user != null ? null : "Credenciales inválidas";
-    } on AuthException catch (e) {
+    } on AuthException {
       return "Correo o contraseña incorrectos";
     } catch (e) {
       return "Error de conexión";

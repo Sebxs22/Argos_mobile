@@ -353,8 +353,11 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
                 return GestureDetector(
                   onTap: () {
                     setState(() {
-                      if (isActive) _activeFilters.remove(id);
-                      else _activeFilters.add(id);
+                      if (isActive) {
+                        _activeFilters.remove(id);
+                      } else {
+                        _activeFilters.add(id);
+                      }
                     });
                   },
                   child: AnimatedContainer(
