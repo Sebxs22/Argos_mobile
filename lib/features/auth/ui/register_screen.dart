@@ -6,6 +6,7 @@ import '../../../../main.dart';
 import 'package:csc_picker_plus/csc_picker_plus.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:intl_phone_field/country_picker_dialog.dart';
+import '../../../core/utils/validators.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -40,6 +41,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   bool _isLoading = false;
   bool _aceptaTerminos = false;
+  bool _cedulaInvalida = false; // Nuevo: rastrear error de cédula
 
   void _handleRegister() async {
     // Validación básica
@@ -54,6 +56,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Por favor, llena todos los campos obligatorios"),
+        ),
+      );
+      return;
+    }
+
+    // Validación de Cédula Real
+    if (!Validators.isValidCedula(_cedulaController.text)) {
+      setState(() => _cedulaInvalida = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Cédula o DNI ecuatoriano no válido"),
+          backgroundColor: Color(0xFFE53935),
         ),
       );
       return;
@@ -286,6 +300,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               _cedulaController,
                               "Cédula / DNI / ID",
                               Icons.badge_outlined,
+                              error: _cedulaInvalida,
+                              onChanged: (val) {
+                                if (_cedulaInvalida) {
+                                  setState(() => _cedulaInvalida =
+                                      !Validators.isValidCedula(val));
+                                }
+                              },
                             ),
                             const SizedBox(height: 20),
 
@@ -432,21 +453,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
     String hint,
     IconData icon, {
     bool obscure = false,
+    bool error = false,
+    Function(String)? onChanged,
   }) {
     return Focus(
       child: Builder(builder: (context) {
         final bool isFocused = Focus.of(context).hasFocus;
         return _buildFieldWrapper(
           isFocused: isFocused,
+          error: error,
           child: TextField(
             controller: controller,
             obscureText: obscure,
+            onChanged: onChanged,
             style: const TextStyle(color: Colors.white, fontSize: 14),
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: const TextStyle(color: Colors.white24, fontSize: 13),
               prefixIcon: Icon(icon,
-                  color: isFocused ? const Color(0xFFE53935) : Colors.white54,
+                  color: error
+                      ? Colors.orange
+                      : (isFocused ? const Color(0xFFE53935) : Colors.white54),
                   size: 20),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(vertical: 18),
@@ -461,8 +488,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _buildFieldWrapper({
     required Widget child,
     bool isFocused = false,
+    bool error = false,
     EdgeInsetsGeometry? padding,
   }) {
+    Color borderColor = Colors.white10;
+    if (error) {
+      borderColor = Colors.orange.withValues(alpha: 0.5);
+    } else if (isFocused) {
+      borderColor = const Color(0xFFE53935);
+    }
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       padding: padding,
@@ -472,13 +507,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
             : Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(15), // Mismo radio que Login
         border: Border.all(
-          color: isFocused ? const Color(0xFFE53935) : Colors.white10,
-          width: isFocused ? 1.5 : 1,
+          color: borderColor,
+          width: isFocused || error ? 1.5 : 1,
         ),
-        boxShadow: isFocused
+        boxShadow: (isFocused || error)
             ? [
                 BoxShadow(
-                    color: const Color(0xFFE53935).withValues(alpha: 0.1),
+                    color: (error ? Colors.orange : const Color(0xFFE53935))
+                        .withValues(alpha: 0.1),
                     blurRadius: 10)
               ]
             : [],
