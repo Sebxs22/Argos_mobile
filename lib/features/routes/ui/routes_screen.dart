@@ -382,9 +382,13 @@ class _RoutesScreenState extends State<RoutesScreen> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFE53935),
+                foregroundColor:
+                    Colors.white, // Aseguramos color de texto blanco
                 minimumSize: const Size(double.infinity, 55),
                 elevation: 10,
-                shadowColor: Colors.redAccent.withValues(alpha: 0.3),
+                shadowColor: isDark
+                    ? Colors.redAccent.withValues(alpha: 0.3)
+                    : Colors.black.withValues(alpha: 0.2),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15),
                 ),

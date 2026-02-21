@@ -7,6 +7,7 @@ import 'package:csc_picker_plus/csc_picker_plus.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:intl_phone_field/country_picker_dialog.dart';
 import '../../../core/utils/validators.dart';
+import '../../profile/ui/agreements_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -406,11 +407,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             value: _aceptaTerminos,
                             onChanged: (val) =>
                                 setState(() => _aceptaTerminos = val ?? false),
-                            title: Text(
-                              "Acepto los términos, condiciones y políticas de privacidad.",
-                              style: TextStyle(
-                                color: secondaryTextColor,
-                                fontSize: 11,
+                            title: GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const AgreementsScreen()),
+                                );
+                              },
+                              child: RichText(
+                                text: TextSpan(
+                                  style: TextStyle(
+                                    color: secondaryTextColor,
+                                    fontSize: 11,
+                                    fontFamily:
+                                        'Outfit', // Usamos la fuente de la app
+                                  ),
+                                  children: [
+                                    const TextSpan(text: "Acepto los "),
+                                    TextSpan(
+                                      text:
+                                          "términos, condiciones y acuerdos de compromiso",
+                                      style: TextStyle(
+                                        color: isDark
+                                            ? Colors.white
+                                            : const Color(0xFFE53935),
+                                        fontWeight: FontWeight.bold,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                    const TextSpan(text: " de la red Argos."),
+                                  ],
+                                ),
                               ),
                             ),
                             controlAffinity: ListTileControlAffinity.leading,

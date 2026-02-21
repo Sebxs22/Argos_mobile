@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/network/auth_service.dart';
 import '../../../core/theme/theme_service.dart';
+import 'agreements_screen.dart';
 import '../../../core/ui/glass_box.dart';
 import '../../../core/ui/argos_background.dart';
 import '../../../core/utils/ui_utils.dart';
@@ -204,6 +205,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 fontWeight: FontWeight.bold),
                           ),
                         ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const AgreementsScreen()),
+                        );
+                      },
+                      child: GlassBox(
+                        borderRadius: 20,
+                        opacity: isDark ? 0.05 : 0.03,
+                        padding: const EdgeInsets.all(18),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.description_outlined,
+                                color: Colors.blueAccent, size: 20),
+                            const SizedBox(width: 15),
+                            Text(
+                              "Acuerdos y Compromisos",
+                              style: TextStyle(
+                                color: isDark ? Colors.white70 : Colors.black87,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Spacer(),
+                            const Icon(Icons.arrow_forward_ios,
+                                color: Colors.blueAccent, size: 14),
+                          ],
+                        ),
                       ),
                     ),
 
