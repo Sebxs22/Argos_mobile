@@ -64,3 +64,16 @@ jobs:
           make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update Supabase Version
+        if: github.ref == 'refs/heads/main'
+        run: |
+          VERSION=$(grep 'version: ' pubspec.yaml | sed 's/version: //')
+          VERSION_CLEAN=$(echo $VERSION | cut -d '+' -f 1 | xargs)
+          echo "Updating Supabase to version: $VERSION_CLEAN"
+          
+          curl -X PATCH "${{ secrets.SUPABASE_URL }}/rest/v1/app_config?id=eq.1" \
+          -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+          -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+          -H "Content-Type: application/json" \
+          -d "{\"version_actual\": \"$VERSION_CLEAN\"}"
