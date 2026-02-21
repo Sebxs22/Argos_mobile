@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:ui'; // Para el Blur
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart'; // IMPORTANTE: Para obtener la ubicación real
 import '../../../core/network/api_service.dart';
@@ -9,7 +10,8 @@ class EmergencyCountdownScreen extends StatefulWidget {
   const EmergencyCountdownScreen({super.key});
 
   @override
-  State<EmergencyCountdownScreen> createState() => _EmergencyCountdownScreenState();
+  State<EmergencyCountdownScreen> createState() =>
+      _EmergencyCountdownScreenState();
 }
 
 class _EmergencyCountdownScreenState extends State<EmergencyCountdownScreen> {
@@ -36,15 +38,20 @@ class _EmergencyCountdownScreenState extends State<EmergencyCountdownScreen> {
     try {
       // 'bestForNavigation' usa GPS + WiFi + Acelerómetros para máxima precisión
       Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.bestForNavigation,
-          timeLimit: const Duration(seconds: 10) // Damos máximo 10s para buscar
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.bestForNavigation,
+          timeLimit: Duration(seconds: 10),
+        ),
       );
       setState(() {
         _preciseLocation = position;
       });
-      print("UBICACIÓN DE PRECISIÓN LISTA: ${position.latitude}, ${position.longitude}");
+      developer.log(
+        "UBICACIÓN DE PRECISIÓN LISTA: ${position.latitude}, ${position.longitude}",
+        name: 'ArgosEmergency',
+      );
     } catch (e) {
-      print("Error buscando satélites: $e");
+      developer.log("Error buscando satélites", error: e);
     }
   }
 
@@ -73,15 +80,33 @@ class _EmergencyCountdownScreenState extends State<EmergencyCountdownScreen> {
 
     if (_preciseLocation == null) {
       try {
-        Position fallback = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+        Position fallback = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+          ),
+        );
         finalLat = fallback.latitude;
         finalLng = fallback.longitude;
-      } catch (e) { print("Fallo GPS total, usando default"); }
+      } catch (e) {
+        developer.log("Fallo GPS total, usando default", error: e);
+      }
     }
 
     // 2. ENVÍO A LA API (Ahora sí con datos reales)
-    print("ENVIANDO ALERTA PRECISA A: $finalLat, $finalLng");
-    _apiService.enviarAlertaEmergencia(finalLat, finalLng);
+    developer.log(
+      "ENVIANDO ALERTA PRECISA A: $finalLat, $finalLng",
+      name: 'ArgosEmergency',
+    );
+    await _apiService.enviarAlertaEmergencia(finalLat, finalLng);
+
+    // 3. NOTIFICACIÓN PUSH A GUARDIANES
+    try {
+      final perfil = await _apiService.obtenerPerfilActual();
+      final nombre = perfil?['nombre_completo'] ?? "Un usuario";
+      await _apiService.enviarNotificacionEmergencia(nombre);
+    } catch (e) {
+      developer.log("Error al enviar notificaciones push", error: e);
+    }
 
     if (!mounted) return;
 
@@ -95,30 +120,38 @@ class _EmergencyCountdownScreenState extends State<EmergencyCountdownScreen> {
           borderRadius: 30,
           blur: 20,
           opacity: 0.1,
-          border: Border.all(color: Colors.white.withOpacity(0.3)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.green.withOpacity(0.2),
-                    boxShadow: [
-                      BoxShadow(color: Colors.green.withOpacity(0.4), blurRadius: 40, spreadRadius: 5)
-                    ]
+                  shape: BoxShape.circle,
+                  color: Colors.green.withValues(alpha: 0.2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.green.withValues(alpha: 0.4),
+                      blurRadius: 40,
+                      spreadRadius: 5,
+                    ),
+                  ],
                 ),
-                child: const Icon(Icons.check, color: Colors.greenAccent, size: 50),
+                child: const Icon(
+                  Icons.check,
+                  color: Colors.greenAccent,
+                  size: 50,
+                ),
               ),
               const SizedBox(height: 20),
 
               const Text(
                 "ALERTA ENVIADA",
                 style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.5
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.5,
                 ),
               ),
               const SizedBox(height: 15),
@@ -138,14 +171,16 @@ class _EmergencyCountdownScreenState extends State<EmergencyCountdownScreen> {
                     Navigator.of(context).pop(true);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white.withOpacity(0.1),
+                    backgroundColor: Colors.white.withValues(alpha: 0.1),
                     foregroundColor: Colors.white,
-                    side: BorderSide(color: Colors.white.withOpacity(0.2)),
+                    side: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.2),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 15),
                   ),
                   child: const Text("ENTENDIDO"),
                 ),
-              )
+              ),
             ],
           ),
         ),
@@ -181,12 +216,28 @@ class _EmergencyCountdownScreenState extends State<EmergencyCountdownScreen> {
         children: [
           // FONDO ALERTA ROJA
           Positioned(
-            top: -50, left: -50,
-            child: Container(width: 500, height: 500, decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFFD50000).withOpacity(0.4))),
+            top: -50,
+            left: -50,
+            child: Container(
+              width: 500,
+              height: 500,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFFD50000).withValues(alpha: 0.4),
+              ),
+            ),
           ),
           Positioned(
-            bottom: -100, right: -100,
-            child: Container(width: 400, height: 400, decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFFFF6D00).withOpacity(0.2))),
+            bottom: -100,
+            right: -100,
+            child: Container(
+              width: 400,
+              height: 400,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFFFF6D00).withValues(alpha: 0.2),
+              ),
+            ),
           ),
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 60, sigmaY: 60),
@@ -200,29 +251,68 @@ class _EmergencyCountdownScreenState extends State<EmergencyCountdownScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text("⚠️ INCIDENTE DETECTADO ⚠️", style: TextStyle(color: Color(0xFFFF5252), fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 2.0)),
+                  const Text(
+                    "⚠️ INCIDENTE DETECTADO ⚠️",
+                    style: TextStyle(
+                      color: Color(0xFFFF5252),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 2.0,
+                    ),
+                  ),
                   const SizedBox(height: 50),
 
                   // RELOJ
                   Stack(
                     alignment: Alignment.center,
                     children: [
-                      Container(width: 220, height: 220, decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: const Color(0xFFD50000).withOpacity(0.4), blurRadius: 60, spreadRadius: 10)])),
+                      Container(
+                        width: 220,
+                        height: 220,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(
+                                0xFFD50000,
+                              ).withValues(alpha: 0.4),
+                              blurRadius: 60,
+                              spreadRadius: 10,
+                            ),
+                          ],
+                        ),
+                      ),
                       SizedBox(
-                        width: 200, height: 200,
+                        width: 200,
+                        height: 200,
                         child: CircularProgressIndicator(
                           value: _secondsRemaining / 10,
                           strokeWidth: 15,
                           color: const Color(0xFFFF1744),
-                          backgroundColor: Colors.white.withOpacity(0.1),
+                          backgroundColor: Colors.white.withValues(alpha: 0.1),
                           strokeCap: StrokeCap.round,
                         ),
                       ),
                       Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text("$_secondsRemaining", style: const TextStyle(color: Colors.white, fontSize: 90, fontWeight: FontWeight.bold, height: 1.0)),
-                          const Text("SEGUNDOS", style: TextStyle(color: Colors.white54, fontSize: 12, letterSpacing: 2))
+                          Text(
+                            "$_secondsRemaining",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 90,
+                              fontWeight: FontWeight.bold,
+                              height: 1.0,
+                            ),
+                          ),
+                          const Text(
+                            "SEGUNDOS",
+                            style: TextStyle(
+                              color: Colors.white54,
+                              fontSize: 12,
+                              letterSpacing: 2,
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -232,19 +322,36 @@ class _EmergencyCountdownScreenState extends State<EmergencyCountdownScreen> {
 
                   // TEXTO DINÁMICO (Muestra si ya tenemos GPS)
                   GlassBox(
-                    borderRadius: 20, opacity: 0.05, padding: const EdgeInsets.all(15),
+                    borderRadius: 20,
+                    opacity: 0.05,
+                    padding: const EdgeInsets.all(15),
                     child: Column(
                       children: [
                         Text(
                           "Enviando ubicación precisa...",
                           textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.white70, fontSize: 16),
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 16,
+                          ),
                         ),
                         const SizedBox(height: 5),
                         // Indicador de precisión pequeño
                         _preciseLocation != null
-                            ? const Text("✅ Señal Satelital: Fuerte (<3m)", style: TextStyle(color: Colors.greenAccent, fontSize: 12))
-                            : const Text("📡 Buscando satélites...", style: TextStyle(color: Colors.amber, fontSize: 12)),
+                            ? const Text(
+                                "✅ Señal Satelital: Fuerte (<3m)",
+                                style: TextStyle(
+                                  color: Colors.greenAccent,
+                                  fontSize: 12,
+                                ),
+                              )
+                            : const Text(
+                                "📡 Buscando satélites...",
+                                style: TextStyle(
+                                  color: Colors.amber,
+                                  fontSize: 12,
+                                ),
+                              ),
                       ],
                     ),
                   ),
@@ -254,13 +361,29 @@ class _EmergencyCountdownScreenState extends State<EmergencyCountdownScreen> {
                   GestureDetector(
                     onTap: _cancelAlert,
                     child: GlassBox(
-                      borderRadius: 50, opacity: 0.1, border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5), padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+                      borderRadius: 50,
+                      opacity: 0.1,
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.5),
+                        width: 1.5,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 40,
+                        vertical: 20,
+                      ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: const [
                           Icon(Icons.close, color: Colors.white, size: 28),
                           SizedBox(width: 15),
-                          Text("ESTOY BIEN, CANCELAR", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                          Text(
+                            "ESTOY BIEN, CANCELAR",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ],
                       ),
                     ),

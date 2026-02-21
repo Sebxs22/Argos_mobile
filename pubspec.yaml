@@ -45,8 +45,8 @@ dependencies:
   http: ^1.2.1
 
   # Para que la app viva aunque bloquees el celular
-  flutter_background_service: ^5.0.0
-  flutter_local_notifications: ^17.0.0
+  flutter_background_service: ^5.1.0
+  flutter_local_notifications: ^20.1.0
 
   # Para guardar preferencias (saber si el modo está activo)
   shared_preferences: ^2.2.2
@@ -58,6 +58,16 @@ dependencies:
   url_launcher: ^6.2.5      # Por si queremos abrir enlaces del mapa
   flutter_vibrate: ^1.3.0
   supabase_flutter: ^2.0.0
+  flutter_dotenv: ^6.0.0
+
+  internet_connection_checker_plus: ^2.9.1+2
+  overlay_support: ^2.1.0
+  flutter_map_marker_cluster: ^1.3.6
+  share_plus: ^12.0.1
+  onesignal_flutter: ^5.4.1
+  package_info_plus: ^8.2.0
+  ota_update: ^5.1.0
+
 
 dev_dependencies:
   flutter_test:
@@ -84,6 +94,7 @@ flutter:
 
   assets:
     - assets/images/
+    - .env
 
   # To add assets to your application, add an assets section, like this:
   # assets:

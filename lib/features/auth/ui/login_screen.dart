@@ -67,7 +67,7 @@ class _LoginScreenState extends State<LoginScreen> {
               height: 400,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFE53935).withOpacity(0.15),
+                color: const Color(0xFFE53935).withValues(alpha: 0.15),
               ),
             ),
           ),
@@ -79,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF2962FF).withOpacity(0.1),
+                color: const Color(0xFF2962FF).withValues(alpha: 0.1),
               ),
             ),
           ),
@@ -99,11 +99,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.03),
+                      color: Colors.white.withValues(alpha: 0.03),
                       border: Border.all(color: Colors.white10),
                     ),
-                    child: const Icon(Icons.shield_moon_outlined,
-                        color: Color(0xFFE53935), size: 50),
+                    child: const Icon(
+                      Icons.shield_moon_outlined,
+                      color: Color(0xFFE53935),
+                      size: 50,
+                    ),
                   ),
                   const SizedBox(height: 25),
                   const Text(
@@ -148,26 +151,28 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 35),
 
                         _isLoading
-                            ? const CircularProgressIndicator(color: Color(0xFFE53935))
+                            ? const CircularProgressIndicator(
+                                color: Color(0xFFE53935),
+                              )
                             : ElevatedButton(
-                          onPressed: _handleLogin,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFE53935),
-                            foregroundColor: Colors.white,
-                            minimumSize: const Size(double.infinity, 55),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                          ),
-                          child: const Text(
-                            "INICIAR SESIÓN",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.5,
-                            ),
-                          ),
-                        ),
+                                onPressed: _handleLogin,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFE53935),
+                                  foregroundColor: Colors.white,
+                                  minimumSize: const Size(double.infinity, 55),
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                ),
+                                child: const Text(
+                                  "INICIAR SESIÓN",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1.5,
+                                  ),
+                                ),
+                              ),
                       ],
                     ),
                   ),
@@ -179,7 +184,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                        MaterialPageRoute(
+                          builder: (context) => const RegisterScreen(),
+                        ),
                       );
                     },
                     child: RichText(
@@ -216,7 +223,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(15),
       ),
       child: TextField(

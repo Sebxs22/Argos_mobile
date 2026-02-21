@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart'; // Import Clustering
 
 // --- COMPONENTES Y LOGICA ---
 import '../../../core/ui/glass_box.dart';
@@ -17,8 +18,10 @@ class SanctuariesMapScreen extends StatefulWidget {
 }
 
 class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
-    with AutomaticKeepAliveClientMixin, TickerProviderStateMixin, WidgetsBindingObserver {
-
+    with
+        AutomaticKeepAliveClientMixin,
+        TickerProviderStateMixin,
+        WidgetsBindingObserver {
   final MapController _mapController = MapController();
   final ApiService _apiService = ApiService();
 
@@ -35,7 +38,14 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
 
   // Filtros activos (Todos por defecto)
   final Set<String> _activeFilters = {
-    'Peligro', 'Policía', 'Salud', 'Farmacia', 'Educación', 'Tienda', 'Parque', 'Iglesia'
+    'Peligro',
+    'Policía',
+    'Salud',
+    'Farmacia',
+    'Educación',
+    'Tienda',
+    'Parque',
+    'Iglesia',
   };
 
   @override
@@ -44,7 +54,10 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
     // Registrar observador para detectar cuando el usuario vuelve a la app
     WidgetsBinding.instance.addObserver(this);
 
-    _radarController = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat();
+    _radarController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
 
     // 1. Carga de datos de la nube
     _loadMapData();
@@ -102,19 +115,27 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
         permission = await Geolocator.requestPermission();
       }
 
-      if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
+      if (permission == LocationPermission.whileInUse ||
+          permission == LocationPermission.always) {
         Position position = await Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.bestForNavigation
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.bestForNavigation,
+          ),
         );
 
         if (mounted) {
-          setState(() => _currentCenter = LatLng(position.latitude, position.longitude));
+          setState(
+            () =>
+                _currentCenter = LatLng(position.latitude, position.longitude),
+          );
 
           // Movemos el mapa con seguridad (evitando LateInitializationError)
           try {
             _mapController.move(_currentCenter, 16.0);
           } catch (e) {
-            debugPrint("MapController no listo, moviendo en el siguiente frame.");
+            debugPrint(
+              "MapController no listo, moviendo en el siguiente frame.",
+            );
           }
         }
       }
@@ -155,56 +176,109 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
       isScrollControlled: true,
       builder: (context) {
         return GlassBox(
-          borderRadius: 30, opacity: 0.1, blur: 20,
+          borderRadius: 30,
+          opacity: 0.1,
+          blur: 20,
           child: Container(
             padding: const EdgeInsets.all(20),
             height: MediaQuery.of(context).size.height * 0.5,
             decoration: BoxDecoration(
-                color: const Color(0xFF1E293B).withOpacity(0.95),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-                border: Border.all(color: Colors.red.withOpacity(0.3))
+              color: const Color(0xFF1E293B).withValues(alpha: 0.95),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(30),
+              ),
+              border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(children: [
-                  const Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 30),
-                  const SizedBox(width: 10),
-                  const Text("HISTORIAL DE RIESGO", style: TextStyle(color: Color(0xFFFFCDD2), fontWeight: FontWeight.bold, fontSize: 18)),
-                  const Spacer(),
-                  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close, color: Colors.white54))
-                ]),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.warning_amber_rounded,
+                      color: Colors.redAccent,
+                      size: 30,
+                    ),
+                    const SizedBox(width: 10),
+                    const Text(
+                      "HISTORIAL DE RIESGO",
+                      style: TextStyle(
+                        color: Color(0xFFFFCDD2),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close, color: Colors.white54),
+                    ),
+                  ],
+                ),
                 const Divider(color: Colors.white24),
                 const SizedBox(height: 10),
-                Text("${zone.reports.length} reportes registrados aquí:", style: const TextStyle(color: Colors.white70)),
+                Text(
+                  "${zone.reports.length} reportes registrados aquí:",
+                  style: const TextStyle(color: Colors.white70),
+                ),
                 const SizedBox(height: 10),
                 Expanded(
-                    child: ListView.builder(
-                        itemCount: zone.reports.length,
-                        physics: const BouncingScrollPhysics(),
-                        itemBuilder: (context, index) {
-                          final report = zone.reports[index];
-                          return Container(
-                              margin: const EdgeInsets.only(bottom: 10),
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.05),
-                                  borderRadius: BorderRadius.circular(15),
-                                  border: Border.all(color: Colors.white10)
+                  child: ListView.builder(
+                    itemCount: zone.reports.length,
+                    physics: const BouncingScrollPhysics(),
+                    itemBuilder: (context, index) {
+                      final report = zone.reports[index];
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(color: Colors.white10),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              report.icon,
+                              color: Colors.redAccent,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 15),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    report.title,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    report.description,
+                                    style: const TextStyle(
+                                      color: Colors.white60,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              child: Row(children: [
-                                Icon(report.icon, color: Colors.redAccent, size: 20),
-                                const SizedBox(width: 15),
-                                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                  Text(report.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                                  Text(report.description, style: const TextStyle(color: Colors.white60, fontSize: 12))
-                                ])),
-                                Text(report.timeAgo, style: const TextStyle(color: Colors.white38, fontSize: 10, fontStyle: FontStyle.italic))
-                              ])
-                          );
-                        }
-                    )
-                )
+                            ),
+                            Text(
+                              report.timeAgo,
+                              style: const TextStyle(
+                                color: Colors.white38,
+                                fontSize: 10,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
               ],
             ),
           ),
@@ -220,7 +294,9 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A1A), // Fondo oscuro real para evitar cuadros blancos
+      backgroundColor: const Color(
+        0xFF1A1A1A,
+      ), // Fondo oscuro real para evitar cuadros blancos
 
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 90.0),
@@ -250,17 +326,39 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
           RotationTransition(
             turns: _radarController,
             child: Container(
-              width: 100, height: 100,
+              width: 100,
+              height: 100,
               decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.blueAccent.withOpacity(0.3), width: 1),
-                  gradient: SweepGradient(center: Alignment.center, colors: [Colors.transparent, Colors.blueAccent.withOpacity(0.5)])
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.blueAccent.withValues(alpha: 0.3),
+                  width: 1,
+                ),
+                gradient: SweepGradient(
+                  center: Alignment.center,
+                  colors: [
+                    Colors.transparent,
+                    Colors.blueAccent.withValues(alpha: 0.5),
+                  ],
+                ),
               ),
-              child: const Icon(Icons.satellite_alt, color: Colors.blue, size: 30),
+              child: const Icon(
+                Icons.satellite_alt,
+                color: Colors.blue,
+                size: 30,
+              ),
             ),
           ),
           const SizedBox(height: 20),
-          const Text("SINTONIZANDO RED ARGOS...", style: TextStyle(color: Colors.blueAccent, fontSize: 10, letterSpacing: 2, fontWeight: FontWeight.bold)),
+          const Text(
+            "SINTONIZANDO RED ARGOS...",
+            style: TextStyle(
+              color: Colors.blueAccent,
+              fontSize: 10,
+              letterSpacing: 2,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ],
       ),
     );
@@ -279,10 +377,13 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
       ),
       children: [
         TileLayer(
-            urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-            userAgentPackageName: 'com.argos.mobile_app',
-            subdomains: const ['a', 'b', 'c', 'd'],
-            tileDisplay: const TileDisplay.fadeIn(duration: Duration(milliseconds: 600))
+          urlTemplate:
+              'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+          userAgentPackageName: 'com.argos.mobile_app',
+          subdomains: const ['a', 'b', 'c', 'd'],
+          tileDisplay: const TileDisplay.fadeIn(
+            duration: Duration(milliseconds: 600),
+          ),
         ),
 
         // Capa de Zonas de Peligro (Nube)
@@ -293,25 +394,57 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
                 point: zone.center,
                 radius: zone.radius,
                 useRadiusInMeter: true,
-                color: Colors.red.withOpacity(0.15),
-                borderColor: Colors.red.withOpacity(0.5),
+                color: Colors.red.withValues(alpha: 0.15),
+                borderColor: Colors.red.withValues(alpha: 0.5),
                 borderStrokeWidth: 1.5,
               );
             }).toList(),
           ),
 
-        // Capa de Marcadores (Santuarios + Yo)
-        MarkerLayer(
-          markers: [
-            Marker(point: _currentCenter, width: 50, height: 50, child: _buildMyPositionMarker()),
+        // Capa de Marcadores con Clustering (Optimización)
+        MarkerClusterLayerWidget(
+          options: MarkerClusterLayerOptions(
+            maxClusterRadius: 120,
+            size: const Size(40, 40),
+            alignment: Alignment.center,
+            padding: const EdgeInsets.all(50),
+            maxZoom: 15,
+            markers: [
+              // Mi Posición (No se agrupa o se agrupa con otros, depende de preferencia. Aquí lo incluimos)
+              Marker(
+                point: _currentCenter,
+                width: 60,
+                height: 60,
+                child: _buildMyPositionMarker(),
+              ),
 
-            // Santuarios filtrables
-            ...kSanctuariesDB.where((s) => _activeFilters.contains(_getFilterName(s.type))).map((site) => Marker(
-                point: site.location,
-                width: 50, height: 50,
-                child: _buildDynamicMarkerIcon(site)
-            )),
-          ],
+              // Santuarios filtrables
+              ...kSanctuariesDB
+                  .where((s) => _activeFilters.contains(_getFilterName(s.type)))
+                  .map(
+                    (site) => Marker(
+                      point: site.location,
+                      width: 50,
+                      height: 50,
+                      child: _buildDynamicMarkerIcon(site),
+                    ),
+                  ),
+            ],
+            builder: (context, markers) {
+              return Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: Colors.blue,
+                ),
+                child: Center(
+                  child: Text(
+                    markers.length.toString(),
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ),
+              );
+            },
+          ),
         ),
       ],
     );
@@ -321,12 +454,24 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
   Widget _buildFilterBar() {
     final filters = [
       {'id': 'Peligro', 'icon': Icons.warning, 'color': Colors.red},
-      {'id': 'Policía', 'icon': Icons.local_police, 'color': Colors.greenAccent},
+      {
+        'id': 'Policía',
+        'icon': Icons.local_police,
+        'color': Colors.greenAccent,
+      },
       {'id': 'Salud', 'icon': Icons.local_hospital, 'color': Colors.blue},
-      {'id': 'Farmacia', 'icon': Icons.local_pharmacy, 'color': Colors.pinkAccent},
+      {
+        'id': 'Farmacia',
+        'icon': Icons.local_pharmacy,
+        'color': Colors.pinkAccent,
+      },
       {'id': 'Tienda', 'icon': Icons.store, 'color': Colors.purpleAccent},
       {'id': 'Educación', 'icon': Icons.school, 'color': Colors.orange},
-      {'id': 'Parque', 'icon': Icons.park, 'color': Colors.tealAccent}, // Icono árbol
+      {
+        'id': 'Parque',
+        'icon': Icons.park,
+        'color': Colors.tealAccent,
+      }, // Icono árbol
       {'id': 'Iglesia', 'icon': Icons.church, 'color': Colors.amber},
     ];
 
@@ -363,18 +508,43 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
                     margin: const EdgeInsets.only(right: 12),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
-                      color: isActive ? baseColor.withOpacity(0.2) : Colors.black.withOpacity(0.4),
+                      color: isActive
+                          ? baseColor.withValues(alpha: 0.2)
+                          : Colors.black.withValues(alpha: 0.4),
                       borderRadius: BorderRadius.circular(30),
-                      border: Border.all(color: isActive ? baseColor : Colors.white10),
-                      boxShadow: isActive ? [BoxShadow(color: baseColor.withOpacity(0.3), blurRadius: 8)] : [],
+                      border: Border.all(
+                        color: isActive ? baseColor : Colors.white10,
+                      ),
+                      boxShadow: isActive
+                          ? [
+                              BoxShadow(
+                                color: baseColor.withValues(alpha: 0.3),
+                                blurRadius: 8,
+                              ),
+                            ]
+                          : [],
                     ),
                     child: Row(
                       children: [
-                        Icon(item['icon'] as IconData, size: 16, color: isActive ? baseColor : Colors.white54),
+                        Icon(
+                          item['icon'] as IconData,
+                          size: 16,
+                          color: isActive ? baseColor : Colors.white54,
+                        ),
                         const SizedBox(width: 8),
-                        Text(id, style: TextStyle(color: isActive ? Colors.white : Colors.white54, fontSize: 12, fontWeight: FontWeight.bold)),
+                        Text(
+                          id,
+                          style: TextStyle(
+                            color: isActive ? Colors.white : Colors.white54,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -391,32 +561,61 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
 
   String _getFilterName(SanctuaryType type) {
     switch (type) {
-      case SanctuaryType.police: return 'Policía';
-      case SanctuaryType.health: return 'Salud';
-      case SanctuaryType.pharmacy: return 'Farmacia';
-      case SanctuaryType.education: return 'Educación';
-      case SanctuaryType.store: return 'Tienda';
-      case SanctuaryType.park: return 'Parque';
-      case SanctuaryType.church: return 'Iglesia';
+      case SanctuaryType.police:
+        return 'Policía';
+      case SanctuaryType.health:
+        return 'Salud';
+      case SanctuaryType.pharmacy:
+        return 'Farmacia';
+      case SanctuaryType.education:
+        return 'Educación';
+      case SanctuaryType.store:
+        return 'Tienda';
+      case SanctuaryType.park:
+        return 'Parque';
+      case SanctuaryType.church:
+        return 'Iglesia';
     }
   }
 
   Widget _buildDynamicMarkerIcon(SanctuaryModel site) {
-    IconData icon; Color color;
+    IconData icon;
+    Color color;
     switch (site.type) {
-      case SanctuaryType.police: icon = Icons.local_police; color = Colors.greenAccent; break;
-      case SanctuaryType.health: icon = Icons.local_hospital; color = Colors.blue; break;
-      case SanctuaryType.education: icon = Icons.school; color = Colors.orange; break;
-      case SanctuaryType.store: icon = Icons.store; color = Colors.purpleAccent; break;
-      case SanctuaryType.park: icon = Icons.park; color = Colors.tealAccent; break;
-      case SanctuaryType.pharmacy: icon = Icons.local_pharmacy; color = Colors.pinkAccent; break;
-      case SanctuaryType.church: icon = Icons.church; color = Colors.amber; break;
+      case SanctuaryType.police:
+        icon = Icons.local_police;
+        color = Colors.greenAccent;
+        break;
+      case SanctuaryType.health:
+        icon = Icons.local_hospital;
+        color = Colors.blue;
+        break;
+      case SanctuaryType.education:
+        icon = Icons.school;
+        color = Colors.orange;
+        break;
+      case SanctuaryType.store:
+        icon = Icons.store;
+        color = Colors.purpleAccent;
+        break;
+      case SanctuaryType.park:
+        icon = Icons.park;
+        color = Colors.tealAccent;
+        break;
+      case SanctuaryType.pharmacy:
+        icon = Icons.local_pharmacy;
+        color = Colors.pinkAccent;
+        break;
+      case SanctuaryType.church:
+        icon = Icons.church;
+        color = Colors.amber;
+        break;
     }
     return Container(
       decoration: BoxDecoration(
-          color: const Color(0xFF262626).withOpacity(0.9),
-          shape: BoxShape.circle,
-          border: Border.all(color: color, width: 1.5)
+        color: const Color(0xFF262626).withValues(alpha: 0.9),
+        shape: BoxShape.circle,
+        border: Border.all(color: color, width: 1.5),
       ),
       child: Icon(icon, color: color, size: 16),
     );
@@ -425,12 +624,19 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
   Widget _buildMyPositionMarker() {
     return Center(
       child: Container(
-        width: 14, height: 14,
+        width: 14,
+        height: 14,
         decoration: BoxDecoration(
-            color: Colors.blue,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 2),
-            boxShadow: [BoxShadow(color: Colors.blue.withOpacity(0.5), blurRadius: 6, spreadRadius: 2)]
+          color: Colors.blue,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 2),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.blue.withValues(alpha: 0.5),
+              blurRadius: 6,
+              spreadRadius: 2,
+            ),
+          ],
         ),
       ),
     );

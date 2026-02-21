@@ -3,13 +3,22 @@ import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Import SharedPreferences
+import 'package:flutter_dotenv/flutter_dotenv.dart'; // Import dotenv
 
 // --- IMPORTANTE: Asegúrate de que esta ruta sea correcta según tu proyecto ---
 import '../../features/sanctuaries/data/mock_sanctuaries_data.dart';
+import '../utils/ui_utils.dart'; // Import UiUtils
 
 class ApiService {
   // Usamos el cliente de Supabase ya inicializado en el main.dart
   final SupabaseClient _supabase = Supabase.instance.client;
+
+  Future<Map<String, dynamic>?> obtenerPerfilActual() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return null;
+    return await _supabase.from('perfiles').select().eq('id', user.id).single();
+  }
 
   // 1. ENVIAR ALERTA (POST DIRECTO A SUPABASE)
   // Se encarga de guardar el reporte de pánico en la nube.
@@ -23,21 +32,42 @@ class ApiService {
         // Guardamos en UTC para evitar desfases de horario entre países
         'fecha': DateTime.now().toUtc().toIso8601String(),
       });
-      debugPrint("✅ Registro en Supabase exitoso.");
+      UiUtils.showSuccess("✅ Alerta enviada a la nube");
     } catch (e) {
-      debugPrint("❌ Error al insertar en Supabase: $e");
+      UiUtils.showError("❌ Error al enviar alerta: $e");
     }
   }
 
-  // 2. OBTENER ALERTAS CON AGRUPAMIENTO INTELIGENTE
+  // 2. OBTENER ALERTAS CON AGRUPAMIENTO INTELIGENTE Y CACHÉ
   // Trae los datos de la nube y une reportes cercanos en una sola "Zona de Riesgo".
   Future<List<DangerZoneModel>> obtenerAlertas() async {
+    final prefs = await SharedPreferences.getInstance();
+    const String cacheKey = 'cached_danger_zones';
+
+    List<dynamic> data = [];
+
+    // Intentar obtener de RED
     try {
-      final List<dynamic> data = await _supabase
+      final List<dynamic> remoteData = await _supabase
           .from('alertas')
           .select()
           .order('fecha', ascending: false);
 
+      data = remoteData;
+      // Guardar en caché
+      prefs.setString(cacheKey, jsonEncode(remoteData));
+    } catch (e) {
+      debugPrint("⚠️ Sin conexión a Supabase. Usando caché local.");
+      // Fallback a CACHÉ
+      if (prefs.containsKey(cacheKey)) {
+        data = jsonDecode(prefs.getString(cacheKey)!);
+        UiUtils.showWarning("Modo Offline: Mostrando alertas guardadas");
+      } else {
+        return [];
+      }
+    }
+
+    try {
       List<DangerZoneModel> zonasAgrupadas = [];
       const Distance distanceCalc = Distance();
 
@@ -59,7 +89,12 @@ class ApiService {
         // Algoritmo de Clustering: Si hay un reporte a menos de 100m, se agrupan.
         int indexZonaCercana = -1;
         for (int i = 0; i < zonasAgrupadas.length; i++) {
-          if (distanceCalc.as(LengthUnit.Meter, puntoAlerta, zonasAgrupadas[i].center) < 100) {
+          if (distanceCalc.as(
+                LengthUnit.Meter,
+                puntoAlerta,
+                zonasAgrupadas[i].center,
+              ) <
+              100) {
             indexZonaCercana = i;
             break;
           }
@@ -68,25 +103,28 @@ class ApiService {
         if (indexZonaCercana != -1) {
           // Agregar al historial de la zona existente
           var zonaExistente = zonasAgrupadas[indexZonaCercana];
-          List<ReportModel> listaActualizada = List.from(zonaExistente.reports)..add(nuevoReporte);
+          List<ReportModel> listaActualizada = List.from(zonaExistente.reports)
+            ..add(nuevoReporte);
 
           zonasAgrupadas[indexZonaCercana] = DangerZoneModel(
-              center: zonaExistente.center,
-              radius: zonaExistente.radius,
-              reports: listaActualizada
+            center: zonaExistente.center,
+            radius: zonaExistente.radius,
+            reports: listaActualizada,
           );
         } else {
           // Crear una zona nueva
-          zonasAgrupadas.add(DangerZoneModel(
+          zonasAgrupadas.add(
+            DangerZoneModel(
               center: puntoAlerta,
               radius: 150, // Radio visual en metros
-              reports: [nuevoReporte]
-          ));
+              reports: [nuevoReporte],
+            ),
+          );
         }
       }
       return zonasAgrupadas;
     } catch (e) {
-      debugPrint("Error de red con Supabase: $e");
+      debugPrint("Error procesando alertas: $e");
       return [];
     }
   }
@@ -100,19 +138,27 @@ class ApiService {
       // Optimizamos la búsqueda añadiendo el contexto de la ciudad
       final String queryFinal = "$consulta, Riobamba, Ecuador";
       final url = Uri.parse(
-          'https://nominatim.openstreetmap.org/search?q=${Uri.encodeComponent(queryFinal)}&format=json&limit=5&addressdetails=1');
+        'https://nominatim.openstreetmap.org/search?q=${Uri.encodeComponent(queryFinal)}&format=json&limit=5&addressdetails=1',
+      );
 
-      final response = await http.get(url, headers: {
-        'User-Agent': 'Argos_Security_App' // Requerido por OSM
-      });
+      final response = await http.get(
+        url,
+        headers: {
+          'User-Agent': 'Argos_Security_App', // Requerido por OSM
+        },
+      );
 
       if (response.statusCode == 200) {
         List<dynamic> data = jsonDecode(response.body);
-        return data.map((item) => {
-          'display_name': item['display_name'],
-          'lat': double.parse(item['lat']),
-          'lon': double.parse(item['lon']),
-        }).toList();
+        return data
+            .map(
+              (item) => {
+                'display_name': item['display_name'],
+                'lat': double.parse(item['lat']),
+                'lon': double.parse(item['lon']),
+              },
+            )
+            .toList();
       }
     } catch (e) {
       debugPrint("Error en el autocompletado: $e");
@@ -121,7 +167,11 @@ class ApiService {
   }
 
   // 4. VISIÓN DE ARGOS (Cálculo de Ruta Segura con perfiles OSRM correctos)
-  Future<Map<String, dynamic>> calcularRutaSegura(LatLng origen, LatLng destino, {String modo = 'foot'}) async {
+  Future<Map<String, dynamic>> calcularRutaSegura(
+    LatLng origen,
+    LatLng destino, {
+    String modo = 'foot',
+  }) async {
     try {
       // CONVERSIÓN A PERFILES CORRECTOS DE OSRM
       String perfilOSRM;
@@ -140,7 +190,8 @@ class ApiService {
       }
 
       final url = Uri.parse(
-          'https://router.project-osrm.org/route/v1/$perfilOSRM/${origen.longitude},${origen.latitude};${destino.longitude},${destino.latitude}?overview=full&geometries=geojson');
+        'https://router.project-osrm.org/route/v1/$perfilOSRM/${origen.longitude},${origen.latitude};${destino.longitude},${destino.latitude}?overview=full&geometries=geojson',
+      );
 
       debugPrint("🚀 Consultando OSRM con perfil: $perfilOSRM");
       debugPrint("📍 URL: $url");
@@ -149,7 +200,9 @@ class ApiService {
 
       if (response.statusCode != 200) {
         debugPrint("❌ Error HTTP ${response.statusCode}: ${response.body}");
-        return {'error': 'Error en servicio de mapas (HTTP ${response.statusCode})'};
+        return {
+          'error': 'Error en servicio de mapas (HTTP ${response.statusCode})',
+        };
       }
 
       final data = jsonDecode(response.body);
@@ -159,14 +212,19 @@ class ApiService {
         return {'error': 'No se encontró una ruta válida'};
       }
 
-      final List<dynamic> coordinates = data['routes'][0]['geometry']['coordinates'];
+      final List<dynamic> coordinates =
+          data['routes'][0]['geometry']['coordinates'];
       List<LatLng> points = coordinates.map((c) => LatLng(c[1], c[0])).toList();
 
       final double duracion = (data['routes'][0]['duration'] ?? 0).toDouble();
       final double distancia = (data['routes'][0]['distance'] ?? 0).toDouble();
 
-      debugPrint("⏱️ Duración: $duracion segundos (${(duracion / 60).toStringAsFixed(1)} min)");
-      debugPrint("📏 Distancia: $distancia metros (${(distancia / 1000).toStringAsFixed(2)} km)");
+      debugPrint(
+        "⏱️ Duración: $duracion segundos (${(duracion / 60).toStringAsFixed(1)} min)",
+      );
+      debugPrint(
+        "📏 Distancia: $distancia metros (${(distancia / 1000).toStringAsFixed(2)} km)",
+      );
 
       final alertas = await obtenerAlertas();
       int puntosDeRiesgo = 0;
@@ -174,7 +232,8 @@ class ApiService {
 
       for (var puntoRuta in points) {
         for (var zona in alertas) {
-          if (distance.as(LengthUnit.Meter, puntoRuta, zona.center) < zona.radius) {
+          if (distance.as(LengthUnit.Meter, puntoRuta, zona.center) <
+              zona.radius) {
             puntosDeRiesgo++;
           }
         }
@@ -183,7 +242,9 @@ class ApiService {
       double score = 100 - (puntosDeRiesgo * 1.5);
       if (score < 0) score = 0;
 
-      debugPrint("✅ Ruta calculada - Score: $score, Puntos de riesgo: $puntosDeRiesgo");
+      debugPrint(
+        "✅ Ruta calculada - Score: $score, Puntos de riesgo: $puntosDeRiesgo",
+      );
 
       return {
         'points': points,
@@ -224,6 +285,61 @@ class ApiService {
       }
     } catch (e) {
       return "Hace instantes";
+    }
+  }
+
+  // 5. ENVIAR NOTIFICACIÓN PUSH A GUARDIANES
+  Future<void> enviarNotificacionEmergencia(String nombreUsuario) async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) return;
+
+      // 1. Obtener IDs de OneSignal de mis guardianes
+      final res = await Supabase.instance.client
+          .from('circulo_confianza')
+          .select('perfiles!guardian_id(onesignal_id)')
+          .eq('usuario_id', user.id);
+
+      final List<String> targetIds = (res as List)
+          .map((e) => e['perfiles']['onesignal_id'] as String?)
+          .where((id) => id != null && id.isNotEmpty)
+          .cast<String>()
+          .toList();
+
+      if (targetIds.isEmpty) {
+        debugPrint("⚠️ No hay guardianes con OneSignal ID para notificar.");
+        return;
+      }
+
+      // 2. Llamar a la API de OneSignal (REST)
+      final response = await http.post(
+        Uri.parse('https://onesignal.com/api/v1/notifications'),
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Authorization': 'Basic ${dotenv.env['ONESIGNAL_REST_API_KEY']}',
+        },
+        body: jsonEncode({
+          'app_id': dotenv.env['ONESIGNAL_APP_ID'],
+          'include_player_ids': targetIds,
+          'contents': {
+            'es':
+                '🆘 ¡$nombreUsuario está en una EMERGENCIA! Abre la app para ver su ubicación.',
+            'en': '🆘 $nombreUsuario is in an EMERGENCY! Check the app.',
+          },
+          'headings': {'es': 'ALERTA ARGOS', 'en': 'ARGOS EMERGENCY'},
+          'priority': 10, // Alta prioridad
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint(
+          "🚀 Notificaciones enviadas correctamente a ${targetIds.length} guardianes.",
+        );
+      } else {
+        debugPrint("❌ Error al enviar notificación: ${response.body}");
+      }
+    } catch (e) {
+      debugPrint("❌ Error en enviarNotificacionEmergencia: $e");
     }
   }
 }

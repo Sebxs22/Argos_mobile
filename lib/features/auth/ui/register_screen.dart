@@ -21,9 +21,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   void _handleRegister() async {
     // Validación básica
-    if (_nombreController.text.isEmpty || _emailController.text.isEmpty || _passController.text.isEmpty) {
+    if (_nombreController.text.isEmpty ||
+        _emailController.text.isEmpty ||
+        _passController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Por favor, llena los campos principales")),
+        const SnackBar(
+          content: Text("Por favor, llena los campos principales"),
+        ),
       );
       return;
     }
@@ -47,7 +51,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const MainNavigator()),
-              (route) => false,
+          (route) => false,
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -75,7 +79,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF2962FF).withOpacity(0.12),
+                color: const Color(0xFF2962FF).withValues(alpha: 0.12),
               ),
             ),
           ),
@@ -87,7 +91,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               height: 400,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFE53935).withOpacity(0.15),
+                color: const Color(0xFFE53935).withValues(alpha: 0.15),
               ),
             ),
           ),
@@ -107,10 +111,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     padding: const EdgeInsets.all(15),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.03),
+                      color: Colors.white.withValues(alpha: 0.03),
                       border: Border.all(color: Colors.white10),
                     ),
-                    child: const Icon(Icons.shield_outlined, color: Color(0xFFE53935), size: 45),
+                    child: const Icon(
+                      Icons.shield_outlined,
+                      color: Color(0xFFE53935),
+                      size: 45,
+                    ),
                   ),
                   const SizedBox(height: 20),
                   const Text(
@@ -124,7 +132,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const Text(
                     "CREA TU IDENTIDAD DE SEGURIDAD",
-                    style: TextStyle(fontSize: 9, letterSpacing: 1.5, color: Colors.white38),
+                    style: TextStyle(
+                      fontSize: 9,
+                      letterSpacing: 1.5,
+                      color: Colors.white38,
+                    ),
                   ),
                   const SizedBox(height: 40),
 
@@ -136,28 +148,55 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     padding: const EdgeInsets.all(25),
                     child: Column(
                       children: [
-                        _buildField(_nombreController, "Nombre Completo", Icons.person_outline),
+                        _buildField(
+                          _nombreController,
+                          "Nombre Completo",
+                          Icons.person_outline,
+                        ),
                         const SizedBox(height: 15),
-                        _buildField(_emailController, "Correo Electrónico", Icons.alternate_email),
+                        _buildField(
+                          _emailController,
+                          "Correo Electrónico",
+                          Icons.alternate_email,
+                        ),
                         const SizedBox(height: 15),
-                        _buildField(_telController, "Teléfono de Contacto", Icons.phone_android_outlined),
+                        _buildField(
+                          _telController,
+                          "Teléfono de Contacto",
+                          Icons.phone_android_outlined,
+                        ),
                         const SizedBox(height: 15),
-                        _buildField(_passController, "Contraseña", Icons.lock_outline, obscure: true),
+                        _buildField(
+                          _passController,
+                          "Contraseña",
+                          Icons.lock_outline,
+                          obscure: true,
+                        ),
                         const SizedBox(height: 30),
 
                         _isLoading
-                            ? const CircularProgressIndicator(color: Color(0xFFE53935))
+                            ? const CircularProgressIndicator(
+                                color: Color(0xFFE53935),
+                              )
                             : ElevatedButton(
-                          onPressed: _handleRegister,
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFE53935),
-                              foregroundColor: Colors.white,
-                              minimumSize: const Size(double.infinity, 55),
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))
-                          ),
-                          child: const Text("CREAR CUENTA", style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2)),
-                        ),
+                                onPressed: _handleRegister,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFE53935),
+                                  foregroundColor: Colors.white,
+                                  minimumSize: const Size(double.infinity, 55),
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                ),
+                                child: const Text(
+                                  "CREAR CUENTA",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1.2,
+                                  ),
+                                ),
+                              ),
                       ],
                     ),
                   ),
@@ -181,10 +220,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildField(TextEditingController controller, String hint, IconData icon, {bool obscure = false}) {
+  Widget _buildField(
+    TextEditingController controller,
+    String hint,
+    IconData icon, {
+    bool obscure = false,
+  }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(15),
       ),
       child: TextField(

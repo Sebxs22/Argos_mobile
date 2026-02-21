@@ -2,28 +2,53 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart'; // Import OneSignal
+import 'package:flutter_dotenv/flutter_dotenv.dart'; // Import dotenv
+import 'package:overlay_support/overlay_support.dart'; // Import OverlaySupport
 
 // --- NUEVAS PANTALLAS Y SERVICIOS ---
 import 'features/eye_guardian/ui/eye_guardian_screen.dart';
 import 'features/routes/ui/routes_screen.dart';
 import 'features/sanctuaries/ui/sanctuaries_map_screen.dart';
-import 'features/auth/ui/login_screen.dart'; // Asegúrate de crear este archivo
+import 'features/auth/ui/login_screen.dart';
 import 'core/network/auth_service.dart';
 import 'core/ui/glass_box.dart';
+import 'core/utils/connectivity_service.dart'; // Import connectivity service
+import 'features/eye_guardian/logic/background_service.dart'; // Import REAL background service
+import 'features/family_circle/ui/family_circle_screen.dart'; // Import Family Circle Screen
+import 'core/network/version_service.dart'; // Import VersionService
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Load environment variables
+  await dotenv.load(fileName: ".env");
+
   // --- INICIALIZACIÓN DE LA NUBE ---
   await Supabase.initialize(
-    url: 'https://qfmhruseaxfnudvgmhto.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmbWhydXNlYXhmbnVkdmdtaHRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MTQyOTEsImV4cCI6MjA4NTk5MDI5MX0.APn0xT7r1kPM3j2ZYl3gRABiyX-1jWS9lzz9tsKO48s',
+    url: dotenv.env['SUPABASE_URL']!,
+    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
 
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.light,
-  ));
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+    ),
+  );
+
+  // Initialize connectivity monitoring
+  ConnectivityService().initialize();
+
+  // Initialize Background Service
+  // Use the one from features/eye_guardian
+  final backgroundServiceManager = BackgroundServiceManager();
+  await backgroundServiceManager.initializeService();
+
+  // Initialize OneSignal
+  OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
+  OneSignal.initialize(dotenv.env['ONESIGNAL_APP_ID']!);
+  OneSignal.Notifications.requestPermission(true);
 
   runApp(const ArgosApp());
 }
@@ -36,19 +61,47 @@ class ArgosApp extends StatelessWidget {
     // Verificamos si hay una sesión activa en Supabase
     final session = Supabase.instance.client.auth.currentSession;
 
-    return MaterialApp(
-      title: 'ARGOS',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF050511),
-        primaryColor: const Color(0xFFE53935),
-        useMaterial3: true,
-        fontFamily: 'Roboto',
+    return OverlaySupport.global(
+      // Wrap with OverlaySupport for toasts
+      child: MaterialApp(
+        title: 'ARGOS',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          brightness: Brightness.dark,
+          scaffoldBackgroundColor: const Color(0xFF050511),
+          primaryColor: const Color(0xFFE53935),
+          useMaterial3: true,
+          fontFamily: 'Roboto',
+        ),
+        // LÓGICA DE ENTRADA: Si hay sesión va al Navigator, si no al Login
+        home: InitialCheckWrapper(
+          child: session != null ? const MainNavigator() : const LoginScreen(),
+        ),
       ),
-      // LÓGICA DE ENTRADA: Si hay sesión va al Navigator, si no al Login
-      home: session != null ? const MainNavigator() : const LoginScreen(),
     );
+  }
+}
+
+class InitialCheckWrapper extends StatefulWidget {
+  final Widget child;
+  const InitialCheckWrapper({super.key, required this.child});
+
+  @override
+  State<InitialCheckWrapper> createState() => _InitialCheckWrapperState();
+}
+
+class _InitialCheckWrapperState extends State<InitialCheckWrapper> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      VersionService().checkForUpdates(context);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
   }
 }
 
@@ -103,40 +156,75 @@ class _MainNavigatorState extends State<MainNavigator> {
   void _showProfileMenu() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF0F172A).withOpacity(0.95),
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF0F172A).withValues(alpha: 0.95),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text("Perfil de Usuario", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+        title: const Text(
+          "Perfil de Usuario",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const CircleAvatar(backgroundColor: Colors.blue, child: Icon(Icons.person, color: Colors.white)),
-              title: Text(_perfilData?['nombre_completo'] ?? "Cargando...", style: const TextStyle(color: Colors.white)),
-              subtitle: Text("Código: ${_perfilData?['codigo_familia'] ?? '...'}", style: const TextStyle(color: Colors.white54, fontSize: 12)),
+              leading: const CircleAvatar(
+                backgroundColor: Colors.blue,
+                child: Icon(Icons.person, color: Colors.white),
+              ),
+              title: Text(
+                _perfilData?['nombre_completo'] ?? "Cargando...",
+                style: const TextStyle(color: Colors.white),
+              ),
+              subtitle: Text(
+                "Código: ${_perfilData?['codigo_familia'] ?? '...'}",
+                style: const TextStyle(color: Colors.white54, fontSize: 12),
+              ),
             ),
             const Divider(color: Colors.white10),
             ListTile(
               onTap: () {
                 // Aquí podrías navegar a la pantalla de Círculo Familiar
-                Navigator.pop(context);
+                Navigator.pop(dialogContext);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (c) => const FamilyCircleScreen()),
+                );
               },
               leading: const Icon(Icons.group, color: Colors.greenAccent),
-              title: const Text("Círculo Familiar", style: TextStyle(color: Colors.white70, fontSize: 14)),
+              title: const Text(
+                "Círculo Familiar",
+                style: TextStyle(color: Colors.white70, fontSize: 14),
+              ),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cerrar", style: TextStyle(color: Colors.grey))),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text("Cerrar", style: TextStyle(color: Colors.grey)),
+          ),
           ElevatedButton.icon(
             onPressed: () async {
               await _auth.cerrarSesion();
-              if (mounted) Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (c) => const LoginScreen()), (route) => false);
+              if (mounted) {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (c) => const LoginScreen()),
+                  (route) => false,
+                );
+              }
             },
             icon: const Icon(Icons.logout, size: 18),
             label: const Text("Cerrar Sesión"),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade900, foregroundColor: Colors.white),
-          )
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade900,
+              foregroundColor: Colors.white,
+            ),
+          ),
         ],
       ),
     );
@@ -150,23 +238,34 @@ class _MainNavigatorState extends State<MainNavigator> {
       backgroundColor: const Color(0xFF050511),
       extendBodyBehindAppBar: true,
       extendBody: true,
-      appBar: isGuardianScreen ? AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 20.0, top: 10.0),
-            child: GestureDetector(
-              onTap: _showProfileMenu,
-              child: Container(
-                width: 40, height: 40,
-                decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withOpacity(0.05), border: Border.all(color: Colors.white12)),
-                child: const Icon(Icons.person_outline, color: Colors.white, size: 20),
-              ),
-            ),
-          )
-        ],
-      ) : null,
+      appBar: isGuardianScreen
+          ? AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 20.0, top: 10.0),
+                  child: GestureDetector(
+                    onTap: _showProfileMenu,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.1),
+                        border: Border.all(color: Colors.white12),
+                      ),
+                      child: const Icon(
+                        Icons.person_outline,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          : null,
 
       body: Stack(
         children: [
@@ -174,9 +273,34 @@ class _MainNavigatorState extends State<MainNavigator> {
             RepaintBoundary(
               child: Stack(
                 children: [
-                  Positioned(top: -100, left: -100, child: Container(width: 350, height: 350, decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFFE53935).withOpacity(0.25)))),
-                  Positioned(bottom: -100, right: -100, child: Container(width: 350, height: 350, decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFF2962FF).withOpacity(0.15)))),
-                  BackdropFilter(filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50), child: Container(color: Colors.transparent)),
+                  Positioned(
+                    top: -100,
+                    left: -100,
+                    child: Container(
+                      width: 350,
+                      height: 350,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFFE53935).withValues(alpha: 0.25),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: -100,
+                    right: -100,
+                    child: Container(
+                      width: 350,
+                      height: 350,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFF2962FF).withValues(alpha: 0.15),
+                      ),
+                    ),
+                  ),
+                  BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
+                    child: Container(color: Colors.transparent),
+                  ),
                 ],
               ),
             ),
@@ -196,13 +320,25 @@ class _MainNavigatorState extends State<MainNavigator> {
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.fromLTRB(25, 0, 25, 30),
         child: GlassBox(
-          borderRadius: 40, blur: 15, opacity: 0.1,
+          borderRadius: 40,
+          blur: 15,
+          opacity: 0.1,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildNavItem(0, Icons.remove_red_eye_outlined, Icons.remove_red_eye, "Guardián"),
-              _buildNavItem(1, Icons.shield_outlined, Icons.shield, "Santuarios"),
+              _buildNavItem(
+                0,
+                Icons.remove_red_eye_outlined,
+                Icons.remove_red_eye,
+                "Guardián",
+              ),
+              _buildNavItem(
+                1,
+                Icons.shield_outlined,
+                Icons.shield,
+                "Santuarios",
+              ),
               _buildNavItem(2, Icons.map_outlined, Icons.map, "Rutas"),
             ],
           ),
@@ -211,20 +347,41 @@ class _MainNavigatorState extends State<MainNavigator> {
     );
   }
 
-  Widget _buildNavItem(int index, IconData iconOff, IconData iconOn, String label) {
+  Widget _buildNavItem(
+    int index,
+    IconData iconOff,
+    IconData iconOn,
+    String label,
+  ) {
     bool isSelected = _selectedIndex == index;
     return GestureDetector(
       onTap: () => _onItemTapped(index),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: isSelected ? BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(20)) : null,
+        decoration: isSelected
+            ? BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20),
+              )
+            : null,
         child: Row(
           children: [
-            Icon(isSelected ? iconOn : iconOff, color: isSelected ? const Color(0xFFFF5252) : Colors.white60, size: 24),
+            Icon(
+              isSelected ? iconOn : iconOff,
+              color: isSelected ? const Color(0xFFFF5252) : Colors.white60,
+              size: 24,
+            ),
             if (isSelected) ...[
               const SizedBox(width: 8),
-              Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-            ]
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ],
           ],
         ),
       ),

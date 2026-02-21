@@ -19,7 +19,8 @@ class EyeGuardianScreen extends StatefulWidget {
 
 enum GuardianState { monitoring, sending, success }
 
-class _EyeGuardianScreenState extends State<EyeGuardianScreen> with TickerProviderStateMixin {
+class _EyeGuardianScreenState extends State<EyeGuardianScreen>
+    with TickerProviderStateMixin {
   StreamSubscription? _accelerometerSubscription;
   final ApiService _apiService = ApiService();
 
@@ -39,14 +40,24 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen> with TickerProvid
   @override
   void initState() {
     super.initState();
-    _pulseController = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat(reverse: true);
-    _rotateController = AnimationController(vsync: this, duration: const Duration(seconds: 10))..repeat();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+    _rotateController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 10),
+    )..repeat();
     _startManualShakeDetection();
   }
 
   void _startManualShakeDetection() {
-    _accelerometerSubscription = userAccelerometerEventStream().listen((UserAccelerometerEvent event) {
-      double acceleration = sqrt(pow(event.x, 2) + pow(event.y, 2) + pow(event.z, 2));
+    _accelerometerSubscription = userAccelerometerEventStream().listen((
+      UserAccelerometerEvent event,
+    ) {
+      double acceleration = sqrt(
+        pow(event.x, 2) + pow(event.y, 2) + pow(event.z, 2),
+      );
       if (acceleration > _shakeThreshold) _handleShakeDetected();
     });
   }
@@ -69,9 +80,15 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen> with TickerProvid
 
     try {
       Position position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, timeLimit: Duration(seconds: 5)),
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 5),
+        ),
       );
-      await _apiService.enviarAlertaEmergencia(position.latitude, position.longitude);
+      await _apiService.enviarAlertaEmergencia(
+        position.latitude,
+        position.longitude,
+      );
 
       if (mounted) {
         setState(() {
@@ -116,7 +133,6 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen> with TickerProvid
         centerIcon = Icons.check;
         statusSubtext = "ALERTA RECIBIDA";
         break;
-      case GuardianState.monitoring:
       default:
         mainColor = Colors.blueAccent;
         glowColor = Colors.blue;
@@ -133,17 +149,23 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen> with TickerProvid
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: 10), // Espacio pequeño, el padding lo maneja el Main
-
+            const SizedBox(
+              height: 10,
+            ), // Espacio pequeño, el padding lo maneja el Main
             // TÍTULO ARGOS
             Text(
               "ARGOS SYSTEM",
               style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 5.0,
-                  shadows: [Shadow(color: glowColor.withOpacity(0.5), blurRadius: 20)]
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 5.0,
+                shadows: [
+                  Shadow(
+                    color: glowColor.withValues(alpha: 0.5),
+                    blurRadius: 20,
+                  ),
+                ],
               ),
             ),
 
@@ -154,11 +176,21 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen> with TickerProvid
               duration: const Duration(milliseconds: 500),
               opacity: _sentAlertsCount > 0 ? 1.0 : 0.0,
               child: GlassBox(
-                borderRadius: 20, opacity: 0.1, blur: 5,
-                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
+                borderRadius: 20,
+                opacity: 0.1,
+                blur: 5,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 15,
+                  vertical: 6,
+                ),
                 child: Text(
                   "$_sentAlertsCount ALERTAS ENVIADAS",
-                  style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 10, letterSpacing: 1.5),
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 10,
+                    letterSpacing: 1.5,
+                  ),
                 ),
               ),
             ),
@@ -170,7 +202,8 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen> with TickerProvid
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     SizedBox(
-                      width: 300, height: 300,
+                      width: 300,
+                      height: 300,
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
@@ -178,38 +211,74 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen> with TickerProvid
                           RotationTransition(
                             turns: _rotateController,
                             child: Container(
-                              width: 280, height: 280,
-                              decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: mainColor.withOpacity(0.3), width: 1)),
-                              child: Align(alignment: Alignment.topCenter, child: Container(width: 4, height: 10, color: mainColor.withOpacity(0.8))),
+                              width: 280,
+                              height: 280,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: mainColor.withValues(alpha: 0.3),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Align(
+                                alignment: Alignment.topCenter,
+                                child: Container(
+                                  width: 4,
+                                  height: 10,
+                                  color: mainColor.withValues(alpha: 0.8),
+                                ),
+                              ),
                             ),
                           ),
                           RotationTransition(
                             turns: ReverseAnimation(_rotateController),
                             child: Container(
-                              width: 220, height: 220,
-                              decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: mainColor.withOpacity(0.4), width: 2)),
+                              width: 220,
+                              height: 220,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: mainColor.withValues(alpha: 0.4),
+                                  width: 2,
+                                ),
+                              ),
                             ),
                           ),
                           // Núcleo
                           AnimatedContainer(
                             duration: const Duration(milliseconds: 400),
-                            width: _currentState == GuardianState.sending ? 160 : 140,
-                            height: _currentState == GuardianState.sending ? 160 : 140,
+                            width: _currentState == GuardianState.sending
+                                ? 160
+                                : 140,
+                            height: _currentState == GuardianState.sending
+                                ? 160
+                                : 140,
                             decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: mainColor.withOpacity(0.1),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: glowColor.withOpacity(0.5),
-                                    blurRadius: _currentState == GuardianState.sending ? 70 : 40,
-                                    spreadRadius: 5,
-                                  )
-                                ],
-                                border: Border.all(color: mainColor.withOpacity(0.7), width: 2)
+                              shape: BoxShape.circle,
+                              color: mainColor.withValues(alpha: 0.1),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: glowColor.withValues(alpha: 0.5),
+                                  blurRadius:
+                                      _currentState == GuardianState.sending
+                                      ? 70
+                                      : 40,
+                                  spreadRadius: 5,
+                                ),
+                              ],
+                              border: Border.all(
+                                color: mainColor.withValues(alpha: 0.7),
+                                width: 2,
+                              ),
                             ),
                             child: AnimatedSwitcher(
                               duration: const Duration(milliseconds: 300),
-                              child: Icon(centerIcon, key: ValueKey(_currentState), size: 60, color: Colors.white),
+                              child: Icon(
+                                centerIcon,
+                                key: ValueKey(_currentState),
+                                size: 60,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ],
@@ -222,7 +291,11 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen> with TickerProvid
                       child: Text(
                         statusSubtext,
                         key: ValueKey(statusSubtext),
-                        style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 12, letterSpacing: 2.5),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.6),
+                          fontSize: 12,
+                          letterSpacing: 2.5,
+                        ),
                       ),
                     ),
                   ],
@@ -235,20 +308,37 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen> with TickerProvid
               padding: const EdgeInsets.only(bottom: 50.0),
               child: GestureDetector(
                 onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const EmergencyCountdownScreen()));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const EmergencyCountdownScreen(),
+                    ),
+                  );
                 },
                 child: GlassBox(
-                  borderRadius: 30, opacity: 0.1, blur: 10,
-                  border: Border.all(color: Colors.white.withOpacity(0.2)),
+                  borderRadius: 30,
+                  opacity: 0.1,
+                  blur: 10,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.2),
+                  ),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 18),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 60,
+                      vertical: 18,
+                    ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.05),
+                      color: Colors.white.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: const Text(
                       "ACTIVACIÓN MANUAL",
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14, letterSpacing: 2.0),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        letterSpacing: 2.0,
+                      ),
                     ),
                   ),
                 ),
