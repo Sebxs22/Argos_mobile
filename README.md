@@ -1,7 +1,7 @@
 # 🛡️ ARGOS - Inteligencia Proactiva en Seguridad Personal
 
 [![Estado de Compilación](https://github.com/Sebxs22/Argos_mobile/actions/workflows/release.yml/badge.svg)](https://github.com/Sebxs22/Argos_mobile/actions/workflows/release.yml)
-[![Versión](https://img.shields.io/badge/Versi%C3%B3n-1.0.5-E53935.svg)](https://github.com/Sebxs22/Argos_mobile/releases/latest)
+[![Versión](https://img.shields.io/badge/Versi%C3%B3n-1.0.0-E53935.svg)](https://github.com/Sebxs22/Argos_mobile/releases/latest)
 [![Propietario](https://img.shields.io/badge/Propiedad-Privada-red.svg)](#-aviso-legal-y-propiedad-intelectual)
 
 **ARGOS** es un ecosistema de seguridad móvil de alto rendimiento que redefine la protección personal mediante detección inteligente de riesgos y redes de respuesta inmediata. Diseñado con una estética **Glassmorphism Premium**, ofrece una experiencia de usuario fluida y sofisticada.
@@ -52,7 +52,7 @@ Infraestructura de mensajería crítica que garantiza la entrega de alertas en m
 > 
 > Este repositorio es de visibilidad pública exclusivamente para fines de demostración de portafolio y revisión académica. **No posee ninguna licencia de uso libre.**
 > 
-> - **Todos los Derechos Reservados**: Luis Sebastián (Sebxs22) retiene la propiedad total y exclusiva de este software.
+> - **Todos los Derechos Reservados**: Luis Shagñay (Sebxs22) retiene la propiedad total y exclusiva de este software.
 > - **Prohibida la Reproducción**: Queda estrictamente prohibido el uso, copia, modificación, fusión, publicación o distribución de este código sin un permiso previo y por escrito del autor.
 > - **Uso Educativo Únicamente**: La visualización de este código no otorga ningún derecho de explotación comercial ni personal.
 >
@@ -78,4 +78,4 @@ flutter run --release
 ```
 
 ---
-*Desarrollado con precisión técnica por Luis Sebastián. 🛡️*
+*Desarrollado con precisión técnica por Luis Shagñay. 🛡️*
