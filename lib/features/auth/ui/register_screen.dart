@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/network/auth_service.dart';
 import '../../../core/ui/glass_box.dart';
 import '../../../../main.dart';
-import 'package:csc_picker/csc_picker.dart';
+import 'package:csc_picker_plus/csc_picker_plus.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -265,7 +265,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             dropdownDialogRadius: 20.0,
                             searchBarRadius: 10.0,
                             onCountryChanged: (value) {
-                              setState(() => _paisSeleccionado = value ?? "");
+                              setState(() => _paisSeleccionado = value);
                             },
                             onStateChanged: (value) {
                               // Podríamos guardar el estado/provincia si fuera necesario
