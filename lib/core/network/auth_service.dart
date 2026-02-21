@@ -15,13 +15,24 @@ class AuthService {
     required String password,
     required String nombre,
     required String telefono,
+    required String cedula,
+    required String pais,
+    required String ciudad,
+    required bool aceptaTerminos,
   }) async {
     try {
       debugPrint("🚀 Intentando registrar usuario: $email");
       final AuthResponse res = await _supabase.auth.signUp(
         email: email,
         password: password,
-        data: {'nombre': nombre, 'telefono': telefono},
+        data: {
+          'nombre': nombre,
+          'telefono': telefono,
+          'cedula': cedula,
+          'pais': pais,
+          'ciudad': ciudad,
+          'acepta_terminos': aceptaTerminos,
+        },
       );
       if (res.user != null) {
         debugPrint("✅ Registro exitoso en Supabase Auth");
@@ -136,10 +147,8 @@ class AuthService {
       if (ids.isEmpty) return [];
 
       // 2. Obtener perfiles de esos IDs
-      final profiles = await _supabase
-          .from('perfiles')
-          .select()
-          .filter('id', 'in', ids);
+      final profiles =
+          await _supabase.from('perfiles').select().filter('id', 'in', ids);
 
       return List<Map<String, dynamic>>.from(profiles);
     } catch (e) {
@@ -166,10 +175,8 @@ class AuthService {
       if (ids.isEmpty) return [];
 
       // 2. Obtener perfiles de esos IDs
-      final profiles = await _supabase
-          .from('perfiles')
-          .select()
-          .filter('id', 'in', ids);
+      final profiles =
+          await _supabase.from('perfiles').select().filter('id', 'in', ids);
 
       return List<Map<String, dynamic>>.from(profiles);
     } catch (e) {
@@ -190,8 +197,7 @@ class AuthService {
       if (status != null && status.isNotEmpty) {
         await _supabase
             .from('perfiles')
-            .update({'onesignal_id': status})
-            .eq('id', yo.id);
+            .update({'onesignal_id': status}).eq('id', yo.id);
         debugPrint("✅ Token de OneSignal registrado: $status");
       }
     } catch (e) {

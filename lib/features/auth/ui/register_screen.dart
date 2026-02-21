@@ -17,16 +17,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passController = TextEditingController();
   final _telController = TextEditingController();
+  final _cedulaController = TextEditingController();
+  final _paisController = TextEditingController(text: "Ecuador");
+  final _ciudadController = TextEditingController();
+
   bool _isLoading = false;
+  bool _aceptaTerminos = false;
 
   void _handleRegister() async {
     // Validación básica
     if (_nombreController.text.isEmpty ||
         _emailController.text.isEmpty ||
-        _passController.text.isEmpty) {
+        _passController.text.isEmpty ||
+        _cedulaController.text.isEmpty ||
+        _ciudadController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Por favor, llena los campos principales"),
+          content: Text("Por favor, llena todos los campos obligatorios"),
+        ),
+      );
+      return;
+    }
+
+    if (!_aceptaTerminos) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Debes aceptar los términos y condiciones"),
+          backgroundColor: Colors.orange,
         ),
       );
       return;
@@ -39,6 +56,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       password: _passController.text.trim(),
       nombre: _nombreController.text.trim(),
       telefono: _telController.text.trim(),
+      cedula: _cedulaController.text.trim(),
+      pais: _paisController.text.trim(),
+      ciudad: _ciudadController.text.trim(),
+      aceptaTerminos: _aceptaTerminos,
     );
 
     if (mounted) {
@@ -70,7 +91,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       backgroundColor: const Color(0xFF050511),
       body: Stack(
         children: [
-          // --- CAPA 1: FONDO AURORA (Sinergia con MainNavigator) ---
+          // --- CAPA 1: FONDO AURORA ---
           Positioned(
             top: -50,
             right: -50,
@@ -101,117 +122,173 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
 
           // --- CAPA 2: CONTENIDO ---
-          Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 50),
-              child: Column(
-                children: [
-                  // Icono superior con estilo
-                  Container(
-                    padding: const EdgeInsets.all(15),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withValues(alpha: 0.03),
-                      border: Border.all(color: Colors.white10),
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+                child: Column(
+                  children: [
+                    // Icono superior
+                    Container(
+                      padding: const EdgeInsets.all(15),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withValues(alpha: 0.03),
+                        border: Border.all(color: Colors.white10),
+                      ),
+                      child: const Icon(
+                        Icons.shield_outlined,
+                        color: Color(0xFFE53935),
+                        size: 40,
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.shield_outlined,
-                      color: Color(0xFFE53935),
-                      size: 45,
+                    const SizedBox(height: 15),
+                    const Text(
+                      "REGISTRO",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 6,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    "REGISTRO",
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 6,
-                      color: Colors.white,
+                    const Text(
+                      "IDENTIDAD DE SEGURIDAD",
+                      style: TextStyle(
+                        fontSize: 8,
+                        letterSpacing: 1.5,
+                        color: Colors.white38,
+                      ),
                     ),
-                  ),
-                  const Text(
-                    "CREA TU IDENTIDAD DE SEGURIDAD",
-                    style: TextStyle(
-                      fontSize: 9,
-                      letterSpacing: 1.5,
-                      color: Colors.white38,
-                    ),
-                  ),
-                  const SizedBox(height: 40),
+                    const SizedBox(height: 30),
 
-                  // Caja de Registro
-                  GlassBox(
-                    borderRadius: 30,
-                    opacity: 0.05,
-                    blur: 20,
-                    padding: const EdgeInsets.all(25),
-                    child: Column(
-                      children: [
-                        _buildField(
-                          _nombreController,
-                          "Nombre Completo",
-                          Icons.person_outline,
-                        ),
-                        const SizedBox(height: 15),
-                        _buildField(
-                          _emailController,
-                          "Correo Electrónico",
-                          Icons.alternate_email,
-                        ),
-                        const SizedBox(height: 15),
-                        _buildField(
-                          _telController,
-                          "Teléfono de Contacto",
-                          Icons.phone_android_outlined,
-                        ),
-                        const SizedBox(height: 15),
-                        _buildField(
-                          _passController,
-                          "Contraseña",
-                          Icons.lock_outline,
-                          obscure: true,
-                        ),
-                        const SizedBox(height: 30),
-
-                        _isLoading
-                            ? const CircularProgressIndicator(
-                                color: Color(0xFFE53935),
-                              )
-                            : ElevatedButton(
-                                onPressed: _handleRegister,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFE53935),
-                                  foregroundColor: Colors.white,
-                                  minimumSize: const Size(double.infinity, 55),
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(15),
-                                  ),
-                                ),
-                                child: const Text(
-                                  "CREAR CUENTA",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 1.2,
-                                  ),
+                    // Caja de Registro
+                    GlassBox(
+                      borderRadius: 30,
+                      opacity: 0.05,
+                      blur: 20,
+                      padding: const EdgeInsets.all(25),
+                      child: Column(
+                        children: [
+                          _buildField(
+                            _nombreController,
+                            "Nombre Completo",
+                            Icons.person_outline,
+                          ),
+                          const SizedBox(height: 15),
+                          _buildField(
+                            _emailController,
+                            "Correo Electrónico",
+                            Icons.alternate_email,
+                          ),
+                          const SizedBox(height: 15),
+                          _buildField(
+                            _telController,
+                            "Teléfono / WhatsApp",
+                            Icons.phone_android_outlined,
+                          ),
+                          const SizedBox(height: 15),
+                          _buildField(
+                            _cedulaController,
+                            "Cédula / DNI / ID",
+                            Icons.badge_outlined,
+                          ),
+                          const SizedBox(height: 15),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildField(
+                                  _paisController,
+                                  "País",
+                                  Icons.public,
                                 ),
                               ),
-                      ],
-                    ),
-                  ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: _buildField(
+                                  _ciudadController,
+                                  "Ciudad",
+                                  Icons.location_city,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 15),
+                          _buildField(
+                            _passController,
+                            "Contraseña Segura",
+                            Icons.lock_outline,
+                            obscure: true,
+                          ),
+                          const SizedBox(height: 20),
 
-                  const SizedBox(height: 25),
+                          // T&C Checkbox
+                          Theme(
+                            data: ThemeData(
+                              unselectedWidgetColor: Colors.white24,
+                            ),
+                            child: CheckboxListTile(
+                              value: _aceptaTerminos,
+                              onChanged: (val) => setState(
+                                  () => _aceptaTerminos = val ?? false),
+                              title: const Text(
+                                "Acepto los términos, condiciones y políticas de privacidad.",
+                                style: TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 11,
+                                ),
+                              ),
+                              controlAffinity: ListTileControlAffinity.leading,
+                              contentPadding: EdgeInsets.zero,
+                              activeColor: const Color(0xFFE53935),
+                              checkColor: Colors.white,
+                            ),
+                          ),
 
-                  // Botón Volver
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text(
-                      "¿Ya tienes cuenta? Inicia sesión",
-                      style: TextStyle(color: Colors.white54, fontSize: 13),
+                          const SizedBox(height: 25),
+
+                          _isLoading
+                              ? const CircularProgressIndicator(
+                                  color: Color(0xFFE53935),
+                                )
+                              : ElevatedButton(
+                                  onPressed: _handleRegister,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFFE53935),
+                                    foregroundColor: Colors.white,
+                                    minimumSize:
+                                        const Size(double.infinity, 55),
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(15),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    "UNIRSE A LA RED",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 1.2,
+                                    ),
+                                  ),
+                                ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+
+                    const SizedBox(height: 20),
+
+                    // Botón Volver
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text(
+                        "¿Ya tienes cuenta? Inicia sesión",
+                        style: TextStyle(color: Colors.white54, fontSize: 13),
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                  ],
+                ),
               ),
             ),
           ),
