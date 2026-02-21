@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:ota_update/ota_update.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'glass_box.dart';
 
 class UpdateProgressDialog extends StatefulWidget {
@@ -61,10 +62,13 @@ class _UpdateProgressDialogState extends State<UpdateProgressDialog> {
     });
 
     try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      final packageName = packageInfo.packageName;
+
       _otaSubscription = OtaUpdate()
           .execute(
         widget.downloadUrl,
-        androidProviderAuthority: 'com.argos.mobile_app.ota_update_provider',
+        androidProviderAuthority: '$packageName.ota_update_provider',
         destinationFilename: 'argos_update.apk',
       )
           .listen(
