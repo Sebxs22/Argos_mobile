@@ -234,9 +234,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             IntlPhoneField(
                               initialCountryCode: 'EC',
                               dropdownIconPosition: IconPosition.trailing,
-                              dropdownTextStyle:
-                                  const TextStyle(color: Colors.white),
-                              style: const TextStyle(color: Colors.white),
+                              dropdownTextStyle: const TextStyle(
+                                  color: Colors.white, fontSize: 13),
+                              style: const TextStyle(
+                                  color: Colors.white, fontSize: 13),
                               cursorColor: const Color(0xFFE53935),
                               decoration: InputDecoration(
                                 hintText: 'Número Celular',
@@ -245,8 +246,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 filled: true,
                                 fillColor: Colors.white.withValues(alpha: 0.05),
                                 border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                  borderSide: BorderSide.none,
+                                  borderRadius: BorderRadius.circular(18),
+                                  borderSide:
+                                      const BorderSide(color: Colors.white10),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(18),
+                                  borderSide:
+                                      const BorderSide(color: Colors.white10),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(18),
+                                  borderSide: const BorderSide(
+                                      color: Color(0xFFE53935), width: 1.5),
                                 ),
                                 contentPadding:
                                     const EdgeInsets.symmetric(vertical: 18),
@@ -264,15 +276,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 searchFieldCursorColor: const Color(0xFFE53935),
                                 searchFieldInputDecoration: InputDecoration(
                                   hintText: 'Buscar país...',
-                                  hintStyle:
-                                      const TextStyle(color: Colors.white24),
+                                  hintStyle: const TextStyle(
+                                      color: Colors.white24, fontSize: 13),
                                   prefixIcon: const Icon(Icons.search,
-                                      color: Colors.white38),
+                                      color: Colors.white38, size: 20),
                                   filled: true,
                                   fillColor:
                                       Colors.white.withValues(alpha: 0.05),
                                   border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(15),
+                                    borderRadius: BorderRadius.circular(12),
                                     borderSide: BorderSide.none,
                                   ),
                                 ),
@@ -304,13 +316,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   CountryStateLanguage.englishOrNative,
                               dropdownDecoration: BoxDecoration(
                                   borderRadius: const BorderRadius.all(
-                                      Radius.circular(15)),
+                                      Radius.circular(18)),
                                   color: Colors.white.withValues(alpha: 0.05),
                                   border: Border.all(
                                       color: Colors.white10, width: 1)),
                               disabledDropdownDecoration: BoxDecoration(
                                   borderRadius: const BorderRadius.all(
-                                      Radius.circular(15)),
+                                      Radius.circular(18)),
                                   color: Colors.white.withValues(alpha: 0.02),
                                   border: Border.all(
                                       color: Colors.white10, width: 1)),
@@ -434,23 +446,44 @@ class _RegisterScreenState extends State<RegisterScreen> {
     IconData icon, {
     bool obscure = false,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: TextField(
-        controller: controller,
-        obscureText: obscure,
-        style: const TextStyle(color: Colors.white, fontSize: 15),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: const TextStyle(color: Colors.white24, fontSize: 14),
-          prefixIcon: Icon(icon, color: Colors.white54, size: 20),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 18),
-        ),
-      ),
+    return Focus(
+      child: Builder(builder: (context) {
+        final bool isFocused = Focus.of(context).hasFocus;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          decoration: BoxDecoration(
+            color: isFocused
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.white.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: isFocused ? const Color(0xFFE53935) : Colors.white10,
+              width: isFocused ? 1.5 : 1,
+            ),
+            boxShadow: isFocused
+                ? [
+                    BoxShadow(
+                        color: const Color(0xFFE53935).withValues(alpha: 0.1),
+                        blurRadius: 10)
+                  ]
+                : [],
+          ),
+          child: TextField(
+            controller: controller,
+            obscureText: obscure,
+            style: const TextStyle(color: Colors.white, fontSize: 14),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: const TextStyle(color: Colors.white24, fontSize: 13),
+              prefixIcon: Icon(icon,
+                  color: isFocused ? const Color(0xFFE53935) : Colors.white54,
+                  size: 20),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(vertical: 18),
+            ),
+          ),
+        );
+      }),
     );
   }
 }
