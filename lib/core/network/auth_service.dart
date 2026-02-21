@@ -206,4 +206,20 @@ class AuthService {
       debugPrint("❌ Error al registrar OneSignal ID: $e");
     }
   }
+
+  // --- 6. ACTUALIZAR PERFIL ---
+  Future<void> actualizarPerfil({
+    required String nombre,
+    required String telefono,
+    required String cedula,
+  }) async {
+    final yo = usuarioActual;
+    if (yo == null) return;
+
+    await _supabase.from('perfiles').update({
+      'nombre_completo': nombre,
+      'telefono': telefono,
+      'cedula': cedula,
+    }).eq('id', yo.id);
+  }
 }

@@ -17,6 +17,8 @@ import 'features/eye_guardian/logic/background_service.dart'; // Import REAL bac
 import 'features/family_circle/ui/family_circle_screen.dart'; // Import Family Circle Screen
 import 'core/network/version_service.dart'; // Import VersionService
 import 'core/ui/argos_background.dart'; // Import ArgosBackground
+import 'core/theme/theme_service.dart'; // Import ThemeService
+import 'features/profile/ui/settings_screen.dart'; // Import SettingsScreen
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,6 +52,9 @@ Future<void> main() async {
   OneSignal.initialize(dotenv.env['ONESIGNAL_APP_ID']!);
   OneSignal.Notifications.requestPermission(true);
 
+  // Initialize Theme Service
+  await ThemeService().init();
+
   runApp(const ArgosApp());
 }
 
@@ -62,31 +67,35 @@ class ArgosApp extends StatelessWidget {
     final session = Supabase.instance.client.auth.currentSession;
 
     return OverlaySupport.global(
-      // Wrap with OverlaySupport for toasts
-      child: MaterialApp(
-        title: 'ARGOS',
-        debugShowCheckedModeBanner: false,
-        themeMode: ThemeMode.system, // Adaptar automáticamente
-        // MODO CLARO
-        theme: ThemeData(
-          brightness: Brightness.light,
-          scaffoldBackgroundColor: const Color(0xFFF8FAFC),
-          primaryColor: const Color(0xFFE53935),
-          useMaterial3: true,
-          fontFamily: 'Roboto',
-        ),
-        // MODO OSCURO (Existente)
-        darkTheme: ThemeData(
-          brightness: Brightness.dark,
-          scaffoldBackgroundColor: const Color(0xFF050511),
-          primaryColor: const Color(0xFFE53935),
-          useMaterial3: true,
-          fontFamily: 'Roboto',
-        ),
-        // LÓGICA DE ENTRADA: Si hay sesión va al Navigator, si no al Login
-        home: InitialCheckWrapper(
-          child: session != null ? const MainNavigator() : const LoginScreen(),
-        ),
+      child: ValueListenableBuilder<ThemeMode>(
+        valueListenable: ThemeService().themeNotifier,
+        builder: (context, currentMode, _) {
+          return MaterialApp(
+            title: 'ARGOS',
+            debugShowCheckedModeBanner: false,
+            themeMode: currentMode,
+            // MODO CLARO
+            theme: ThemeData(
+              brightness: Brightness.light,
+              scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+              primaryColor: const Color(0xFFE53935),
+              useMaterial3: true,
+              fontFamily: 'Roboto',
+            ),
+            // MODO OSCURO
+            darkTheme: ThemeData(
+              brightness: Brightness.dark,
+              scaffoldBackgroundColor: const Color(0xFF050511),
+              primaryColor: const Color(0xFFE53935),
+              useMaterial3: true,
+              fontFamily: 'Roboto',
+            ),
+            home: InitialCheckWrapper(
+              child:
+                  session != null ? const MainNavigator() : const LoginScreen(),
+            ),
+          );
+        },
       ),
     );
   }
@@ -203,7 +212,21 @@ class _MainNavigatorState extends State<MainNavigator> {
             Divider(color: isDark ? Colors.white10 : Colors.black12),
             ListTile(
               onTap: () {
-                // Aquí podrías navegar a la pantalla de Círculo Familiar
+                Navigator.pop(dialogContext);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (c) => const SettingsScreen()),
+                );
+              },
+              leading: const Icon(Icons.settings, color: Colors.blueAccent),
+              title: Text(
+                "Configuración y Perfil",
+                style: TextStyle(
+                    color: textColor.withValues(alpha: 0.7), fontSize: 14),
+              ),
+            ),
+            ListTile(
+              onTap: () {
                 Navigator.pop(dialogContext);
                 Navigator.push(
                   context,

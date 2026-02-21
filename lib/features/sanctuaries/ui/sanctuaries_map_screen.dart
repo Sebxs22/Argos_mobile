@@ -634,9 +634,12 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
         color = Colors.amber;
         break;
     }
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF262626).withValues(alpha: 0.9),
+        color: isDark
+            ? const Color(0xFF262626).withValues(alpha: 0.9)
+            : Colors.white.withValues(alpha: 0.9),
         shape: BoxShape.circle,
         border: Border.all(color: color, width: 1.5),
       ),
