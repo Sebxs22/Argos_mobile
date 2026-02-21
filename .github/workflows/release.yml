@@ -30,7 +30,13 @@ jobs:
           channel: 'stable'
           
       - name: Get dependencies
-        run: flutter pub get
+        run: |
+          touch .env
+          echo "SUPABASE_URL=mock" >> .env
+          echo "SUPABASE_ANON_KEY=mock" >> .env
+          echo "ONESIGNAL_APP_ID=mock" >> .env
+          echo "ONESIGNAL_REST_API_KEY=mock" >> .env
+          flutter pub get
         
       - name: Build APK (Release)
         run: flutter build apk --release --no-tree-shake-icons
