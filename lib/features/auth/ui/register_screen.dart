@@ -121,7 +121,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               height: 400,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFE53935).withOpacity(0.15),
+                color: const Color(0xFFE53935).withValues(alpha: 0.15),
               ),
             ),
           ),
@@ -133,7 +133,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF2962FF).withOpacity(0.1),
+                color: const Color(0xFF2962FF).withValues(alpha: 0.1),
               ),
             ),
           ),
@@ -193,7 +193,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: Theme(
                         data: Theme.of(context).copyWith(
                           // Override para asegurar que los diálogos y buscadores se vean bien en negro
-                          dialogBackgroundColor: const Color(0xFF0F172A),
+                          dialogTheme: const DialogThemeData(
+                              backgroundColor: Color(0xFF0F172A)),
                           colorScheme: ColorScheme.fromSeed(
                             seedColor: const Color(0xFFE53935),
                             brightness: Brightness.dark,
@@ -207,7 +208,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           inputDecorationTheme: InputDecorationTheme(
                             hintStyle: const TextStyle(color: Colors.white24),
                             labelStyle: const TextStyle(color: Colors.white70),
-                            fillColor: Colors.white.withOpacity(0.05),
+                            fillColor: Colors.white.withValues(alpha: 0.05),
                             filled: true,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(15),
@@ -267,7 +268,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     prefixIcon: const Icon(Icons.search,
                                         color: Colors.white38, size: 20),
                                     filled: true,
-                                    fillColor: Colors.white.withOpacity(0.05),
+                                    fillColor:
+                                        Colors.white.withValues(alpha: 0.05),
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                       borderSide: BorderSide.none,
@@ -464,8 +466,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       padding: padding,
       decoration: BoxDecoration(
         color: isFocused
-            ? Colors.white.withOpacity(0.08)
-            : Colors.white.withOpacity(0.05),
+            ? Colors.white.withValues(alpha: 0.08)
+            : Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: isFocused ? const Color(0xFFE53935) : Colors.white10,
@@ -474,7 +476,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         boxShadow: isFocused
             ? [
                 BoxShadow(
-                    color: const Color(0xFFE53935).withOpacity(0.1),
+                    color: const Color(0xFFE53935).withValues(alpha: 0.1),
                     blurRadius: 10)
               ]
             : [],
