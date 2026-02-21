@@ -112,21 +112,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       backgroundColor: const Color(0xFF050511),
       body: Stack(
         children: [
-          // --- CAPA 1: FONDO AURORA ---
+          // --- CAPA 1: FONDO AURORA (Exacto al LoginScreen) ---
           Positioned(
-            top: -50,
-            right: -50,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFF2962FF).withValues(alpha: 0.12),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -100,
+            top: -100,
             left: -100,
             child: Container(
               width: 400,
@@ -137,8 +125,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
             ),
           ),
+          Positioned(
+            bottom: -50,
+            right: -50,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFF2962FF).withValues(alpha: 0.1),
+              ),
+            ),
+          ),
           BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 70, sigmaY: 70),
+            filter: ImageFilter.blur(sigmaX: 60, sigmaY: 60),
             child: Container(color: Colors.transparent),
           ),
 
@@ -187,13 +187,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     // Caja de Registro (Liquid Glass)
                     GlassBox(
                       borderRadius: 30,
-                      opacity: 0.08,
-                      blur: 25,
+                      opacity: 0.05,
+                      blur: 20,
                       padding: const EdgeInsets.all(25),
                       child: Theme(
                         data: Theme.of(context).copyWith(
                           // Override para asegurar que los diálogos y buscadores se vean bien en negro
-                          dialogBackgroundColor: const Color(0xFF0F172A),
+                          dialogTheme: const DialogThemeData(
+                            backgroundColor: Color(0xFF0F172A),
+                          ),
                           colorScheme: ColorScheme.fromSeed(
                             seedColor: const Color(0xFFE53935),
                             brightness: Brightness.dark,
@@ -230,57 +232,49 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                             const SizedBox(height: 15),
 
-                            // --- SELECTOR DE TELÉFONO (Wrapped for premium rounding) ---
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.05),
-                                borderRadius: BorderRadius.circular(18),
-                                border:
-                                    Border.all(color: Colors.white10, width: 1),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(18),
-                                child: IntlPhoneField(
-                                  initialCountryCode: 'EC',
-                                  dropdownIconPosition: IconPosition.trailing,
-                                  dropdownTextStyle: const TextStyle(
-                                      color: Colors.white, fontSize: 13),
-                                  style: const TextStyle(
-                                      color: Colors.white, fontSize: 13),
-                                  cursorColor: const Color(0xFFE53935),
-                                  decoration: InputDecoration(
-                                    hintText: 'Número Celular',
+                            // --- SELECTOR DE TELÉFONO ---
+                            _buildFieldWrapper(
+                              child: IntlPhoneField(
+                                initialCountryCode: 'EC',
+                                dropdownIconPosition: IconPosition.trailing,
+                                dropdownTextStyle: const TextStyle(
+                                    color: Colors.white, fontSize: 13),
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 13),
+                                cursorColor: const Color(0xFFE53935),
+                                decoration: const InputDecoration(
+                                  hintText: 'Número Celular',
+                                  hintStyle: TextStyle(
+                                      color: Colors.white24, fontSize: 14),
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.symmetric(
+                                      vertical: 18, horizontal: 15),
+                                ),
+                                languageCode: "es",
+                                onChanged: (phone) {
+                                  _telefonoCompleto = phone.completeNumber;
+                                },
+                                pickerDialogStyle: PickerDialogStyle(
+                                  backgroundColor: const Color(0xFF0F172A),
+                                  countryNameStyle: const TextStyle(
+                                      color: Colors.white, fontSize: 14),
+                                  countryCodeStyle: const TextStyle(
+                                      color: Colors.white70, fontSize: 13),
+                                  searchFieldCursorColor:
+                                      const Color(0xFFE53935),
+                                  searchFieldInputDecoration: InputDecoration(
+                                    hintText: 'Buscar país...',
                                     hintStyle: const TextStyle(
-                                        color: Colors.white24, fontSize: 14),
-                                    border: InputBorder.none,
-                                    contentPadding: const EdgeInsets.symmetric(
-                                        vertical: 18, horizontal: 15),
-                                  ),
-                                  languageCode: "es",
-                                  onChanged: (phone) {
-                                    _telefonoCompleto = phone.completeNumber;
-                                  },
-                                  pickerDialogStyle: PickerDialogStyle(
-                                    backgroundColor: const Color(0xFF0F172A),
-                                    countryNameStyle: const TextStyle(
-                                        color: Colors.white, fontSize: 14),
-                                    countryCodeStyle: const TextStyle(
-                                        color: Colors.white70, fontSize: 13),
-                                    searchFieldCursorColor:
-                                        const Color(0xFFE53935),
-                                    searchFieldInputDecoration: InputDecoration(
-                                      hintText: 'Buscar país...',
-                                      hintStyle: const TextStyle(
-                                          color: Colors.white24, fontSize: 13),
-                                      prefixIcon: const Icon(Icons.search,
-                                          color: Colors.white38, size: 20),
-                                      filled: true,
-                                      fillColor:
-                                          Colors.white.withValues(alpha: 0.05),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        borderSide: BorderSide.none,
-                                      ),
+                                        color: Colors.white24, fontSize: 13),
+                                    prefixIcon: const Icon(Icons.search,
+                                        color: Colors.white38, size: 20),
+                                    filled: true,
+                                    fillColor:
+                                        Colors.white.withValues(alpha: 0.05),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide.none,
                                     ),
                                   ),
                                 ),
@@ -304,20 +298,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   letterSpacing: 1),
                             ),
                             const SizedBox(height: 10),
-                            // --- SELECTOR DE PAÍS/CIUDAD (Wrapped for premium rounding) ---
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 5),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.05),
-                                borderRadius: BorderRadius.circular(18),
-                                border:
-                                    Border.all(color: Colors.white10, width: 1),
-                              ),
+                            // --- SELECTOR DE UBICACIÓN (Vertical Layout) ---
+                            _buildFieldWrapper(
+                              padding: const EdgeInsets.all(12),
                               child: CSCPickerPlus(
                                 showStates: true,
                                 showCities: true,
                                 flagState: CountryFlag.ENABLE,
+                                layout: Layout.vertical, // Separar selectores
                                 countryStateLanguage:
                                     CountryStateLanguage.englishOrNative,
                                 dropdownDecoration: const BoxDecoration(
@@ -448,25 +436,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Focus(
       child: Builder(builder: (context) {
         final bool isFocused = Focus.of(context).hasFocus;
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          decoration: BoxDecoration(
-            color: isFocused
-                ? Colors.white.withValues(alpha: 0.08)
-                : Colors.white.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: isFocused ? const Color(0xFFE53935) : Colors.white10,
-              width: isFocused ? 1.5 : 1,
-            ),
-            boxShadow: isFocused
-                ? [
-                    BoxShadow(
-                        color: const Color(0xFFE53935).withValues(alpha: 0.1),
-                        blurRadius: 10)
-                  ]
-                : [],
-          ),
+        return _buildFieldWrapper(
+          isFocused: isFocused,
           child: TextField(
             controller: controller,
             obscureText: obscure,
@@ -483,6 +454,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         );
       }),
+    );
+  }
+
+  // Wrapper estandarizado con ClipRRect para evitar esquinas rectangulares
+  Widget _buildFieldWrapper({
+    required Widget child,
+    bool isFocused = false,
+    EdgeInsetsGeometry? padding,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      padding: padding,
+      decoration: BoxDecoration(
+        color: isFocused
+            ? Colors.white.withValues(alpha: 0.08)
+            : Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(15), // Mismo radio que Login
+        border: Border.all(
+          color: isFocused ? const Color(0xFFE53935) : Colors.white10,
+          width: isFocused ? 1.5 : 1,
+        ),
+        boxShadow: isFocused
+            ? [
+                BoxShadow(
+                    color: const Color(0xFFE53935).withValues(alpha: 0.1),
+                    blurRadius: 10)
+              ]
+            : [],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(15),
+        child: child,
+      ),
     );
   }
 }

@@ -1,0 +1,1 @@
+[info] 'dialogBackgroundColor' is deprecated and shouldn't be used. Use DialogThemeData.backgroundColor instead. This feature was deprecated after v3.27.0-0.1.pre (C:\Users\luiss\OneDrive\Documentos\Unach\Octavo\ARGOS_PROJECT\mobile_app\lib\features\auth\ui\register_screen.dart:196:27)
