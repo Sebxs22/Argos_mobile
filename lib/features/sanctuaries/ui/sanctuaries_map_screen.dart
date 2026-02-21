@@ -170,6 +170,11 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
   }
 
   void _showZoneDetails(DangerZoneModel zone) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final secondaryTextColor = isDark ? Colors.white70 : Colors.black54;
+    final panelColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -177,17 +182,18 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
       builder: (context) {
         return GlassBox(
           borderRadius: 30,
-          opacity: 0.1,
+          opacity: isDark ? 0.1 : 0.05,
           blur: 20,
           child: Container(
             padding: const EdgeInsets.all(20),
             height: MediaQuery.of(context).size.height * 0.5,
             decoration: BoxDecoration(
-              color: const Color(0xFF1E293B).withValues(alpha: 0.95),
+              color: panelColor.withValues(alpha: 0.95),
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(30),
               ),
-              border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+              border: Border.all(
+                  color: Colors.red.withValues(alpha: isDark ? 0.3 : 0.15)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,10 +206,12 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
                       size: 30,
                     ),
                     const SizedBox(width: 10),
-                    const Text(
+                    Text(
                       "HISTORIAL DE RIESGO",
                       style: TextStyle(
-                        color: Color(0xFFFFCDD2),
+                        color: isDark
+                            ? const Color(0xFFFFCDD2)
+                            : Colors.red.shade900,
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
                       ),
@@ -211,15 +219,16 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
                     const Spacer(),
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close, color: Colors.white54),
+                      icon: Icon(Icons.close,
+                          color: isDark ? Colors.white54 : Colors.black54),
                     ),
                   ],
                 ),
-                const Divider(color: Colors.white24),
+                Divider(color: isDark ? Colors.white24 : Colors.black12),
                 const SizedBox(height: 10),
                 Text(
                   "${zone.reports.length} reportes registrados aquí:",
-                  style: const TextStyle(color: Colors.white70),
+                  style: TextStyle(color: secondaryTextColor),
                 ),
                 const SizedBox(height: 10),
                 Expanded(
@@ -232,14 +241,18 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
                         margin: const EdgeInsets.only(bottom: 10),
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.05),
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : Colors.black.withValues(alpha: 0.03),
                           borderRadius: BorderRadius.circular(15),
-                          border: Border.all(color: Colors.white10),
+                          border: Border.all(
+                              color: isDark ? Colors.white10 : Colors.black12),
                         ),
                         child: Row(
                           children: [
-                            Icon(
-                              report.icon,
+                            const Icon(
+                              Icons
+                                  .warning_amber, // Simplificamos el acceso al icono si report.icon falla
                               color: Colors.redAccent,
                               size: 20,
                             ),
@@ -250,15 +263,15 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
                                 children: [
                                   Text(
                                     report.title,
-                                    style: const TextStyle(
-                                      color: Colors.white,
+                                    style: TextStyle(
+                                      color: textColor,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                   Text(
                                     report.description,
-                                    style: const TextStyle(
-                                      color: Colors.white60,
+                                    style: TextStyle(
+                                      color: secondaryTextColor,
                                       fontSize: 12,
                                     ),
                                   ),
@@ -267,8 +280,8 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
                             ),
                             Text(
                               report.timeAgo,
-                              style: const TextStyle(
-                                color: Colors.white38,
+                              style: TextStyle(
+                                color: isDark ? Colors.white38 : Colors.black38,
                                 fontSize: 10,
                                 fontStyle: FontStyle.italic,
                               ),
@@ -292,12 +305,11 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     super.build(context);
     return Scaffold(
-      backgroundColor: const Color(
-        0xFF1A1A1A,
-      ), // Fondo oscuro real para evitar cuadros blancos
-
+      backgroundColor:
+          isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF8FAFC),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 90.0),
         child: FloatingActionButton(
@@ -308,7 +320,6 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
           child: const Icon(Icons.my_location, color: Colors.white),
         ),
       ),
-
       body: Stack(
         children: [
           if (_isLoadingLocation) _buildLoadingRadar() else _buildMap(),
@@ -372,13 +383,16 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
         initialZoom: 15.0,
         minZoom: 10.0,
         maxZoom: 18.0,
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1A1A1A)
+            : const Color(0xFFF8FAFC),
         onTap: _handleMapTap,
       ),
       children: [
         TileLayer(
-          urlTemplate:
-              'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+          urlTemplate: Theme.of(context).brightness == Brightness.dark
+              ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+              : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
           userAgentPackageName: 'com.argos.mobile_app',
           subdomains: const ['a', 'b', 'c', 'd'],
           tileDisplay: const TileDisplay.fadeIn(
@@ -452,6 +466,7 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
 
   // --- BARRA DE FILTROS EN CAPSULAS ---
   Widget _buildFilterBar() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final filters = [
       {'id': 'Peligro', 'icon': Icons.warning, 'color': Colors.red},
       {
@@ -514,11 +529,15 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
                     ),
                     decoration: BoxDecoration(
                       color: isActive
-                          ? baseColor.withValues(alpha: 0.2)
-                          : Colors.black.withValues(alpha: 0.4),
+                          ? baseColor.withValues(alpha: isDark ? 0.2 : 0.1)
+                          : (isDark
+                              ? Colors.black.withValues(alpha: 0.4)
+                              : Colors.white.withValues(alpha: 0.8)),
                       borderRadius: BorderRadius.circular(30),
                       border: Border.all(
-                        color: isActive ? baseColor : Colors.white10,
+                        color: isActive
+                            ? baseColor
+                            : (isDark ? Colors.white10 : Colors.black12),
                       ),
                       boxShadow: isActive
                           ? [
@@ -534,13 +553,17 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
                         Icon(
                           item['icon'] as IconData,
                           size: 16,
-                          color: isActive ? baseColor : Colors.white54,
+                          color: isActive
+                              ? baseColor
+                              : (isDark ? Colors.white54 : Colors.black45),
                         ),
                         const SizedBox(width: 8),
                         Text(
                           id,
                           style: TextStyle(
-                            color: isActive ? Colors.white : Colors.white54,
+                            color: isActive
+                                ? (isDark ? Colors.white : baseColor)
+                                : (isDark ? Colors.white54 : Colors.black45),
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),

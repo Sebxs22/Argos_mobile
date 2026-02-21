@@ -120,6 +120,10 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
     IconData centerIcon;
     String statusSubtext;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final secondaryTextColor = isDark ? Colors.white38 : Colors.black45;
+
     switch (_currentState) {
       case GuardianState.sending:
         mainColor = _argosRed;
@@ -156,13 +160,13 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
             Text(
               "ARGOS SYSTEM",
               style: TextStyle(
-                color: Colors.white,
+                color: textColor,
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 5.0,
                 shadows: [
                   Shadow(
-                    color: glowColor.withValues(alpha: 0.5),
+                    color: glowColor.withValues(alpha: isDark ? 0.5 : 0.2),
                     blurRadius: 20,
                   ),
                 ],
@@ -177,7 +181,7 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
               opacity: _sentAlertsCount > 0 ? 1.0 : 0.0,
               child: GlassBox(
                 borderRadius: 20,
-                opacity: 0.1,
+                opacity: isDark ? 0.1 : 0.05,
                 blur: 5,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 15,
@@ -185,8 +189,8 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
                 ),
                 child: Text(
                   "$_sentAlertsCount ALERTAS ENVIADAS",
-                  style: const TextStyle(
-                    color: Colors.white70,
+                  style: TextStyle(
+                    color: secondaryTextColor,
                     fontWeight: FontWeight.bold,
                     fontSize: 10,
                     letterSpacing: 1.5,
@@ -261,8 +265,8 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
                                   color: glowColor.withValues(alpha: 0.5),
                                   blurRadius:
                                       _currentState == GuardianState.sending
-                                      ? 70
-                                      : 40,
+                                          ? 70
+                                          : 40,
                                   spreadRadius: 5,
                                 ),
                               ],
@@ -277,7 +281,11 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
                                 centerIcon,
                                 key: ValueKey(_currentState),
                                 size: 60,
-                                color: Colors.white,
+                                color:
+                                    _currentState == GuardianState.monitoring &&
+                                            !isDark
+                                        ? Colors.blueAccent
+                                        : Colors.white,
                               ),
                             ),
                           ),
@@ -292,7 +300,7 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
                         statusSubtext,
                         key: ValueKey(statusSubtext),
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.6),
+                          color: secondaryTextColor,
                           fontSize: 12,
                           letterSpacing: 2.5,
                         ),
@@ -317,10 +325,12 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
                 },
                 child: GlassBox(
                   borderRadius: 30,
-                  opacity: 0.1,
+                  opacity: isDark ? 0.1 : 0.05,
                   blur: 10,
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.2),
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.2)
+                        : Colors.black12,
                   ),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
@@ -328,13 +338,15 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
                       vertical: 18,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.05),
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.05)
+                          : Colors.black.withValues(alpha: 0.02),
                       borderRadius: BorderRadius.circular(30),
                     ),
-                    child: const Text(
+                    child: Text(
                       "ACTIVACIÓN MANUAL",
                       style: TextStyle(
-                        color: Colors.white,
+                        color: textColor,
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                         letterSpacing: 2.0,

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart'; // IMPORTANTE: Para obtener la ubicación real
 import '../../../core/network/api_service.dart';
 import '../../../core/ui/glass_box.dart';
+import '../../../core/ui/argos_background.dart';
 
 class EmergencyCountdownScreen extends StatefulWidget {
   const EmergencyCountdownScreen({super.key});
@@ -210,11 +211,14 @@ class _EmergencyCountdownScreenState extends State<EmergencyCountdownScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF050511),
-      body: Stack(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final secondaryTextColor = isDark ? Colors.white38 : Colors.black45;
+
+    return ArgosBackground(
+      child: Stack(
         children: [
-          // FONDO ALERTA ROJA
+          // FONDO ALERTA ROJA (Mantenemos los colores de emergencia pero suavizados en modo claro)
           Positioned(
             top: -50,
             left: -50,
@@ -223,7 +227,8 @@ class _EmergencyCountdownScreenState extends State<EmergencyCountdownScreen> {
               height: 500,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFD50000).withValues(alpha: 0.4),
+                color: const Color(0xFFD50000)
+                    .withValues(alpha: isDark ? 0.3 : 0.15),
               ),
             ),
           ),
@@ -235,7 +240,8 @@ class _EmergencyCountdownScreenState extends State<EmergencyCountdownScreen> {
               height: 400,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFFF6D00).withValues(alpha: 0.2),
+                color: const Color(0xFFFF6D00)
+                    .withValues(alpha: isDark ? 0.15 : 0.08),
               ),
             ),
           ),
@@ -275,7 +281,7 @@ class _EmergencyCountdownScreenState extends State<EmergencyCountdownScreen> {
                             BoxShadow(
                               color: const Color(
                                 0xFFD50000,
-                              ).withValues(alpha: 0.4),
+                              ).withValues(alpha: isDark ? 0.4 : 0.2),
                               blurRadius: 60,
                               spreadRadius: 10,
                             ),
@@ -289,7 +295,9 @@ class _EmergencyCountdownScreenState extends State<EmergencyCountdownScreen> {
                           value: _secondsRemaining / 10,
                           strokeWidth: 15,
                           color: const Color(0xFFFF1744),
-                          backgroundColor: Colors.white.withValues(alpha: 0.1),
+                          backgroundColor: isDark
+                              ? Colors.white.withValues(alpha: 0.1)
+                              : Colors.black.withValues(alpha: 0.05),
                           strokeCap: StrokeCap.round,
                         ),
                       ),
@@ -298,17 +306,17 @@ class _EmergencyCountdownScreenState extends State<EmergencyCountdownScreen> {
                         children: [
                           Text(
                             "$_secondsRemaining",
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: textColor,
                               fontSize: 90,
                               fontWeight: FontWeight.bold,
                               height: 1.0,
                             ),
                           ),
-                          const Text(
+                          Text(
                             "SEGUNDOS",
                             style: TextStyle(
-                              color: Colors.white54,
+                              color: secondaryTextColor,
                               fontSize: 12,
                               letterSpacing: 2,
                             ),
@@ -323,15 +331,15 @@ class _EmergencyCountdownScreenState extends State<EmergencyCountdownScreen> {
                   // TEXTO DINÁMICO (Muestra si ya tenemos GPS)
                   GlassBox(
                     borderRadius: 20,
-                    opacity: 0.05,
+                    opacity: isDark ? 0.05 : 0.03,
                     padding: const EdgeInsets.all(15),
                     child: Column(
                       children: [
                         Text(
                           "Enviando ubicación precisa...",
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white70,
+                          style: TextStyle(
+                            color: secondaryTextColor,
                             fontSize: 16,
                           ),
                         ),
@@ -362,9 +370,11 @@ class _EmergencyCountdownScreenState extends State<EmergencyCountdownScreen> {
                     onTap: _cancelAlert,
                     child: GlassBox(
                       borderRadius: 50,
-                      opacity: 0.1,
+                      opacity: isDark ? 0.1 : 0.05,
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.5),
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.5)
+                            : Colors.black12,
                         width: 1.5,
                       ),
                       padding: const EdgeInsets.symmetric(
@@ -373,13 +383,13 @@ class _EmergencyCountdownScreenState extends State<EmergencyCountdownScreen> {
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(Icons.close, color: Colors.white, size: 28),
-                          SizedBox(width: 15),
+                        children: [
+                          Icon(Icons.close, color: textColor, size: 28),
+                          const SizedBox(width: 15),
                           Text(
                             "ESTOY BIEN, CANCELAR",
                             style: TextStyle(
-                              color: Colors.white,
+                              color: textColor,
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),

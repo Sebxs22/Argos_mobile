@@ -23,6 +23,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _cedulaController = TextEditingController();
 
   String _telefonoCompleto = "";
+  String _telefonoNumero = "";
+  int _maxPhoneLength = 9; // Por defecto Ecuador
   String _paisSeleccionado = "";
   String _estadoSeleccionado = "";
   String _ciudadSeleccionada = "";
@@ -237,7 +239,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             languageCode: "es",
                             onChanged: (phone) {
                               setState(() {
+                                _telefonoNumero = phone.number;
                                 _telefonoCompleto = phone.completeNumber;
+                              });
+                            },
+                            onCountryChanged: (country) {
+                              setState(() {
+                                _maxPhoneLength = country.maxLength;
                               });
                             },
                             pickerDialogStyle: PickerDialogStyle(
@@ -273,7 +281,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           child: Align(
                             alignment: Alignment.centerRight,
                             child: Text(
-                              "${_telefonoCompleto.isEmpty ? 0 : _telefonoCompleto.length}/13",
+                              "${_telefonoNumero.length}/$_maxPhoneLength",
                               style: TextStyle(
                                 color: secondaryTextColor,
                                 fontSize: 10,

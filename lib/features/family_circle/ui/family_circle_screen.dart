@@ -66,37 +66,46 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
   Future<void> _agregarGuardian() async {
     String codigoInput = "";
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final secondaryTextColor = isDark ? Colors.white70 : Colors.black54;
+
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        title: const Text(
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
           "Vincular Guardián",
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: textColor),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               "Ingresa el código de familiar de la persona que quieres que reciba tus alertas.",
-              style: TextStyle(color: Colors.white70, fontSize: 13),
+              style: TextStyle(color: secondaryTextColor, fontSize: 13),
             ),
             const SizedBox(height: 15),
             TextField(
               onChanged: (v) => codigoInput = v.toUpperCase(),
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: textColor,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 2,
               ),
               textAlign: TextAlign.center,
               decoration: InputDecoration(
                 hintText: "EJ: ARG-1234",
-                hintStyle: const TextStyle(color: Colors.white30),
+                hintStyle:
+                    TextStyle(color: isDark ? Colors.white30 : Colors.black26),
                 filled: true,
-                fillColor: Colors.black26,
+                fillColor: isDark
+                    ? Colors.black26
+                    : Colors.black.withValues(alpha: 0.05),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none,
                 ),
               ),
             ),
@@ -146,21 +155,26 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final secondaryTextColor = isDark ? Colors.white70 : Colors.black54;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor:
+          isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text(
+        title: Text(
           "Círculo de Confianza",
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
         ),
         centerTitle: true,
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: Colors.blueAccent,
           labelColor: Colors.blueAccent,
-          unselectedLabelColor: Colors.white54,
+          unselectedLabelColor: secondaryTextColor,
           tabs: const [
             Tab(text: "MIS GUARDIANES"),
             Tab(text: "A QUIENES PROTEJO"),
@@ -175,7 +189,7 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
                 Container(
                   margin: const EdgeInsets.all(20),
                   child: GlassBox(
-                    opacity: 0.05,
+                    opacity: isDark ? 0.05 : 0.03,
                     borderRadius: 20,
                     padding: const EdgeInsets.all(20),
                     child: Column(
@@ -197,17 +211,17 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
                             children: [
                               Text(
                                 _miPerfil?['codigo_familia'] ?? "...",
-                                style: const TextStyle(
-                                  color: Colors.white,
+                                style: TextStyle(
+                                  color: textColor,
                                   fontSize: 24,
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: 2,
                                 ),
                               ),
                               const SizedBox(width: 10),
-                              const Icon(
+                              Icon(
                                 Icons.copy,
-                                color: Colors.white30,
+                                color: isDark ? Colors.white30 : Colors.black26,
                                 size: 18,
                               ),
                             ],
@@ -235,7 +249,10 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
                 Expanded(
                   child: TabBarView(
                     controller: _tabController,
-                    children: [_buildGuardiansList(), _buildProtegesList()],
+                    children: [
+                      _buildGuardiansList(isDark),
+                      _buildProtegesList(isDark)
+                    ],
                   ),
                 ),
               ],
@@ -249,7 +266,7 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
     );
   }
 
-  Widget _buildGuardiansList() {
+  Widget _buildGuardiansList(bool isDark) {
     if (_misGuardianes.isEmpty) {
       return _buildEmptyState(
         "No tienes guardianes.",
@@ -261,12 +278,12 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
       padding: const EdgeInsets.symmetric(horizontal: 20),
       itemBuilder: (context, index) {
         final user = _misGuardianes[index];
-        return _buildUserCard(user, isGuardian: true);
+        return _buildUserCard(user, isGuardian: true, isDark: isDark);
       },
     );
   }
 
-  Widget _buildProtegesList() {
+  Widget _buildProtegesList(bool isDark) {
     if (_misProtegidos.isEmpty) {
       return _buildEmptyState(
         "No proteges a nadie.",
@@ -278,19 +295,25 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
       padding: const EdgeInsets.symmetric(horizontal: 20),
       itemBuilder: (context, index) {
         final user = _misProtegidos[index];
-        return _buildUserCard(user, isGuardian: false);
+        return _buildUserCard(user, isGuardian: false, isDark: isDark);
       },
     );
   }
 
-  Widget _buildUserCard(Map<String, dynamic> user, {required bool isGuardian}) {
+  Widget _buildUserCard(Map<String, dynamic> user,
+      {required bool isGuardian, required bool isDark}) {
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final secondaryTextColor = isDark ? Colors.white54 : Colors.black45;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.05)
+            : Colors.black.withValues(alpha: 0.03),
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: isDark ? Colors.white10 : Colors.black12),
       ),
       child: Row(
         children: [
@@ -310,14 +333,14 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
               children: [
                 Text(
                   user['nombre_completo'] ?? "Usuario",
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: textColor,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
                   user['telefono'] ?? "Sin teléfono",
-                  style: const TextStyle(color: Colors.white54, fontSize: 12),
+                  style: TextStyle(color: secondaryTextColor, fontSize: 12),
                 ),
               ],
             ),
@@ -335,17 +358,21 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
   }
 
   Widget _buildEmptyState(String title, String subtitle) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final secondaryTextColor = isDark ? Colors.white30 : Colors.black38;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(40),
         child: Column(
           children: [
-            Icon(Icons.group_off, size: 50, color: Colors.white12),
+            Icon(Icons.group_off,
+                size: 50, color: isDark ? Colors.white12 : Colors.black12),
             const SizedBox(height: 15),
             Text(
               title,
-              style: const TextStyle(
-                color: Colors.white70,
+              style: TextStyle(
+                color: isDark ? Colors.white70 : Colors.black54,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -353,7 +380,7 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
             Text(
               subtitle,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white30, fontSize: 12),
+              style: TextStyle(color: secondaryTextColor, fontSize: 12),
             ),
           ],
         ),

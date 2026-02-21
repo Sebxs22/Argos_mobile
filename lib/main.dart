@@ -164,15 +164,21 @@ class _MainNavigatorState extends State<MainNavigator> {
   }
 
   void _showProfileMenu() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final secondaryTextColor = isDark ? Colors.white54 : Colors.black54;
+
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: const Color(0xFF0F172A).withValues(alpha: 0.95),
+        backgroundColor: isDark
+            ? const Color(0xFF0F172A).withValues(alpha: 0.95)
+            : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
+        title: Text(
           "Perfil de Usuario",
           style: TextStyle(
-            color: Colors.white,
+            color: textColor,
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
@@ -187,14 +193,14 @@ class _MainNavigatorState extends State<MainNavigator> {
               ),
               title: Text(
                 _perfilData?['nombre_completo'] ?? "Cargando...",
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: textColor),
               ),
               subtitle: Text(
                 "Código: ${_perfilData?['codigo_familia'] ?? '...'}",
-                style: const TextStyle(color: Colors.white54, fontSize: 12),
+                style: TextStyle(color: secondaryTextColor, fontSize: 12),
               ),
             ),
-            const Divider(color: Colors.white10),
+            Divider(color: isDark ? Colors.white10 : Colors.black12),
             ListTile(
               onTap: () {
                 // Aquí podrías navegar a la pantalla de Círculo Familiar
@@ -205,9 +211,10 @@ class _MainNavigatorState extends State<MainNavigator> {
                 );
               },
               leading: const Icon(Icons.group, color: Colors.greenAccent),
-              title: const Text(
+              title: Text(
                 "Círculo Familiar",
-                style: TextStyle(color: Colors.white70, fontSize: 14),
+                style: TextStyle(
+                    color: textColor.withValues(alpha: 0.7), fontSize: 14),
               ),
             ),
           ],

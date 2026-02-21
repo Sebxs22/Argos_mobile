@@ -144,10 +144,12 @@ class _RoutesScreenState extends State<RoutesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black87;
+
     return Scaffold(
-      backgroundColor: const Color(
-        0xFF1A1A1A,
-      ), // Fondo oscuro para evitar destellos blancos
+      backgroundColor:
+          isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF8FAFC),
       // Botón para re-centrar el mapa
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 95.0),
@@ -161,31 +163,33 @@ class _RoutesScreenState extends State<RoutesScreen> {
       ),
       body: Stack(
         children: [
-          _buildMap(),
-          _buildTopInterface(),
+          _buildMap(isDark),
+          _buildTopInterface(isDark),
           if (_isLoading)
             const Center(
               child: CircularProgressIndicator(color: Colors.redAccent),
             ),
-          if (_routePoints.isNotEmpty) _buildBottomDetails(),
+          if (_routePoints.isNotEmpty) _buildBottomDetails(isDark, textColor),
         ],
       ),
     );
   }
 
-  Widget _buildMap() {
+  Widget _buildMap(bool isDark) {
     return FlutterMap(
       mapController: _mapController,
       options: MapOptions(
         initialCenter: _myLocation ?? const LatLng(-1.67, -78.64),
         initialZoom: 15.0,
         onTap: _onMapTap, // Captura el destino
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor:
+            isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF8FAFC),
       ),
       children: [
         TileLayer(
-          urlTemplate:
-              'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+          urlTemplate: isDark
+              ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+              : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
           tileDisplay: const TileDisplay.fadeIn(
             duration: Duration(milliseconds: 500),
           ),
@@ -234,34 +238,36 @@ class _RoutesScreenState extends State<RoutesScreen> {
     );
   }
 
-  Widget _buildTopInterface() {
+  Widget _buildTopInterface(bool isDark) {
     return Positioned(
       top: 60,
       left: 20,
       right: 20,
       child: GlassBox(
         borderRadius: 20,
-        opacity: 0.1,
+        opacity: isDark ? 0.1 : 0.05,
         blur: 15,
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 20),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _transportIcon(Icons.directions_walk, 'foot'),
-            _transportIcon(Icons.directions_car, 'car'),
-            _transportIcon(Icons.directions_bike, 'bicycle'),
+            _transportIcon(Icons.directions_walk, 'foot', isDark),
+            _transportIcon(Icons.directions_car, 'car', isDark),
+            _transportIcon(Icons.directions_bike, 'bicycle', isDark),
           ],
         ),
       ),
     );
   }
 
-  Widget _transportIcon(IconData icon, String mode) {
+  Widget _transportIcon(IconData icon, String mode, bool isDark) {
     bool isSelected = _selectedMode == mode;
     return IconButton(
       icon: Icon(
         icon,
-        color: isSelected ? Colors.redAccent : Colors.white54,
+        color: isSelected
+            ? Colors.redAccent
+            : (isDark ? Colors.white54 : Colors.black45),
         size: 28,
       ),
       onPressed: () {
@@ -277,14 +283,14 @@ class _RoutesScreenState extends State<RoutesScreen> {
     );
   }
 
-  Widget _buildBottomDetails() {
+  Widget _buildBottomDetails(bool isDark, Color textColor) {
     return Positioned(
       bottom: 110,
       left: 20,
       right: 20,
       child: GlassBox(
         borderRadius: 25,
-        opacity: 0.2,
+        opacity: isDark ? 0.2 : 0.1,
         blur: 20,
         padding: const EdgeInsets.all(22),
         child: Column(
@@ -297,16 +303,16 @@ class _RoutesScreenState extends State<RoutesScreen> {
                   children: [
                     Text(
                       "LLEGADA EN $_eta",
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: textColor,
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
                       ),
                     ),
                     Text(
                       "Distancia: $_distance",
-                      style: const TextStyle(
-                        color: Colors.white54,
+                      style: TextStyle(
+                        color: isDark ? Colors.white54 : Colors.black54,
                         fontSize: 12,
                       ),
                     ),
@@ -319,7 +325,7 @@ class _RoutesScreenState extends State<RoutesScreen> {
             // Botón dinámico de peligros
             if (_alertsOnRoute.isNotEmpty)
               GestureDetector(
-                onTap: _verAlertasEnRuta,
+                onTap: () => _verAlertasEnRuta(isDark, textColor),
                 child: Container(
                   margin: const EdgeInsets.only(bottom: 15),
                   padding: const EdgeInsets.symmetric(
@@ -407,26 +413,26 @@ class _RoutesScreenState extends State<RoutesScreen> {
     );
   }
 
-  void _verAlertasEnRuta() {
+  void _verAlertasEnRuta(bool isDark, Color textColor) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => GlassBox(
         borderRadius: 25,
-        opacity: 0.3,
+        opacity: isDark ? 0.3 : 0.1,
         child: Container(
           padding: const EdgeInsets.all(25),
-          decoration: const BoxDecoration(
-            color: Color(0xFF1A1A1A),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 "RIESGOS EN EL CAMINO",
                 style: TextStyle(
-                  color: Colors.white,
+                  color: textColor,
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
                 ),
@@ -444,14 +450,15 @@ class _RoutesScreenState extends State<RoutesScreen> {
                       ),
                       title: Text(
                         report.title,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: textColor,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       subtitle: Text(
                         "${report.description} (${report.timeAgo})",
-                        style: const TextStyle(color: Colors.white54),
+                        style: TextStyle(
+                            color: isDark ? Colors.white54 : Colors.black54),
                       ),
                     );
                   },
