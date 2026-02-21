@@ -2,7 +2,9 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../core/network/auth_service.dart';
 import '../../../core/ui/glass_box.dart';
-import '../../../../main.dart'; // Para navegar al MainNavigator tras el registro
+import '../../../../main.dart';
+import 'package:csc_picker/csc_picker.dart';
+import 'package:intl_phone_field/intl_phone_field.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -16,10 +18,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _nombreController = TextEditingController();
   final _emailController = TextEditingController();
   final _passController = TextEditingController();
-  final _telController = TextEditingController();
   final _cedulaController = TextEditingController();
-  final _paisController = TextEditingController(text: "Ecuador");
-  final _ciudadController = TextEditingController();
+
+  String _telefonoCompleto = "";
+  String _paisSeleccionado = "";
+  String _ciudadSeleccionada = "";
 
   bool _isLoading = false;
   bool _aceptaTerminos = false;
@@ -30,7 +33,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _emailController.text.isEmpty ||
         _passController.text.isEmpty ||
         _cedulaController.text.isEmpty ||
-        _ciudadController.text.isEmpty) {
+        _telefonoCompleto.isEmpty ||
+        _paisSeleccionado.isEmpty ||
+        _ciudadSeleccionada.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Por favor, llena todos los campos obligatorios"),
@@ -55,10 +60,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       email: _emailController.text.trim(),
       password: _passController.text.trim(),
       nombre: _nombreController.text.trim(),
-      telefono: _telController.text.trim(),
+      telefono: _telefonoCompleto,
       cedula: _cedulaController.text.trim(),
-      pais: _paisController.text.trim(),
-      ciudad: _ciudadController.text.trim(),
+      pais: _paisSeleccionado,
+      ciudad: _ciudadSeleccionada,
       aceptaTerminos: _aceptaTerminos,
     );
 
@@ -183,38 +188,94 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             Icons.alternate_email,
                           ),
                           const SizedBox(height: 15),
-                          _buildField(
-                            _telController,
-                            "Teléfono / WhatsApp",
-                            Icons.phone_android_outlined,
+
+                          // --- SELECTOR DE TELÉFONO ---
+                          IntlPhoneField(
+                            initialCountryCode: 'EC',
+                            dropdownIconPosition: IconPosition.trailing,
+                            dropdownTextStyle:
+                                const TextStyle(color: Colors.white),
+                            style: const TextStyle(color: Colors.white),
+                            cursorColor: const Color(0xFFE53935),
+                            decoration: InputDecoration(
+                              hintText: 'Número Celular',
+                              hintStyle: const TextStyle(
+                                  color: Colors.white24, fontSize: 14),
+                              filled: true,
+                              fillColor: Colors.white.withValues(alpha: 0.05),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(15),
+                                borderSide: BorderSide.none,
+                              ),
+                              contentPadding:
+                                  const EdgeInsets.symmetric(vertical: 18),
+                            ),
+                            onChanged: (phone) {
+                              _telefonoCompleto = phone.completeNumber;
+                            },
                           ),
-                          const SizedBox(height: 15),
+                          const SizedBox(height: 10),
+
                           _buildField(
                             _cedulaController,
                             "Cédula / DNI / ID",
                             Icons.badge_outlined,
                           ),
-                          const SizedBox(height: 15),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildField(
-                                  _paisController,
-                                  "País",
-                                  Icons.public,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: _buildField(
-                                  _ciudadController,
-                                  "Ciudad",
-                                  Icons.location_city,
-                                ),
-                              ),
-                            ],
+                          const SizedBox(height: 20),
+
+                          // --- SELECTOR DE PAÍS/CIUDAD ---
+                          const Text(
+                            "UBICACIÓN GEOGRÁFICA",
+                            style: TextStyle(
+                                color: Colors.white38,
+                                fontSize: 9,
+                                letterSpacing: 1),
                           ),
-                          const SizedBox(height: 15),
+                          const SizedBox(height: 10),
+                          CSCPicker(
+                            showStates: true,
+                            showCities: true,
+                            flagState: CountryFlag.ENABLE,
+                            dropdownDecoration: BoxDecoration(
+                                borderRadius:
+                                    const BorderRadius.all(Radius.circular(15)),
+                                color: Colors.white.withValues(alpha: 0.05),
+                                border: Border.all(
+                                    color: Colors.white10, width: 1)),
+                            disabledDropdownDecoration: BoxDecoration(
+                                borderRadius:
+                                    const BorderRadius.all(Radius.circular(15)),
+                                color: Colors.white.withValues(alpha: 0.02),
+                                border: Border.all(
+                                    color: Colors.white10, width: 1)),
+                            countrySearchPlaceholder: "Buscar País",
+                            stateSearchPlaceholder: "Buscar Estado",
+                            citySearchPlaceholder: "Buscar Ciudad",
+                            countryDropdownLabel: "País",
+                            stateDropdownLabel: "Estado",
+                            cityDropdownLabel: "Ciudad",
+                            selectedItemStyle: const TextStyle(
+                                color: Colors.white, fontSize: 14),
+                            dropdownHeadingStyle: const TextStyle(
+                                color: Colors.black,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold),
+                            dropdownItemStyle: const TextStyle(
+                                color: Colors.black, fontSize: 14),
+                            dropdownDialogRadius: 20.0,
+                            searchBarRadius: 10.0,
+                            onCountryChanged: (value) {
+                              setState(() => _paisSeleccionado = value ?? "");
+                            },
+                            onStateChanged: (value) {
+                              // Podríamos guardar el estado/provincia si fuera necesario
+                            },
+                            onCityChanged: (value) {
+                              setState(() => _ciudadSeleccionada = value ?? "");
+                            },
+                          ),
+                          const SizedBox(height: 20),
+
                           _buildField(
                             _passController,
                             "Contraseña Segura",
