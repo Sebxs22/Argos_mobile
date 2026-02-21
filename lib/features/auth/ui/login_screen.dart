@@ -76,15 +76,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     color: isDark ? Colors.white10 : Colors.black12,
                   ),
                 ),
-                child: Image.asset(
-                  'assets/images/icon.png',
-                  width: 60,
-                  height: 60,
-                  errorBuilder: (ctx, err, stack) => Icon(
-                    Icons.shield_moon_outlined,
-                    color: const Color(0xFFE53935),
-                    size: 50,
-                  ),
+                child: Icon(
+                  Icons.shield_moon_outlined,
+                  color: const Color(0xFFE53935),
+                  size: 50,
                 ),
               ),
               const SizedBox(height: 25),
@@ -110,8 +105,8 @@ class _LoginScreenState extends State<LoginScreen> {
               // Caja de Login (Glass)
               GlassBox(
                 borderRadius: 30,
-                opacity: isDark ? 0.05 : 0.03,
-                blur: 20,
+                opacity: isDark ? 0.08 : 0.05,
+                blur: 25,
                 padding: const EdgeInsets.all(30),
                 child: Column(
                   children: [

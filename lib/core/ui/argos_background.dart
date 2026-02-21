@@ -15,31 +15,31 @@ class ArgosBackground extends StatelessWidget {
 
     return Scaffold(
       backgroundColor:
-          isDark ? const Color(0xFF050511) : const Color(0xFFF8FAFC),
+          isDark ? const Color(0xFF030308) : const Color(0xFFF1F5F9),
       body: Stack(
         children: [
           // Auroras Background
           Positioned(
-            top: -100,
-            left: -100,
+            top: -120,
+            left: -120,
             child: Container(
-              width: 400,
-              height: 400,
+              width: 450,
+              height: 450,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: redAurora.withValues(alpha: isDark ? 0.15 : 0.08),
+                color: redAurora.withValues(alpha: isDark ? 0.12 : 0.05),
               ),
             ),
           ),
           Positioned(
-            bottom: -50,
-            right: -50,
+            bottom: -80,
+            right: -80,
             child: Container(
-              width: 300,
-              height: 300,
+              width: 350,
+              height: 350,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: blueAurora.withValues(alpha: isDark ? 0.1 : 0.05),
+                color: blueAurora.withValues(alpha: isDark ? 0.08 : 0.03),
               ),
             ),
           ),

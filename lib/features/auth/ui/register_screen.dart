@@ -145,15 +145,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       color: isDark ? Colors.white10 : Colors.black12,
                     ),
                   ),
-                  child: Image.asset(
-                    'assets/images/icon.png',
-                    width: 50,
-                    height: 50,
-                    errorBuilder: (ctx, err, stack) => const Icon(
-                      Icons.shield_outlined,
-                      color: Color(0xFFE53935),
-                      size: 40,
-                    ),
+                  child: const Icon(
+                    Icons.shield_outlined,
+                    color: Color(0xFFE53935),
+                    size: 40,
                   ),
                 ),
                 const SizedBox(height: 15),
@@ -179,8 +174,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // Caja de Registro (Liquid Glass)
                 GlassBox(
                   borderRadius: 30,
-                  opacity: isDark ? 0.05 : 0.03,
-                  blur: 20,
+                  opacity: isDark ? 0.08 : 0.05,
+                  blur: 25,
                   padding: const EdgeInsets.all(25),
                   child: Theme(
                     data: Theme.of(context).copyWith(
@@ -223,6 +218,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           isDark: isDark,
                           child: IntlPhoneField(
                             initialCountryCode: 'EC',
+                            showCursor: true,
                             dropdownIconPosition: IconPosition.trailing,
                             dropdownTextStyle:
                                 TextStyle(color: textColor, fontSize: 13),
@@ -234,12 +230,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   color: secondaryTextColor, fontSize: 14),
                               border: InputBorder.none,
                               isDense: true,
+                              counterText: "", // Ocultar el contador interno
                               contentPadding: const EdgeInsets.symmetric(
                                   vertical: 18, horizontal: 15),
                             ),
                             languageCode: "es",
                             onChanged: (phone) {
-                              _telefonoCompleto = phone.completeNumber;
+                              setState(() {
+                                _telefonoCompleto = phone.completeNumber;
+                              });
                             },
                             pickerDialogStyle: PickerDialogStyle(
                               backgroundColor: isDark
@@ -268,6 +267,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                           ),
                         ),
+                        // --- CONTADOR DE TELÉFONO EXTERNO ---
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0, right: 8.0),
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              "${_telefonoCompleto.isEmpty ? 0 : _telefonoCompleto.length}/13",
+                              style: TextStyle(
+                                color: secondaryTextColor,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
                         const SizedBox(height: 10),
 
                         _buildField(
@@ -283,6 +297,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             }
                           },
                         ),
+                        // --- AVISO DE CÉDULA EXTERNO ---
+                        if (_cedulaInvalida)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0, left: 8.0),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                "✕ Cédula o DNI ecuatoriano no válido",
+                                style: TextStyle(
+                                  color: Colors.orange.withValues(alpha: 0.9),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                          ),
                         const SizedBox(height: 20),
 
                         // --- SELECTOR DE PAÍS/CIUDAD ---
