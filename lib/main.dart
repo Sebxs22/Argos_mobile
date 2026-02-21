@@ -64,7 +64,7 @@ class ArgosApp extends StatelessWidget {
     return OverlaySupport.global(
       // Wrap with OverlaySupport for toasts
       child: MaterialApp(
-        title: 'ARGOS',
+        title: 'Argos',
         debugShowCheckedModeBanner: false,
         themeMode: ThemeMode.system, // Adaptar automáticamente
         // MODO CLARO
