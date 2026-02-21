@@ -230,62 +230,58 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                             const SizedBox(height: 15),
 
-                            // --- SELECTOR DE TELÉFONO ---
-                            IntlPhoneField(
-                              initialCountryCode: 'EC',
-                              dropdownIconPosition: IconPosition.trailing,
-                              dropdownTextStyle: const TextStyle(
-                                  color: Colors.white, fontSize: 13),
-                              style: const TextStyle(
-                                  color: Colors.white, fontSize: 13),
-                              cursorColor: const Color(0xFFE53935),
-                              decoration: InputDecoration(
-                                hintText: 'Número Celular',
-                                hintStyle: const TextStyle(
-                                    color: Colors.white24, fontSize: 14),
-                                filled: true,
-                                fillColor: Colors.white.withValues(alpha: 0.05),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(18),
-                                  borderSide:
-                                      const BorderSide(color: Colors.white10),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(18),
-                                  borderSide:
-                                      const BorderSide(color: Colors.white10),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(18),
-                                  borderSide: const BorderSide(
-                                      color: Color(0xFFE53935), width: 1.5),
-                                ),
-                                contentPadding:
-                                    const EdgeInsets.symmetric(vertical: 18),
+                            // --- SELECTOR DE TELÉFONO (Wrapped for premium rounding) ---
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.05),
+                                borderRadius: BorderRadius.circular(18),
+                                border:
+                                    Border.all(color: Colors.white10, width: 1),
                               ),
-                              languageCode: "es",
-                              onChanged: (phone) {
-                                _telefonoCompleto = phone.completeNumber;
-                              },
-                              pickerDialogStyle: PickerDialogStyle(
-                                backgroundColor: const Color(0xFF0F172A),
-                                countryNameStyle: const TextStyle(
-                                    color: Colors.white, fontSize: 14),
-                                countryCodeStyle: const TextStyle(
-                                    color: Colors.white70, fontSize: 13),
-                                searchFieldCursorColor: const Color(0xFFE53935),
-                                searchFieldInputDecoration: InputDecoration(
-                                  hintText: 'Buscar país...',
-                                  hintStyle: const TextStyle(
-                                      color: Colors.white24, fontSize: 13),
-                                  prefixIcon: const Icon(Icons.search,
-                                      color: Colors.white38, size: 20),
-                                  filled: true,
-                                  fillColor:
-                                      Colors.white.withValues(alpha: 0.05),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide.none,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(18),
+                                child: IntlPhoneField(
+                                  initialCountryCode: 'EC',
+                                  dropdownIconPosition: IconPosition.trailing,
+                                  dropdownTextStyle: const TextStyle(
+                                      color: Colors.white, fontSize: 13),
+                                  style: const TextStyle(
+                                      color: Colors.white, fontSize: 13),
+                                  cursorColor: const Color(0xFFE53935),
+                                  decoration: InputDecoration(
+                                    hintText: 'Número Celular',
+                                    hintStyle: const TextStyle(
+                                        color: Colors.white24, fontSize: 14),
+                                    border: InputBorder.none,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        vertical: 18, horizontal: 15),
+                                  ),
+                                  languageCode: "es",
+                                  onChanged: (phone) {
+                                    _telefonoCompleto = phone.completeNumber;
+                                  },
+                                  pickerDialogStyle: PickerDialogStyle(
+                                    backgroundColor: const Color(0xFF0F172A),
+                                    countryNameStyle: const TextStyle(
+                                        color: Colors.white, fontSize: 14),
+                                    countryCodeStyle: const TextStyle(
+                                        color: Colors.white70, fontSize: 13),
+                                    searchFieldCursorColor:
+                                        const Color(0xFFE53935),
+                                    searchFieldInputDecoration: InputDecoration(
+                                      hintText: 'Buscar país...',
+                                      hintStyle: const TextStyle(
+                                          color: Colors.white24, fontSize: 13),
+                                      prefixIcon: const Icon(Icons.search,
+                                          color: Colors.white38, size: 20),
+                                      filled: true,
+                                      fillColor:
+                                          Colors.white.withValues(alpha: 0.05),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -308,51 +304,54 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   letterSpacing: 1),
                             ),
                             const SizedBox(height: 10),
-                            CSCPickerPlus(
-                              showStates: true,
-                              showCities: true,
-                              flagState: CountryFlag.ENABLE,
-                              countryStateLanguage:
-                                  CountryStateLanguage.englishOrNative,
-                              dropdownDecoration: BoxDecoration(
-                                  borderRadius: const BorderRadius.all(
-                                      Radius.circular(18)),
-                                  color: Colors.white.withValues(alpha: 0.05),
-                                  border: Border.all(
-                                      color: Colors.white10, width: 1)),
-                              disabledDropdownDecoration: BoxDecoration(
-                                  borderRadius: const BorderRadius.all(
-                                      Radius.circular(18)),
-                                  color: Colors.white.withValues(alpha: 0.02),
-                                  border: Border.all(
-                                      color: Colors.white10, width: 1)),
-                              countrySearchPlaceholder: "Buscar País",
-                              stateSearchPlaceholder: "Buscar Estado",
-                              citySearchPlaceholder: "Buscar Ciudad",
-                              countryDropdownLabel: "País",
-                              stateDropdownLabel: "Estado / Provincia",
-                              cityDropdownLabel: "Ciudad",
-                              selectedItemStyle: const TextStyle(
-                                  color: Colors.white, fontSize: 14),
-                              dropdownHeadingStyle: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold),
-                              dropdownItemStyle: const TextStyle(
-                                  color: Colors.white, fontSize: 14),
-                              dropdownDialogRadius: 20.0,
-                              searchBarRadius: 10.0,
-                              onCountryChanged: (value) {
-                                setState(() => _paisSeleccionado = value);
-                              },
-                              onStateChanged: (value) {
-                                setState(() => _estadoSeleccionado =
-                                    _cleanLocationName(value));
-                              },
-                              onCityChanged: (value) {
-                                setState(() => _ciudadSeleccionada =
-                                    _cleanLocationName(value));
-                              },
+                            // --- SELECTOR DE PAÍS/CIUDAD (Wrapped for premium rounding) ---
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.05),
+                                borderRadius: BorderRadius.circular(18),
+                                border:
+                                    Border.all(color: Colors.white10, width: 1),
+                              ),
+                              child: CSCPickerPlus(
+                                showStates: true,
+                                showCities: true,
+                                flagState: CountryFlag.ENABLE,
+                                countryStateLanguage:
+                                    CountryStateLanguage.englishOrNative,
+                                dropdownDecoration: const BoxDecoration(
+                                    color: Colors.transparent),
+                                disabledDropdownDecoration: const BoxDecoration(
+                                    color: Colors.transparent),
+                                countrySearchPlaceholder: "Buscar País",
+                                stateSearchPlaceholder: "Buscar Estado",
+                                citySearchPlaceholder: "Buscar Ciudad",
+                                countryDropdownLabel: "País",
+                                stateDropdownLabel: "Estado / Provincia",
+                                cityDropdownLabel: "Ciudad",
+                                selectedItemStyle: const TextStyle(
+                                    color: Colors.white, fontSize: 13),
+                                dropdownHeadingStyle: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold),
+                                dropdownItemStyle: const TextStyle(
+                                    color: Colors.white, fontSize: 13),
+                                dropdownDialogRadius: 20.0,
+                                searchBarRadius: 10.0,
+                                onCountryChanged: (value) {
+                                  setState(() => _paisSeleccionado = value);
+                                },
+                                onStateChanged: (value) {
+                                  setState(() => _estadoSeleccionado =
+                                      _cleanLocationName(value));
+                                },
+                                onCityChanged: (value) {
+                                  setState(() => _ciudadSeleccionada =
+                                      _cleanLocationName(value));
+                                },
+                              ),
                             ),
                             const SizedBox(height: 20),
 
