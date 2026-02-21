@@ -299,7 +299,7 @@ class _RoutesScreenState extends State<RoutesScreen> {
       right: 20,
       child: GlassBox(
         borderRadius: 25,
-        opacity: isDark ? 0.2 : 0.15,
+        opacity: isDark ? 0.2 : 0.2, // Aumentamos opacidad en claro
         blur: 20,
         padding: const EdgeInsets.all(22),
         child: Column(
@@ -321,7 +321,9 @@ class _RoutesScreenState extends State<RoutesScreen> {
                     Text(
                       "Distancia: $_distance",
                       style: TextStyle(
-                        color: isDark ? Colors.white54 : Colors.black54,
+                        color: isDark
+                            ? Colors.white54
+                            : Colors.black87, // Más oscuro en claro
                         fontSize: 12,
                       ),
                     ),
@@ -342,8 +344,11 @@ class _RoutesScreenState extends State<RoutesScreen> {
                     horizontal: 12,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.red.withValues(alpha: 0.1),
+                    color: Colors.red.withValues(alpha: isDark ? 0.1 : 0.15),
                     borderRadius: BorderRadius.circular(12),
+                    border: !isDark
+                        ? Border.all(color: Colors.red.withValues(alpha: 0.2))
+                        : null,
                   ),
                   child: Row(
                     children: [
@@ -355,8 +360,9 @@ class _RoutesScreenState extends State<RoutesScreen> {
                       const SizedBox(width: 10),
                       Text(
                         "${_alertsOnRoute.length} peligros detectados. Ver más.",
-                        style: const TextStyle(
-                          color: Colors.redAccent,
+                        style: TextStyle(
+                          color:
+                              isDark ? Colors.redAccent : Colors.red.shade900,
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
                         ),
@@ -398,23 +404,28 @@ class _RoutesScreenState extends State<RoutesScreen> {
   }
 
   Widget _buildSecurityBadge() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     bool isSafe = _securityScore > 80;
+
+    // Tonos más oscuros para modo claro
+    final Color baseColor = isSafe
+        ? (isDark ? Colors.greenAccent : Colors.green.shade800)
+        : (isDark ? Colors.orangeAccent : Colors.orange.shade900);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: isSafe
-            ? Colors.green.withValues(alpha: 0.2)
-            : Colors.orange.withValues(alpha: 0.2),
+        color: baseColor.withValues(alpha: isDark ? 0.2 : 0.15),
         borderRadius: BorderRadius.circular(15),
         border: Border.all(
-          color: isSafe ? Colors.greenAccent : Colors.orangeAccent,
+          color: baseColor,
           width: 1.5,
         ),
       ),
       child: Text(
         "${_securityScore.toInt()}%",
         style: TextStyle(
-          color: isSafe ? Colors.greenAccent : Colors.orangeAccent,
+          color: baseColor,
           fontWeight: FontWeight.bold,
           fontSize: 14,
         ),
