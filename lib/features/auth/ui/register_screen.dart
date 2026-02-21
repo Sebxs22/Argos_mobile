@@ -232,7 +232,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 letterSpacing: 1),
                           ),
                           const SizedBox(height: 10),
-                          CSCPicker(
+                          CSCPickerPlus(
                             showStates: true,
                             showCities: true,
                             flagState: CountryFlag.ENABLE,
