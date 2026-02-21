@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:ota_update/ota_update.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'glass_box.dart';
 
 class UpdateProgressDialog extends StatefulWidget {
@@ -31,7 +32,29 @@ class _UpdateProgressDialogState extends State<UpdateProgressDialog> {
     super.dispose();
   }
 
-  void _startDownload() {
+  Future<void> _startDownload() async {
+    // Proactively check for installation permission on Android
+    final status = await Permission.requestInstallPackages.status;
+    if (!status.isGranted) {
+      setState(() {
+        _status = "Permiso requerido para instalar.";
+      });
+      final result = await Permission.requestInstallPackages.request();
+      if (!result.isGranted) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                  "Debes permitir a ARGOS instalar aplicaciones para actualizar."),
+              action:
+                  SnackBarAction(label: "AJUSTES", onPressed: openAppSettings),
+            ),
+          );
+        }
+        return;
+      }
+    }
+
     setState(() {
       _isDownloading = true;
       _status = "Descargando v${widget.version}...";
