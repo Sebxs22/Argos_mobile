@@ -5,6 +5,7 @@ import '../../../core/ui/glass_box.dart';
 import '../../../../main.dart';
 import 'package:csc_picker_plus/csc_picker_plus.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
+import 'package:intl_phone_field/country_picker_dialog.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -22,7 +23,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   String _telefonoCompleto = "";
   String _paisSeleccionado = "";
+  String _estadoSeleccionado = "";
   String _ciudadSeleccionada = "";
+
+  // Función para limpiar nombres (ej: "Chimborazo Province" -> "Chimborazo")
+  String _cleanLocationName(String? name) {
+    if (name == null || name.isEmpty) return "";
+    return name
+        .replaceAll(
+            RegExp(
+                r' (Province|State|Region|Department|District|Prefecture|Area|Zone|Territory)',
+                caseSensitive: false),
+            "")
+        .trim();
+  }
 
   bool _isLoading = false;
   bool _aceptaTerminos = false;
@@ -35,6 +49,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _cedulaController.text.isEmpty ||
         _telefonoCompleto.isEmpty ||
         _paisSeleccionado.isEmpty ||
+        _estadoSeleccionado.isEmpty ||
         _ciudadSeleccionada.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -63,6 +78,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       telefono: _telefonoCompleto,
       cedula: _cedulaController.text.trim(),
       pais: _paisSeleccionado,
+      estado: _estadoSeleccionado,
       ciudad: _ciudadSeleccionada,
       aceptaTerminos: _aceptaTerminos,
     );
@@ -210,9 +226,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               contentPadding:
                                   const EdgeInsets.symmetric(vertical: 18),
                             ),
+                            languageCode: "es",
                             onChanged: (phone) {
                               _telefonoCompleto = phone.completeNumber;
                             },
+                            pickerDialogStyle: PickerDialogStyle(
+                              backgroundColor: const Color(0xFF0F172A),
+                              countryNameStyle:
+                                  const TextStyle(color: Colors.white),
+                              countryCodeStyle:
+                                  const TextStyle(color: Colors.white70),
+                              searchFieldCursorColor: const Color(0xFFE53935),
+                              searchFieldInputDecoration: InputDecoration(
+                                hintText: 'Buscar país...',
+                                hintStyle:
+                                    const TextStyle(color: Colors.white24),
+                                prefixIcon: const Icon(Icons.search,
+                                    color: Colors.white38),
+                                enabledBorder: UnderlineInputBorder(
+                                    borderSide:
+                                        BorderSide(color: Colors.white12)),
+                                focusedBorder: UnderlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: const Color(0xFFE53935))),
+                              ),
+                            ),
                           ),
                           const SizedBox(height: 10),
 
@@ -252,26 +290,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             stateSearchPlaceholder: "Buscar Estado",
                             citySearchPlaceholder: "Buscar Ciudad",
                             countryDropdownLabel: "País",
-                            stateDropdownLabel: "Estado",
+                            stateDropdownLabel: "Estado / Provincia",
                             cityDropdownLabel: "Ciudad",
                             selectedItemStyle: const TextStyle(
-                                color: Colors.white, fontSize: 14),
+                                color: Colors.white, fontSize: 13),
                             dropdownHeadingStyle: const TextStyle(
-                                color: Colors.black,
+                                color: Colors.white,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold),
                             dropdownItemStyle: const TextStyle(
-                                color: Colors.black, fontSize: 14),
+                                color: Colors.white, fontSize: 13),
                             dropdownDialogRadius: 20.0,
                             searchBarRadius: 10.0,
                             onCountryChanged: (value) {
                               setState(() => _paisSeleccionado = value);
                             },
                             onStateChanged: (value) {
-                              // Podríamos guardar el estado/provincia si fuera necesario
+                              setState(() => _estadoSeleccionado =
+                                  _cleanLocationName(value));
                             },
                             onCityChanged: (value) {
-                              setState(() => _ciudadSeleccionada = value ?? "");
+                              setState(() => _ciudadSeleccionada =
+                                  _cleanLocationName(value));
                             },
                           ),
                           const SizedBox(height: 20),

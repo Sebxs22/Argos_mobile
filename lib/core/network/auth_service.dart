@@ -17,6 +17,7 @@ class AuthService {
     required String telefono,
     required String cedula,
     required String pais,
+    required String estado,
     required String ciudad,
     required bool aceptaTerminos,
   }) async {
@@ -30,6 +31,7 @@ class AuthService {
           'telefono': telefono,
           'cedula': cedula,
           'pais': pais,
+          'estado': estado,
           'ciudad': ciudad,
           'acepta_terminos': aceptaTerminos,
         },
