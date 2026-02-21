@@ -184,196 +184,226 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     const SizedBox(height: 30),
 
-                    // Caja de Registro
+                    // Caja de Registro (Liquid Glass)
                     GlassBox(
                       borderRadius: 30,
-                      opacity: 0.05,
-                      blur: 20,
+                      opacity: 0.08,
+                      blur: 25,
                       padding: const EdgeInsets.all(25),
-                      child: Column(
-                        children: [
-                          _buildField(
-                            _nombreController,
-                            "Nombre Completo",
-                            Icons.person_outline,
+                      child: Theme(
+                        data: Theme.of(context).copyWith(
+                          // Override para asegurar que los diálogos y buscadores se vean bien en negro
+                          dialogBackgroundColor: const Color(0xFF0F172A),
+                          colorScheme: ColorScheme.fromSeed(
+                            seedColor: const Color(0xFFE53935),
+                            brightness: Brightness.dark,
+                            surface: const Color(0xFF0F172A),
+                            onSurface: Colors.white,
                           ),
-                          const SizedBox(height: 15),
-                          _buildField(
-                            _emailController,
-                            "Correo Electrónico",
-                            Icons.alternate_email,
+                          textTheme: const TextTheme(
+                            titleMedium: TextStyle(color: Colors.white),
+                            bodyMedium: TextStyle(color: Colors.white),
                           ),
-                          const SizedBox(height: 15),
-
-                          // --- SELECTOR DE TELÉFONO ---
-                          IntlPhoneField(
-                            initialCountryCode: 'EC',
-                            dropdownIconPosition: IconPosition.trailing,
-                            dropdownTextStyle:
-                                const TextStyle(color: Colors.white),
-                            style: const TextStyle(color: Colors.white),
-                            cursorColor: const Color(0xFFE53935),
-                            decoration: InputDecoration(
-                              hintText: 'Número Celular',
-                              hintStyle: const TextStyle(
-                                  color: Colors.white24, fontSize: 14),
-                              filled: true,
-                              fillColor: Colors.white.withValues(alpha: 0.05),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(15),
-                                borderSide: BorderSide.none,
-                              ),
-                              contentPadding:
-                                  const EdgeInsets.symmetric(vertical: 18),
+                          inputDecorationTheme: InputDecorationTheme(
+                            hintStyle: const TextStyle(color: Colors.white24),
+                            labelStyle: const TextStyle(color: Colors.white70),
+                            fillColor: Colors.white.withValues(alpha: 0.05),
+                            filled: true,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                              borderSide: BorderSide(color: Colors.white10),
                             ),
-                            languageCode: "es",
-                            onChanged: (phone) {
-                              _telefonoCompleto = phone.completeNumber;
-                            },
-                            pickerDialogStyle: PickerDialogStyle(
-                              backgroundColor: const Color(0xFF0F172A),
-                              countryNameStyle:
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            _buildField(
+                              _nombreController,
+                              "Nombre Completo",
+                              Icons.person_outline,
+                            ),
+                            const SizedBox(height: 15),
+                            _buildField(
+                              _emailController,
+                              "Correo Electrónico",
+                              Icons.alternate_email,
+                            ),
+                            const SizedBox(height: 15),
+
+                            // --- SELECTOR DE TELÉFONO ---
+                            IntlPhoneField(
+                              initialCountryCode: 'EC',
+                              dropdownIconPosition: IconPosition.trailing,
+                              dropdownTextStyle:
                                   const TextStyle(color: Colors.white),
-                              countryCodeStyle:
-                                  const TextStyle(color: Colors.white70),
-                              searchFieldCursorColor: const Color(0xFFE53935),
-                              searchFieldInputDecoration: InputDecoration(
-                                hintText: 'Buscar país...',
-                                hintStyle:
-                                    const TextStyle(color: Colors.white24),
-                                prefixIcon: const Icon(Icons.search,
-                                    color: Colors.white38),
-                                enabledBorder: UnderlineInputBorder(
-                                    borderSide:
-                                        BorderSide(color: Colors.white12)),
-                                focusedBorder: UnderlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color: const Color(0xFFE53935))),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-
-                          _buildField(
-                            _cedulaController,
-                            "Cédula / DNI / ID",
-                            Icons.badge_outlined,
-                          ),
-                          const SizedBox(height: 20),
-
-                          // --- SELECTOR DE PAÍS/CIUDAD ---
-                          const Text(
-                            "UBICACIÓN GEOGRÁFICA",
-                            style: TextStyle(
-                                color: Colors.white38,
-                                fontSize: 9,
-                                letterSpacing: 1),
-                          ),
-                          const SizedBox(height: 10),
-                          CSCPickerPlus(
-                            showStates: true,
-                            showCities: true,
-                            flagState: CountryFlag.ENABLE,
-                            dropdownDecoration: BoxDecoration(
-                                borderRadius:
-                                    const BorderRadius.all(Radius.circular(15)),
-                                color: Colors.white.withValues(alpha: 0.05),
-                                border: Border.all(
-                                    color: Colors.white10, width: 1)),
-                            disabledDropdownDecoration: BoxDecoration(
-                                borderRadius:
-                                    const BorderRadius.all(Radius.circular(15)),
-                                color: Colors.white.withValues(alpha: 0.02),
-                                border: Border.all(
-                                    color: Colors.white10, width: 1)),
-                            countrySearchPlaceholder: "Buscar País",
-                            stateSearchPlaceholder: "Buscar Estado",
-                            citySearchPlaceholder: "Buscar Ciudad",
-                            countryDropdownLabel: "País",
-                            stateDropdownLabel: "Estado / Provincia",
-                            cityDropdownLabel: "Ciudad",
-                            selectedItemStyle: const TextStyle(
-                                color: Colors.white, fontSize: 13),
-                            dropdownHeadingStyle: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold),
-                            dropdownItemStyle: const TextStyle(
-                                color: Colors.white, fontSize: 13),
-                            dropdownDialogRadius: 20.0,
-                            searchBarRadius: 10.0,
-                            onCountryChanged: (value) {
-                              setState(() => _paisSeleccionado = value);
-                            },
-                            onStateChanged: (value) {
-                              setState(() => _estadoSeleccionado =
-                                  _cleanLocationName(value));
-                            },
-                            onCityChanged: (value) {
-                              setState(() => _ciudadSeleccionada =
-                                  _cleanLocationName(value));
-                            },
-                          ),
-                          const SizedBox(height: 20),
-
-                          _buildField(
-                            _passController,
-                            "Contraseña Segura",
-                            Icons.lock_outline,
-                            obscure: true,
-                          ),
-                          const SizedBox(height: 20),
-
-                          // T&C Checkbox
-                          Theme(
-                            data: ThemeData(
-                              unselectedWidgetColor: Colors.white24,
-                            ),
-                            child: CheckboxListTile(
-                              value: _aceptaTerminos,
-                              onChanged: (val) => setState(
-                                  () => _aceptaTerminos = val ?? false),
-                              title: const Text(
-                                "Acepto los términos, condiciones y políticas de privacidad.",
-                                style: TextStyle(
-                                  color: Colors.white54,
-                                  fontSize: 11,
+                              style: const TextStyle(color: Colors.white),
+                              cursorColor: const Color(0xFFE53935),
+                              decoration: InputDecoration(
+                                hintText: 'Número Celular',
+                                hintStyle: const TextStyle(
+                                    color: Colors.white24, fontSize: 14),
+                                filled: true,
+                                fillColor: Colors.white.withValues(alpha: 0.05),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                  borderSide: BorderSide.none,
                                 ),
+                                contentPadding:
+                                    const EdgeInsets.symmetric(vertical: 18),
                               ),
-                              controlAffinity: ListTileControlAffinity.leading,
-                              contentPadding: EdgeInsets.zero,
-                              activeColor: const Color(0xFFE53935),
-                              checkColor: Colors.white,
-                            ),
-                          ),
-
-                          const SizedBox(height: 25),
-
-                          _isLoading
-                              ? const CircularProgressIndicator(
-                                  color: Color(0xFFE53935),
-                                )
-                              : ElevatedButton(
-                                  onPressed: _handleRegister,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFE53935),
-                                    foregroundColor: Colors.white,
-                                    minimumSize:
-                                        const Size(double.infinity, 55),
-                                    elevation: 0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(15),
-                                    ),
-                                  ),
-                                  child: const Text(
-                                    "UNIRSE A LA RED",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1.2,
-                                    ),
+                              languageCode: "es",
+                              onChanged: (phone) {
+                                _telefonoCompleto = phone.completeNumber;
+                              },
+                              pickerDialogStyle: PickerDialogStyle(
+                                backgroundColor: const Color(0xFF0F172A),
+                                countryNameStyle: const TextStyle(
+                                    color: Colors.white, fontSize: 14),
+                                countryCodeStyle: const TextStyle(
+                                    color: Colors.white70, fontSize: 13),
+                                searchFieldCursorColor: const Color(0xFFE53935),
+                                searchFieldInputDecoration: InputDecoration(
+                                  hintText: 'Buscar país...',
+                                  hintStyle:
+                                      const TextStyle(color: Colors.white24),
+                                  prefixIcon: const Icon(Icons.search,
+                                      color: Colors.white38),
+                                  filled: true,
+                                  fillColor:
+                                      Colors.white.withValues(alpha: 0.05),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(15),
+                                    borderSide: BorderSide.none,
                                   ),
                                 ),
-                        ],
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+
+                            _buildField(
+                              _cedulaController,
+                              "Cédula / DNI / ID",
+                              Icons.badge_outlined,
+                            ),
+                            const SizedBox(height: 20),
+
+                            // --- SELECTOR DE PAÍS/CIUDAD ---
+                            const Text(
+                              "UBICACIÓN GEOGRÁFICA",
+                              style: TextStyle(
+                                  color: Colors.white38,
+                                  fontSize: 9,
+                                  letterSpacing: 1),
+                            ),
+                            const SizedBox(height: 10),
+                            CSCPickerPlus(
+                              showStates: true,
+                              showCities: true,
+                              flagState: CountryFlag.ENABLE,
+                              countryStateLanguage:
+                                  CountryStateLanguage.englishOrNative,
+                              dropdownDecoration: BoxDecoration(
+                                  borderRadius: const BorderRadius.all(
+                                      Radius.circular(15)),
+                                  color: Colors.white.withValues(alpha: 0.05),
+                                  border: Border.all(
+                                      color: Colors.white10, width: 1)),
+                              disabledDropdownDecoration: BoxDecoration(
+                                  borderRadius: const BorderRadius.all(
+                                      Radius.circular(15)),
+                                  color: Colors.white.withValues(alpha: 0.02),
+                                  border: Border.all(
+                                      color: Colors.white10, width: 1)),
+                              countrySearchPlaceholder: "Buscar País",
+                              stateSearchPlaceholder: "Buscar Estado",
+                              citySearchPlaceholder: "Buscar Ciudad",
+                              countryDropdownLabel: "País",
+                              stateDropdownLabel: "Estado / Provincia",
+                              cityDropdownLabel: "Ciudad",
+                              selectedItemStyle: const TextStyle(
+                                  color: Colors.white, fontSize: 14),
+                              dropdownHeadingStyle: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold),
+                              dropdownItemStyle: const TextStyle(
+                                  color: Colors.white, fontSize: 14),
+                              dropdownDialogRadius: 20.0,
+                              searchBarRadius: 10.0,
+                              onCountryChanged: (value) {
+                                setState(() => _paisSeleccionado = value);
+                              },
+                              onStateChanged: (value) {
+                                setState(() => _estadoSeleccionado =
+                                    _cleanLocationName(value));
+                              },
+                              onCityChanged: (value) {
+                                setState(() => _ciudadSeleccionada =
+                                    _cleanLocationName(value));
+                              },
+                            ),
+                            const SizedBox(height: 20),
+
+                            _buildField(
+                              _passController,
+                              "Contraseña Segura",
+                              Icons.lock_outline,
+                              obscure: true,
+                            ),
+                            const SizedBox(height: 20),
+
+                            // T&C Checkbox
+                            Theme(
+                              data: ThemeData(
+                                unselectedWidgetColor: Colors.white24,
+                              ),
+                              child: CheckboxListTile(
+                                value: _aceptaTerminos,
+                                onChanged: (val) => setState(
+                                    () => _aceptaTerminos = val ?? false),
+                                title: const Text(
+                                  "Acepto los términos, condiciones y políticas de privacidad.",
+                                  style: TextStyle(
+                                    color: Colors.white54,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                                controlAffinity:
+                                    ListTileControlAffinity.leading,
+                                contentPadding: EdgeInsets.zero,
+                                activeColor: const Color(0xFFE53935),
+                                checkColor: Colors.white,
+                              ),
+                            ),
+
+                            const SizedBox(height: 25),
+
+                            _isLoading
+                                ? const CircularProgressIndicator(
+                                    color: Color(0xFFE53935),
+                                  )
+                                : ElevatedButton(
+                                    onPressed: _handleRegister,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFFE53935),
+                                      foregroundColor: Colors.white,
+                                      minimumSize:
+                                          const Size(double.infinity, 55),
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(15),
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      "UNIRSE A LA RED",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1.2,
+                                      ),
+                                    ),
+                                  ),
+                          ],
+                        ),
                       ),
                     ),
 
