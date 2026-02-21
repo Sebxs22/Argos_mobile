@@ -1,84 +1,81 @@
-# 🛡️ ARGOS - Seguridad Inteligente Movil
+# 🛡️ ARGOS - Inteligencia Proactiva en Seguridad Personal
 
-[![Build & Release APK](https://github.com/Sebxs22/Argos_mobile/actions/workflows/release.yml/badge.svg)](https://github.com/Sebxs22/Argos_mobile/actions/workflows/release.yml)
+[![Estado de Compilación](https://github.com/Sebxs22/Argos_mobile/actions/workflows/release.yml/badge.svg)](https://github.com/Sebxs22/Argos_mobile/actions/workflows/release.yml)
+[![Versión](https://img.shields.io/badge/Versi%C3%B3n-1.0.5-E53935.svg)](https://github.com/Sebxs22/Argos_mobile/releases/latest)
+[![Propietario](https://img.shields.io/badge/Propiedad-Privada-red.svg)](#-aviso-legal-y-propiedad-intelectual)
 
-**ARGOS** es una plataforma de seguridad personal avanzada diseñada para proteger a los usuarios en situaciones críticas mediante tecnología de detección proactiva y redes de confianza. 
-
----
-
-## 🚀 Zaz Flow (Descarga Directa)
-
-¿Quieres probar la última versión ahora mismo? No necesitas compilar nada.
-
-[👉 **DESCARGAR ÚLTIMA VERSIÓN (APK)**](https://github.com/Sebxs22/Argos_mobile/releases/latest/download/app-release.apk)
-
-*Nota: Una vez instalada, la app te avisará automáticamente cuando haya nuevas actualizaciones disponibles gracias a nuestro sistema Seamless OTA.*
+**ARGOS** es un ecosistema de seguridad móvil de alto rendimiento que redefine la protección personal mediante detección inteligente de riesgos y redes de respuesta inmediata. Diseñado con una estética **Glassmorphism Premium**, ofrece una experiencia de usuario fluida y sofisticada.
 
 ---
 
-## ✨ Características Principales
+## 🚀 Zaz Flow: Actualización Continua
 
-### 👁️ Ojo Guardián
-Sistema inteligente de detección de caídas y emergencias basado en sensores inerciales del dispositivo. Activa una cuenta regresiva automática antes de alertar a tu círculo de confianza.
+ARGOS incorpora un sistema de actualización **Seamless OTA**. No necesitas entrar a una tienda de aplicaciones para estar protegido con lo último.
 
-### 👥 Círculo de Confianza
-Gestión de guardianes y protegidos. Vincula a tus familiares y amigos mediante códigos únicos para que reciban notificaciones en tiempo real si te encuentras en peligro.
+[📥 **DESCARGAR ÚLTIMA VERSIÓN (APK OFICIAL)**](https://github.com/Sebxs22/Argos_mobile/releases/latest/download/app-release.apk)
 
-### 📍 Santuarios y Rutas Seguras
-Visualización de zonas seguras ("Santuarios") en el mapa y cálculo de rutas protegidas para minimizar riesgos en tus trayectos diarios.
-
-### 🆘 Alertas Críticas
-Sistema de notificaciones push de alta prioridad que funcionan incluso en segundo plano, enviando tu ubicación exacta y estado actual a tus guardianes.
+> [!TIP]
+> **Instalación Inteligente**: Una vez instalada, la app detectará automáticamente futuros cambios en el código y te notificará para actualizar al instante.
 
 ---
 
-## 🛠️ Stack Tecnológico
+## ⚡ Innovaciones de ARGOS
 
-- **Frontend**: [Flutter](https://flutter.dev/) (Dart) - UI Moderna con Glassmorphism.
-- **Backend / DB**: [Supabase](https://supabase.com/) - Autenticación y base de datos en tiempo real.
-- **Notificaciones**: [OneSignal](https://onesignal.com/) - Infraestructura de mensajería push a escala.
-- **CI/CD**: [GitHub Actions](https://github.com/features/actions) - Compilación y despliegue automatizado.
-- **Mapas**: [Flutter Map](https://pub.dev/packages/flutter_map) + OpenStreetMap.
+### 👁️ El Ojo Guardián
+Algoritmos avanzados que analizan los sensores del dispositivo para detectar caídas bruscas o comportamientos inusuales. En caso de riesgo, activa un protocolo de emergencia con cuenta regresiva.
+
+### 👪 Círculo de Confianza
+Tu red de seguridad humana. Vincula a tus "Guardianes" para que reciban tu ubicación, nivel de batería y alertas críticas en tiempo real, incluso con la app cerrada.
+
+### 🗺️ Rutas y Santuarios
+Mapa interactivo con zonas de refugio ("Santuarios") y trazado de rutas seguras basadas en niveles de riesgo locales.
+
+### 🔔 Notificaciones de Alta Prioridad
+Infraestructura de mensajería crítica que garantiza la entrega de alertas en menos de 2 segundos a todos tus contactos de emergencia.
 
 ---
 
-## ⚙️ Configuración del Entorno
+## 🏗️ Arquitectura Técnica
 
-Si eres desarrollador y quieres replicar el entorno, necesitas un archivo `.env` en la raíz con las siguientes claves:
+- **Framework**: Flutter 3.x (Dart) - Arquitectura limpia y escalable.
+- **Data Core**: Supabase Realtime - Sincronización instantánea de estados de emergencia.
+- **Push Engine**: OneSignal REST API - Entrega garantizada de alertas críticas.
+- **Automación**: GitHub Actions (CI/CD) - Compilación en la nube y sincronización automática de versiones.
+- **Design System**: Glassmorphism UI - Una interfaz que se siente viva, premium y moderna.
+
+---
+
+## ⚠️ Aviso Legal y Propiedad Intelectual
+
+> [!IMPORTANT]
+> **PROPIEDAD EXCLUSIVA Y PRIVADA**
+> 
+> Todo el código fuente, diseño de interfaces, logotipos, algoritmos y documentación contenidos en este proyecto son de **propiedad exclusiva de Luis Sebastián (Sebxs22)**. 
+> 
+> - **Prohibida la Reproducción**: No se permite la copia, distribución o modificación de este código sin autorización expresa y por escrito del autor.
+> - **Uso Comercial**: Queda estrictamente prohibido el uso de este software para fines comerciales sin la licencia correspondiente.
+> - **Confidencialidad**: Los algoritmos de detección de riesgo y la arquitectura de red son información propietaria y confidencial.
+>
+> *Cualquier uso no autorizado será sujeto a las acciones legales pertinentes.*
+
+---
+
+## 🛠️ Configuración de Desarrollo
+
+Para replicar el entorno de desarrollo, es obligatorio contar con un archivo `.env` configurado:
 
 ```env
-SUPABASE_URL=tu_url_de_supabase
-SUPABASE_ANON_KEY=tu_clave_anon
-ONESIGNAL_APP_ID=tu_id_de_app
-ONESIGNAL_REST_API_KEY=tu_clave_rest_api
+SUPABASE_URL=argos_project_url
+SUPABASE_ANON_KEY=tu_clave_anon_secreta
+ONESIGNAL_APP_ID=uuid_de_onesignal
+ONESIGNAL_REST_API_KEY=key_de_comunicacion_push
 ```
 
-### Comandos útiles:
+### Ejecución rápida:
 ```bash
-# Obtener dependencias
 flutter pub get
-
-# Ejecutar en modo debug
-flutter run
-
-# Generar versión de producción
-flutter build apk --release
+flutter run --release
 ```
 
 ---
-
-## 🤖 Automatización (CI/CD)
-
-Este repositorio utiliza **GitHub Actions** para:
-1. Validar la integridad del código en cada commit.
-2. Compilar automáticamente el APK en la nube.
-3. Publicar versiones automáticas bajo el tag `latest` para el sistema de actualizaciones OTA.
-
----
-
-## 📄 Licencia
-
-Este proyecto es parte de un desarrollo académico y profesional por **[Sebxs22]**. Todos los derechos reservados.
-
----
-*Desarrollado con ❤️ para un mundo más seguro.*
+*Desarrollado con precisión técnica por Luis Sebastián. 🛡️*
