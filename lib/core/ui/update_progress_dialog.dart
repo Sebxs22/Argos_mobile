@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:ota_update/ota_update.dart';
 import 'glass_box.dart';
@@ -22,6 +23,13 @@ class _UpdateProgressDialogState extends State<UpdateProgressDialog> {
   double _progress = 0;
   String _status = "Preparando descarga...";
   bool _isDownloading = false;
+  StreamSubscription<OtaEvent>? _otaSubscription;
+
+  @override
+  void dispose() {
+    _otaSubscription?.cancel();
+    super.dispose();
+  }
 
   void _startDownload() {
     setState(() {
@@ -30,8 +38,9 @@ class _UpdateProgressDialogState extends State<UpdateProgressDialog> {
     });
 
     try {
-      OtaUpdate().execute(widget.downloadUrl).listen(
+      _otaSubscription = OtaUpdate().execute(widget.downloadUrl).listen(
         (OtaEvent event) {
+          if (!mounted) return;
           setState(() {
             _progress = double.tryParse(event.value ?? "0") ?? 0;
 
@@ -40,13 +49,13 @@ class _UpdateProgressDialogState extends State<UpdateProgressDialog> {
                 _status = "Descargando: ${_progress.toInt()}%";
                 break;
               case OtaStatus.INSTALLING:
-                _status = "Instalando actualización...";
+                _status = "Instalando...";
                 break;
               case OtaStatus.ALREADY_RUNNING_ERROR:
                 _status = "Ya hay una descarga en curso.";
                 break;
               case OtaStatus.PERMISSION_NOT_GRANTED_ERROR:
-                _status = "Error: Permisos denegados.";
+                _status = "Error de permisos.";
                 break;
               default:
                 _status = "Error en la actualización.";
@@ -54,6 +63,7 @@ class _UpdateProgressDialogState extends State<UpdateProgressDialog> {
           });
         },
         onError: (e) {
+          if (!mounted) return;
           setState(() {
             _status = "Error: $e";
             _isDownloading = false;
@@ -61,6 +71,7 @@ class _UpdateProgressDialogState extends State<UpdateProgressDialog> {
         },
       );
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _status = "Error inesperado: $e";
         _isDownloading = false;
@@ -215,17 +226,6 @@ class _UpdateProgressDialogState extends State<UpdateProgressDialog> {
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        if (_progress < 100)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(
-                              "${_progress.toInt()}% completado",
-                              style: const TextStyle(
-                                color: Colors.white38,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
                       ],
                     ),
                   ],
