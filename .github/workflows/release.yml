@@ -38,8 +38,16 @@ jobs:
           echo "ONESIGNAL_REST_API_KEY=${{ secrets.ONESIGNAL_REST_API_KEY }}" >> .env
           flutter pub get
         
+      - name: Decode Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
+
       - name: Build APK (Release)
         run: flutter build apk --release --no-tree-shake-icons
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         
       - name: Create GitHub Release
         id: create_release
