@@ -23,16 +23,16 @@ subprojects {
         if (project.plugins.hasPlugin("com.android.library") || project.plugins.hasPlugin("com.android.application")) {
             val android = project.extensions.findByName("android") as? com.android.build.gradle.BaseExtension
             android?.apply {
-                compileSdkVersion(35)
+                compileSdkVersion(36)
                 defaultConfig {
-                    targetSdkVersion(35)
+                    targetSdkVersion(34)
                 }
             }
 
             if (!project.hasProperty("flutter")) {
                 project.extensions.extraProperties.set("flutter", mapOf(
-                    "compileSdkVersion" to 35,
-                    "targetSdkVersion" to 35,
+                    "compileSdkVersion" to 36,
+                    "targetSdkVersion" to 34,
                     "minSdkVersion" to 21
                 ))
             }
