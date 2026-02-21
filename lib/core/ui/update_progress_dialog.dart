@@ -49,16 +49,22 @@ class _UpdateProgressDialogState extends State<UpdateProgressDialog> {
                 _status = "Descargando: ${_progress.toInt()}%";
                 break;
               case OtaStatus.INSTALLING:
-                _status = "Instalando...";
+                _status = "Iniciando instalación...";
                 break;
               case OtaStatus.ALREADY_RUNNING_ERROR:
-                _status = "Ya hay una descarga en curso.";
+                _status = "Descarga en curso. Espera.";
                 break;
               case OtaStatus.PERMISSION_NOT_GRANTED_ERROR:
-                _status = "Error de permisos.";
+                _status = "Error: Faltan permisos de instalación.";
+                break;
+              case OtaStatus.DOWNLOAD_ERROR:
+                _status = "Error de conexión en la descarga.";
+                break;
+              case OtaStatus.CHECKSUM_ERROR:
+                _status = "Error de integridad del archivo.";
                 break;
               default:
-                _status = "Error en la actualización.";
+                _status = "Estado: ${event.status}";
             }
           });
         },
@@ -150,7 +156,8 @@ class _UpdateProgressDialogState extends State<UpdateProgressDialog> {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFE53935).withOpacity(0.3),
+                            color:
+                                const Color(0xFFE53935).withValues(alpha: 0.3),
                             blurRadius: 15,
                             offset: const Offset(0, 8),
                           ),
@@ -206,7 +213,7 @@ class _UpdateProgressDialogState extends State<UpdateProgressDialog> {
                                 boxShadow: [
                                   BoxShadow(
                                     color: const Color(0xFFE53935)
-                                        .withOpacity(0.4),
+                                        .withValues(alpha: 0.4),
                                     blurRadius: 10,
                                   ),
                                 ],
@@ -237,7 +244,7 @@ class _UpdateProgressDialogState extends State<UpdateProgressDialog> {
                         child: Text(
                           "Omitir por ahora",
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.3),
+                            color: Colors.white.withValues(alpha: 0.3),
                             fontWeight: FontWeight.w400,
                           ),
                         ),
