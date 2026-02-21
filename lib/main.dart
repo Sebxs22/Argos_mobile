@@ -19,6 +19,7 @@ import 'core/network/version_service.dart'; // Import VersionService
 import 'core/ui/argos_background.dart'; // Import ArgosBackground
 import 'core/theme/theme_service.dart'; // Import ThemeService
 import 'features/profile/ui/settings_screen.dart'; // Import SettingsScreen
+import 'core/ui/connectivity_badge.dart'; // Import ConnectivityBadge
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -275,85 +276,96 @@ class _MainNavigatorState extends State<MainNavigator> {
     bool isGuardianScreen = _selectedIndex == 0;
 
     return ArgosBackground(
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        extendBodyBehindAppBar: true,
-        extendBody: true,
-        appBar: isGuardianScreen
-            ? AppBar(
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                actions: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 20.0, top: 10.0),
-                    child: GestureDetector(
-                      onTap: _showProfileMenu,
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? Colors.white.withValues(alpha: 0.1)
-                              : Colors.black.withValues(alpha: 0.05),
-                          border: Border.all(
-                            color:
-                                Theme.of(context).brightness == Brightness.dark
+      child: Stack(
+        children: [
+          Scaffold(
+            backgroundColor: Colors.transparent,
+            extendBodyBehindAppBar: true,
+            extendBody: true,
+            appBar: isGuardianScreen
+                ? AppBar(
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    actions: [
+                      Padding(
+                        padding: const EdgeInsets.only(right: 20.0, top: 10.0),
+                        child: GestureDetector(
+                          onTap: _showProfileMenu,
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? Colors.white.withValues(alpha: 0.1)
+                                  : Colors.black.withValues(alpha: 0.05),
+                              border: Border.all(
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
                                     ? Colors.white12
                                     : Colors.black12,
+                              ),
+                            ),
+                            child: Icon(
+                              Icons.person_outline,
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? Colors.white
+                                  : Colors.black87,
+                              size: 20,
+                            ),
                           ),
                         ),
-                        child: Icon(
-                          Icons.person_outline,
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? Colors.white
-                              : Colors.black87,
-                          size: 20,
-                        ),
                       ),
+                    ],
+                  )
+                : null,
+            body: AnimatedPadding(
+              duration: const Duration(milliseconds: 300),
+              padding: EdgeInsets.only(top: isGuardianScreen ? 80 : 0),
+              child: PageView(
+                controller: _pageController,
+                onPageChanged: _onPageChanged,
+                physics: const BouncingScrollPhysics(),
+                children: _pages,
+              ),
+            ),
+            bottomNavigationBar: Padding(
+              padding: const EdgeInsets.fromLTRB(25, 0, 25, 30),
+              child: GlassBox(
+                borderRadius: 40,
+                blur: 15,
+                opacity: Theme.of(context).brightness == Brightness.dark
+                    ? 0.1
+                    : 0.05,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildNavItem(
+                      0,
+                      Icons.remove_red_eye_outlined,
+                      Icons.remove_red_eye,
+                      "Guardián",
                     ),
-                  ),
-                ],
-              )
-            : null,
-        body: AnimatedPadding(
-          duration: const Duration(milliseconds: 300),
-          padding: EdgeInsets.only(top: isGuardianScreen ? 80 : 0),
-          child: PageView(
-            controller: _pageController,
-            onPageChanged: _onPageChanged,
-            physics: const BouncingScrollPhysics(),
-            children: _pages,
-          ),
-        ),
-        bottomNavigationBar: Padding(
-          padding: const EdgeInsets.fromLTRB(25, 0, 25, 30),
-          child: GlassBox(
-            borderRadius: 40,
-            blur: 15,
-            opacity:
-                Theme.of(context).brightness == Brightness.dark ? 0.1 : 0.05,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildNavItem(
-                  0,
-                  Icons.remove_red_eye_outlined,
-                  Icons.remove_red_eye,
-                  "Guardián",
+                    _buildNavItem(
+                      1,
+                      Icons.shield_outlined,
+                      Icons.shield,
+                      "Santuarios",
+                    ),
+                    _buildNavItem(2, Icons.map_outlined, Icons.map, "Rutas"),
+                  ],
                 ),
-                _buildNavItem(
-                  1,
-                  Icons.shield_outlined,
-                  Icons.shield,
-                  "Santuarios",
-                ),
-                _buildNavItem(2, Icons.map_outlined, Icons.map, "Rutas"),
-              ],
+              ),
             ),
           ),
-        ),
+          // Indicador de conectividad sutil en la parte superior
+          const ConnectivityBadge(),
+        ],
       ),
     );
   }

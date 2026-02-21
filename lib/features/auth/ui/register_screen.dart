@@ -7,6 +7,7 @@ import 'package:csc_picker_plus/csc_picker_plus.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:intl_phone_field/country_picker_dialog.dart';
 import '../../../core/utils/validators.dart';
+import '../../../core/utils/ui_utils.dart'; // Import UiUtils
 import '../../profile/ui/agreements_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -56,33 +57,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _paisSeleccionado.isEmpty ||
         _estadoSeleccionado.isEmpty ||
         _ciudadSeleccionada.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Por favor, llena todos los campos obligatorios"),
-        ),
-      );
+      UiUtils.showWarning("Por favor, llena todos los campos obligatorios");
       return;
     }
 
-    // Validación de Cédula Real
     if (!Validators.isValidCedula(_cedulaController.text)) {
       setState(() => _cedulaInvalida = true);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Cédula o DNI ecuatoriano no válido"),
-          backgroundColor: Color(0xFFE53935),
-        ),
-      );
+      UiUtils.showError("Cédula o DNI ecuatoriano no válido");
       return;
     }
 
     if (!_aceptaTerminos) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Debes aceptar los términos y condiciones"),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      UiUtils.showWarning("Debes aceptar los términos y condiciones");
       return;
     }
 
@@ -113,12 +99,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           (route) => false,
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Error: $error"),
-            backgroundColor: const Color(0xFFE53935),
-          ),
-        );
+        UiUtils.showError(error);
       }
     }
   }

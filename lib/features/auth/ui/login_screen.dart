@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/network/auth_service.dart';
 import '../../../core/ui/glass_box.dart';
 import '../../../core/ui/argos_background.dart';
+import '../../../core/utils/ui_utils.dart'; // Import UiUtils
 import '../../../../main.dart'; // Para navegar al MainNavigator
 import 'register_screen.dart';
 
@@ -20,9 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _handleLogin() async {
     if (_emailController.text.isEmpty || _passController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Por favor, completa todos los campos")),
-      );
+      UiUtils.showWarning("Por favor, completa todos los campos");
       return;
     }
 
@@ -36,18 +35,14 @@ class _LoginScreenState extends State<LoginScreen> {
     if (mounted) {
       setState(() => _isLoading = false);
       if (error == null) {
+        UiUtils.showSuccess("¡Bienvenido a ARGOS!");
         // Navegamos al MainNavigator para tener acceso a todas las pestañas
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const MainNavigator()),
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(error),
-            backgroundColor: const Color(0xFFE53935),
-          ),
-        );
+        UiUtils.showError(error);
       }
     }
   }
