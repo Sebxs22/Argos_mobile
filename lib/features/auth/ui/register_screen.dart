@@ -334,10 +334,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                         const SizedBox(height: 10),
                         // --- SELECTOR DE UBICACIÓN (Vertical Layout) ---
+                        // Wrap in a separate widget or use a key to minimize rebuilds if possible
                         _buildFieldWrapper(
                           isDark: isDark,
                           padding: const EdgeInsets.all(12),
                           child: CSCPickerPlus(
+                            key: const ValueKey(
+                                'csc_picker'), // Ensure it doesn't rebuild entire state needlessly
                             showStates: true,
                             showCities: true,
                             flagState: CountryFlag.ENABLE,
@@ -365,15 +368,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             dropdownDialogRadius: 20.0,
                             searchBarRadius: 10.0,
                             onCountryChanged: (value) {
-                              setState(() => _paisSeleccionado = value);
+                              if (_paisSeleccionado != value) {
+                                setState(() => _paisSeleccionado = value);
+                              }
                             },
                             onStateChanged: (value) {
-                              setState(() => _estadoSeleccionado =
-                                  _cleanLocationName(value));
+                              String cleaned = _cleanLocationName(value);
+                              if (_estadoSeleccionado != cleaned) {
+                                setState(() => _estadoSeleccionado = cleaned);
+                              }
                             },
                             onCityChanged: (value) {
-                              setState(() => _ciudadSeleccionada =
-                                  _cleanLocationName(value));
+                              String cleaned = _cleanLocationName(value);
+                              if (_ciudadSeleccionada != cleaned) {
+                                setState(() => _ciudadSeleccionada = cleaned);
+                              }
                             },
                           ),
                         ),

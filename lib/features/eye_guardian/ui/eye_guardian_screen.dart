@@ -166,9 +166,15 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
                 letterSpacing: 5.0,
                 shadows: [
                   Shadow(
-                    color: glowColor.withValues(alpha: isDark ? 0.5 : 0.2),
+                    color: glowColor.withValues(alpha: isDark ? 0.5 : 0.3),
                     blurRadius: 20,
                   ),
+                  if (!isDark)
+                    Shadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
                 ],
               ),
             ),
@@ -340,8 +346,17 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
                     decoration: BoxDecoration(
                       color: isDark
                           ? Colors.white.withValues(alpha: 0.05)
-                          : Colors.black.withValues(alpha: 0.02),
+                          : Colors.white.withValues(alpha: 0.7),
                       borderRadius: BorderRadius.circular(30),
+                      boxShadow: !isDark
+                          ? [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 5),
+                              )
+                            ]
+                          : [],
                     ),
                     child: Text(
                       "ACTIVACIÓN MANUAL",

@@ -245,9 +245,9 @@ class _RoutesScreenState extends State<RoutesScreen> {
       right: 20,
       child: GlassBox(
         borderRadius: 20,
-        opacity: isDark ? 0.1 : 0.05,
+        opacity: isDark ? 0.1 : 0.08,
         blur: 15,
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 20),
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 10),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
@@ -262,24 +262,33 @@ class _RoutesScreenState extends State<RoutesScreen> {
 
   Widget _transportIcon(IconData icon, String mode, bool isDark) {
     bool isSelected = _selectedMode == mode;
-    return IconButton(
-      icon: Icon(
-        icon,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      decoration: BoxDecoration(
         color: isSelected
-            ? Colors.redAccent
-            : (isDark ? Colors.white54 : Colors.black45),
-        size: 28,
+            ? Colors.redAccent.withValues(alpha: isDark ? 0.15 : 0.1)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(15),
       ),
-      onPressed: () {
-        setState(() {
-          _selectedMode = mode;
-          _routePoints = []; // Reset visual
-          _eta = "--";
-          _distance = "--";
-          _securityScore = 0;
-        });
-        if (_destination != null) _obtenerRuta();
-      },
+      child: IconButton(
+        icon: Icon(
+          icon,
+          color: isSelected
+              ? Colors.redAccent
+              : (isDark ? Colors.white54 : Colors.black45),
+          size: 26,
+        ),
+        onPressed: () {
+          setState(() {
+            _selectedMode = mode;
+            _routePoints = []; // Reset visual
+            _eta = "--";
+            _distance = "--";
+            _securityScore = 0;
+          });
+          if (_destination != null) _obtenerRuta();
+        },
+      ),
     );
   }
 
@@ -290,7 +299,7 @@ class _RoutesScreenState extends State<RoutesScreen> {
       right: 20,
       child: GlassBox(
         borderRadius: 25,
-        opacity: isDark ? 0.2 : 0.1,
+        opacity: isDark ? 0.2 : 0.15,
         blur: 20,
         padding: const EdgeInsets.all(22),
         child: Column(

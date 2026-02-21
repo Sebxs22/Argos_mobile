@@ -529,21 +529,25 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
                     ),
                     decoration: BoxDecoration(
                       color: isActive
-                          ? baseColor.withValues(alpha: isDark ? 0.2 : 0.1)
+                          ? baseColor.withValues(alpha: isDark ? 0.2 : 0.15)
                           : (isDark
                               ? Colors.black.withValues(alpha: 0.4)
-                              : Colors.white.withValues(alpha: 0.8)),
+                              : Colors.white.withValues(alpha: 0.9)),
                       borderRadius: BorderRadius.circular(30),
                       border: Border.all(
                         color: isActive
                             ? baseColor
                             : (isDark ? Colors.white10 : Colors.black12),
+                        width: isActive ? 1.5 : 1,
                       ),
-                      boxShadow: isActive
+                      boxShadow: isActive || !isDark
                           ? [
                               BoxShadow(
-                                color: baseColor.withValues(alpha: 0.3),
-                                blurRadius: 8,
+                                color: isActive
+                                    ? baseColor.withValues(alpha: 0.3)
+                                    : Colors.black.withValues(alpha: 0.05),
+                                blurRadius: isActive ? 8 : 4,
+                                spreadRadius: isActive ? 1 : 0,
                               ),
                             ]
                           : [],

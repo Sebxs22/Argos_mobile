@@ -189,7 +189,7 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
                 Container(
                   margin: const EdgeInsets.all(20),
                   child: GlassBox(
-                    opacity: isDark ? 0.05 : 0.03,
+                    opacity: isDark ? 0.05 : 0.1,
                     borderRadius: 20,
                     padding: const EdgeInsets.all(20),
                     child: Column(
@@ -311,9 +311,18 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
       decoration: BoxDecoration(
         color: isDark
             ? Colors.white.withValues(alpha: 0.05)
-            : Colors.black.withValues(alpha: 0.03),
+            : Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(15),
         border: Border.all(color: isDark ? Colors.white10 : Colors.black12),
+        boxShadow: !isDark
+            ? [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                )
+              ]
+            : [],
       ),
       child: Row(
         children: [

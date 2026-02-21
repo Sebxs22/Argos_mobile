@@ -21,25 +21,44 @@ class GlassBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     // Usamos ClipRRect para recortar el efecto costoso solo al área necesaria
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(borderRadius),
-      child: BackdropFilter(
-        // Optimizamos el filtro
-        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-        child: Container(
-          padding: padding ?? const EdgeInsets.all(20.0),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: opacity),
-            borderRadius: BorderRadius.circular(borderRadius),
-            border:
-                border ??
-                Border.all(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  width: 1.0,
-                ),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(borderRadius),
+        boxShadow: !isDark
+            ? [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  spreadRadius: 1,
+                )
+              ]
+            : [],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: BackdropFilter(
+          // Optimizamos el filtro
+          filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+          child: Container(
+            padding: padding ?? const EdgeInsets.all(20.0),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.white.withValues(alpha: opacity)
+                  : Colors.white.withValues(alpha: opacity * 1.5),
+              borderRadius: BorderRadius.circular(borderRadius),
+              border: border ??
+                  Border.all(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.2)
+                        : Colors.black.withValues(alpha: 0.1),
+                    width: 1.0,
+                  ),
+            ),
+            child: child,
           ),
-          child: child,
         ),
       ),
     );
