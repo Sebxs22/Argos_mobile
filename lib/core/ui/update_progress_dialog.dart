@@ -30,38 +30,36 @@ class _UpdateProgressDialogState extends State<UpdateProgressDialog> {
     });
 
     try {
-      OtaUpdate()
-          .execute(widget.downloadUrl)
-          .listen(
-            (OtaEvent event) {
-              setState(() {
-                _progress = double.tryParse(event.value ?? "0") ?? 0;
+      OtaUpdate().execute(widget.downloadUrl).listen(
+        (OtaEvent event) {
+          setState(() {
+            _progress = double.tryParse(event.value ?? "0") ?? 0;
 
-                switch (event.status) {
-                  case OtaStatus.DOWNLOADING:
-                    _status = "Descargando: ${_progress.toInt()}%";
-                    break;
-                  case OtaStatus.INSTALLING:
-                    _status = "Instalando actualización...";
-                    break;
-                  case OtaStatus.ALREADY_RUNNING_ERROR:
-                    _status = "Ya hay una descarga en curso.";
-                    break;
-                  case OtaStatus.PERMISSION_NOT_GRANTED_ERROR:
-                    _status = "Error: Permisos denegados.";
-                    break;
-                  default:
-                    _status = "Error en la actualización.";
-                }
-              });
-            },
-            onError: (e) {
-              setState(() {
-                _status = "Error: $e";
-                _isDownloading = false;
-              });
-            },
-          );
+            switch (event.status) {
+              case OtaStatus.DOWNLOADING:
+                _status = "Descargando: ${_progress.toInt()}%";
+                break;
+              case OtaStatus.INSTALLING:
+                _status = "Instalando actualización...";
+                break;
+              case OtaStatus.ALREADY_RUNNING_ERROR:
+                _status = "Ya hay una descarga en curso.";
+                break;
+              case OtaStatus.PERMISSION_NOT_GRANTED_ERROR:
+                _status = "Error: Permisos denegados.";
+                break;
+              default:
+                _status = "Error en la actualización.";
+            }
+          });
+        },
+        onError: (e) {
+          setState(() {
+            _status = "Error: $e";
+            _isDownloading = false;
+          });
+        },
+      );
     } catch (e) {
       setState(() {
         _status = "Error inesperado: $e";
@@ -86,63 +84,158 @@ class _UpdateProgressDialogState extends State<UpdateProgressDialog> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(
-                  Icons.system_update_alt,
+                  Icons.auto_awesome,
                   color: Color(0xFFE53935),
-                  size: 50,
+                  size: 60,
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 15),
                 Text(
-                  "Actualización Disponible",
+                  "Nueva Versión Disponible",
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.5,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  "Versión v${widget.version}",
-                  style: const TextStyle(color: Colors.white70, fontSize: 14),
+                const SizedBox(height: 5),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white12,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    "v${widget.version}",
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 25),
+                const SizedBox(height: 30),
                 if (!_isDownloading) ...[
                   const Text(
-                    "Se recomienda actualizar para contar con las últimas mejoras de seguridad.",
-                    style: TextStyle(color: Colors.white54, fontSize: 13),
+                    "Se han detectado mejoras importantes para tu seguridad en ARGOS.",
+                    style: TextStyle(
+                      color: Colors.white60,
+                      fontSize: 14,
+                      height: 1.4,
+                    ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 30),
-                  ElevatedButton(
-                    onPressed: _startDownload,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE53935),
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
+                  const SizedBox(height: 35),
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFE53935), Color(0xFFC62828)],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFE53935).withOpacity(0.3),
+                          blurRadius: 15,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton(
+                      onPressed: _startDownload,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(double.infinity, 60),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      child: const Text(
+                        "ACTUALIZAR AHORA",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                        ),
                       ),
                     ),
-                    child: const Text("ACTUALIZAR AHORA"),
                   ),
                 ] else ...[
-                  LinearProgressIndicator(
-                    value: _progress / 100,
-                    backgroundColor: Colors.white12,
-                    color: const Color(0xFFE53935),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    _status,
-                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  Column(
+                    children: [
+                      Stack(
+                        children: [
+                          Container(
+                            height: 12,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: Colors.white12,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            height: 12,
+                            width: (MediaQuery.of(context).size.width - 140) *
+                                (_progress / 100),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFFFF5252), Color(0xFFE53935)],
+                              ),
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                      const Color(0xFFE53935).withOpacity(0.4),
+                                  blurRadius: 10,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 25),
+                      Text(
+                        _progress >= 100
+                            ? "¡Listo! Abriendo instalador..."
+                            : _status,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      if (_progress < 100)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            "${_progress.toInt()}% completado",
+                            style: const TextStyle(
+                              color: Colors.white38,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ],
                 if (!widget.isRequired && !_isDownloading)
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text(
-                      "Más tarde",
-                      style: TextStyle(color: Colors.white38),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 15),
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        "Omitir por ahora",
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.3),
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
                     ),
                   ),
               ],
