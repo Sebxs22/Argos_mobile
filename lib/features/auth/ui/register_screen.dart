@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../core/network/auth_service.dart';
 import '../../../core/ui/glass_box.dart';
@@ -140,8 +139,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: isDark
-                        ? Colors.white.withOpacity(0.03)
-                        : Colors.black.withOpacity(0.02),
+                        ? Colors.white.withValues(alpha: 0.03)
+                        : Colors.black.withValues(alpha: 0.02),
                     border: Border.all(
                       color: isDark ? Colors.white10 : Colors.black12,
                     ),
@@ -259,8 +258,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     color: secondaryTextColor, size: 20),
                                 filled: true,
                                 fillColor: isDark
-                                    ? Colors.white.withOpacity(0.05)
-                                    : Colors.black.withOpacity(0.03),
+                                    ? Colors.white.withValues(alpha: 0.05)
+                                    : Colors.black.withValues(alpha: 0.03),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide.none,
