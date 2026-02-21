@@ -47,16 +47,16 @@ Infraestructura de mensajería crítica que garantiza la entrega de alertas en m
 
 ## ⚠️ Aviso Legal y Propiedad Intelectual
 
-> [!IMPORTANT]
-> **PROPIEDAD EXCLUSIVA Y PRIVADA**
+> [!CAUTION]
+> **CÓDIGO PÚBLICO ≠ CÓDIGO ABIERTO (OPEN SOURCE)**
 > 
-> Todo el código fuente, diseño de interfaces, logotipos, algoritmos y documentación contenidos en este proyecto son de **propiedad exclusiva de Luis Sebastián (Sebxs22)**. 
+> Este repositorio es de visibilidad pública exclusivamente para fines de demostración de portafolio y revisión académica. **No posee ninguna licencia de uso libre.**
 > 
-> - **Prohibida la Reproducción**: No se permite la copia, distribución o modificación de este código sin autorización expresa y por escrito del autor.
-> - **Uso Comercial**: Queda estrictamente prohibido el uso de este software para fines comerciales sin la licencia correspondiente.
-> - **Confidencialidad**: Los algoritmos de detección de riesgo y la arquitectura de red son información propietaria y confidencial.
+> - **Todos los Derechos Reservados**: Luis Sebastián (Sebxs22) retiene la propiedad total y exclusiva de este software.
+> - **Prohibida la Reproducción**: Queda estrictamente prohibido el uso, copia, modificación, fusión, publicación o distribución de este código sin un permiso previo y por escrito del autor.
+> - **Uso Educativo Únicamente**: La visualización de este código no otorga ningún derecho de explotación comercial ni personal.
 >
-> *Cualquier uso no autorizado será sujeto a las acciones legales pertinentes.*
+> *Cualquier infracción a estos términos será tratada bajo las leyes de propiedad intelectual vigentes.*
 
 ---
 
