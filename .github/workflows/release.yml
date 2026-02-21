@@ -31,10 +31,10 @@ jobs:
       - name: Get dependencies
         run: |
           touch .env
-          echo "SUPABASE_URL=mock" >> .env
-          echo "SUPABASE_ANON_KEY=mock" >> .env
-          echo "ONESIGNAL_APP_ID=mock" >> .env
-          echo "ONESIGNAL_REST_API_KEY=mock" >> .env
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
+          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
+          echo "ONESIGNAL_APP_ID=${{ secrets.ONESIGNAL_APP_ID }}" >> .env
+          echo "ONESIGNAL_REST_API_KEY=${{ secrets.ONESIGNAL_REST_API_KEY }}" >> .env
           flutter pub get
         
       - name: Build APK (Release)
