@@ -1,7 +1,7 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../core/network/auth_service.dart';
 import '../../../core/ui/glass_box.dart';
+import '../../../core/ui/argos_background.dart';
 import '../../../../main.dart'; // Para navegar al MainNavigator
 import 'register_screen.dart';
 
@@ -54,162 +54,140 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF050511),
-      body: Stack(
-        children: [
-          // --- CAPA 1: FONDO AURORA (Igual al MainNavigator) ---
-          Positioned(
-            top: -100,
-            left: -100,
-            child: Container(
-              width: 400,
-              height: 400,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFFE53935).withValues(alpha: 0.15),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final secondaryTextColor = isDark ? Colors.white38 : Colors.black45;
+
+    return ArgosBackground(
+      child: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(30),
+          child: Column(
+            children: [
+              // Logo Principal
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.03)
+                      : Colors.black.withValues(alpha: 0.02),
+                  border: Border.all(
+                    color: isDark ? Colors.white10 : Colors.black12,
+                  ),
+                ),
+                child: Image.asset(
+                  'assets/images/icon.png',
+                  width: 60,
+                  height: 60,
+                  errorBuilder: (ctx, err, stack) => Icon(
+                    Icons.shield_moon_outlined,
+                    color: const Color(0xFFE53935),
+                    size: 50,
+                  ),
+                ),
               ),
-            ),
-          ),
-          Positioned(
-            bottom: -50,
-            right: -50,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFF2962FF).withValues(alpha: 0.1),
+              const SizedBox(height: 25),
+              Text(
+                "ARGOS",
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 8,
+                  color: textColor,
+                ),
               ),
-            ),
-          ),
-          BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 60, sigmaY: 60),
-            child: Container(color: Colors.transparent),
-          ),
+              Text(
+                "SISTEMA DE PROTECCIÓN URBANA",
+                style: TextStyle(
+                  fontSize: 10,
+                  letterSpacing: 2,
+                  color: secondaryTextColor,
+                ),
+              ),
+              const SizedBox(height: 50),
 
-          // --- CAPA 2: CONTENIDO ---
-          Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(30),
-              child: Column(
-                children: [
-                  // Logo o Icono de Cabecera
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withValues(alpha: 0.03),
-                      border: Border.all(color: Colors.white10),
+              // Caja de Login (Glass)
+              GlassBox(
+                borderRadius: 30,
+                opacity: isDark ? 0.05 : 0.03,
+                blur: 20,
+                padding: const EdgeInsets.all(30),
+                child: Column(
+                  children: [
+                    _buildInputField(
+                      controller: _emailController,
+                      hint: "Correo Electrónico",
+                      icon: Icons.alternate_email,
+                      isDark: isDark,
                     ),
-                    child: const Icon(
-                      Icons.shield_moon_outlined,
-                      color: Color(0xFFE53935),
-                      size: 50,
+                    const SizedBox(height: 20),
+                    _buildInputField(
+                      controller: _passController,
+                      hint: "Contraseña",
+                      icon: Icons.lock_outline,
+                      isPassword: true,
+                      isDark: isDark,
                     ),
-                  ),
-                  const SizedBox(height: 25),
-                  const Text(
-                    "ARGOS",
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 8,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const Text(
-                    "SISTEMA DE PROTECCIÓN URBANA",
-                    style: TextStyle(
-                      fontSize: 10,
-                      letterSpacing: 2,
-                      color: Colors.white38,
-                    ),
-                  ),
-                  const SizedBox(height: 50),
-
-                  // Caja de Login (Glass)
-                  GlassBox(
-                    borderRadius: 30,
-                    opacity: 0.05,
-                    blur: 20,
-                    padding: const EdgeInsets.all(30),
-                    child: Column(
-                      children: [
-                        _buildInputField(
-                          controller: _emailController,
-                          hint: "Correo Electrónico",
-                          icon: Icons.alternate_email,
-                        ),
-                        const SizedBox(height: 20),
-                        _buildInputField(
-                          controller: _passController,
-                          hint: "Contraseña",
-                          icon: Icons.lock_outline,
-                          isPassword: true,
-                        ),
-                        const SizedBox(height: 35),
-
-                        _isLoading
-                            ? const CircularProgressIndicator(
-                                color: Color(0xFFE53935),
-                              )
-                            : ElevatedButton(
-                                onPressed: _handleLogin,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFE53935),
-                                  foregroundColor: Colors.white,
-                                  minimumSize: const Size(double.infinity, 55),
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(15),
-                                  ),
-                                ),
-                                child: const Text(
-                                  "INICIAR SESIÓN",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 1.5,
-                                  ),
-                                ),
+                    const SizedBox(height: 35),
+                    _isLoading
+                        ? const CircularProgressIndicator(
+                            color: Color(0xFFE53935),
+                          )
+                        : ElevatedButton(
+                            onPressed: _handleLogin,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFE53935),
+                              foregroundColor: Colors.white,
+                              minimumSize: const Size(double.infinity, 55),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
                               ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  // Botón para ir al Registro
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const RegisterScreen(),
-                        ),
-                      );
-                    },
-                    child: RichText(
-                      text: const TextSpan(
-                        text: "¿No tienes una cuenta? ",
-                        style: TextStyle(color: Colors.white38, fontSize: 13),
-                        children: [
-                          TextSpan(
-                            text: "Regístrate",
-                            style: TextStyle(
-                              color: Color(0xFFE53935),
-                              fontWeight: FontWeight.bold,
+                            ),
+                            child: const Text(
+                              "INICIAR SESIÓN",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.5,
+                              ),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+
+              const SizedBox(height: 30),
+
+              // Botón para ir al Registro
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const RegisterScreen(),
+                    ),
+                  );
+                },
+                child: RichText(
+                  text: TextSpan(
+                    text: "¿No tienes una cuenta? ",
+                    style: TextStyle(color: secondaryTextColor, fontSize: 13),
+                    children: const [
+                      TextSpan(
+                        text: "Regístrate",
+                        style: TextStyle(
+                          color: Color(0xFFE53935),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -220,20 +198,33 @@ class _LoginScreenState extends State<LoginScreen> {
     required String hint,
     required IconData icon,
     bool isPassword = false,
+    bool isDark = true,
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.05)
+            : Colors.black.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(15),
       ),
       child: TextField(
         controller: controller,
         obscureText: isPassword,
-        style: const TextStyle(color: Colors.white, fontSize: 15),
+        style: TextStyle(
+          color: isDark ? Colors.white : Colors.black87,
+          fontSize: 15,
+        ),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(color: Colors.white24, fontSize: 14),
-          prefixIcon: Icon(icon, color: Colors.white54, size: 20),
+          hintStyle: TextStyle(
+            color: isDark ? Colors.white24 : Colors.black38,
+            fontSize: 14,
+          ),
+          prefixIcon: Icon(
+            icon,
+            color: isDark ? Colors.white54 : Colors.black45,
+            size: 20,
+          ),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 18),
         ),
