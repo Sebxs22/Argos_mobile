@@ -19,13 +19,13 @@ val flutterVersionName = localProperties.getProperty("flutter.versionName") ?: "
 
 android {
     namespace = "com.argos.mobile_app"
-    compileSdk = 35
+    compileSdk = 36
     ndkVersion = "27.0.12077973"
 
     defaultConfig {
         applicationId = "com.argos.mobile_app"
         minSdk = flutter.minSdkVersion
-        targetSdk = 35
+        targetSdk = 34
         versionCode = flutterVersionCode.toInt()
         versionName = flutterVersionName
     }

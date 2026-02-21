@@ -61,7 +61,13 @@ class _UpdateProgressDialogState extends State<UpdateProgressDialog> {
     });
 
     try {
-      _otaSubscription = OtaUpdate().execute(widget.downloadUrl).listen(
+      _otaSubscription = OtaUpdate()
+          .execute(
+        widget.downloadUrl,
+        androidProviderAuthority: 'com.argos.mobile_app.ota_update_provider',
+        destinationFilename: 'argos_update.apk',
+      )
+          .listen(
         (OtaEvent event) {
           if (!mounted) return;
           setState(() {
