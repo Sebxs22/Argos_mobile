@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:developer' as developer;
 import 'dart:ui';
-import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:sensors_plus/sensors_plus.dart';
@@ -107,15 +106,20 @@ Future<void> _handlePanicAlert(
 
     // Notificación Local (Compatibilidad confirmada para v20+)
     await notifications.show(
-        888,
-        'ARGOS: SOS ENVIADO',
-        'Confirmado. Ayuda en camino.',
-        const NotificationDetails(
-            android: AndroidNotificationDetails('argos_channel', 'ARGOS',
-                importance: Importance.max,
-                priority: Priority.high,
-                enableVibration: true,
-                playSound: false)));
+      id: 888,
+      title: 'ARGOS: SOS ENVIADO',
+      body: 'Confirmado. Ayuda en camino.',
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'argos_channel',
+          'ARGOS',
+          importance: Importance.max,
+          priority: Priority.high,
+          enableVibration: true,
+          playSound: false,
+        ),
+      ),
+    );
   } catch (e) {
     developer.log("Error SOS: $e");
   }
