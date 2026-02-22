@@ -238,25 +238,42 @@ class _CircleMapScreenState extends State<CircleMapScreen> {
     final Color memberColor =
         Colors.primaries[id.hashCode % Colors.primaries.length];
 
+    final String lastConnect = member['ultima_conexion'] ?? "";
+    final String timeAgo = _apiService.calcularTiempoTranscurrido(lastConnect);
+
     return Stack(
       alignment: Alignment.center,
       children: [
-        // Etiqueta de nombre (Sutil)
+        // Etiqueta de nombre y tiempo (Sutil)
         Positioned(
           top: 0,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(10),
+              color: Colors.black.withValues(alpha: 0.7),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                  color: memberColor.withValues(alpha: 0.3), width: 0.5),
             ),
-            child: Text(
-              name.split(' ')[0], // Solo el primer nombre
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 8,
-                fontWeight: FontWeight.bold,
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  name.split(' ')[0], // Solo el primer nombre
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  timeAgo,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.7),
+                    fontSize: 7,
+                  ),
+                ),
+              ],
             ),
           ),
         ),

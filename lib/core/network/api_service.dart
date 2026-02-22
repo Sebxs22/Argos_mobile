@@ -108,7 +108,7 @@ class ApiService {
 
         LatLng puntoAlerta = LatLng(item['latitud'], item['longitud']);
         String fechaStr = item['fecha'] ?? "";
-        String tiempoTexto = _calcularTiempoTranscurrido(fechaStr);
+        String tiempoTexto = calcularTiempoTranscurrido(fechaStr);
         String tipo = item['tipo'] ?? "ALERTA";
 
         ReportModel nuevoReporte = ReportModel(
@@ -292,7 +292,7 @@ class ApiService {
 
   // 5. TRADUCTOR DE TIEMPO (RELATIVO)
   // Corrige el desfase de 5 horas y devuelve texto amigable.
-  String _calcularTiempoTranscurrido(String fechaIso) {
+  String calcularTiempoTranscurrido(String fechaIso) {
     try {
       if (fechaIso.isEmpty) return "Hace instantes";
 

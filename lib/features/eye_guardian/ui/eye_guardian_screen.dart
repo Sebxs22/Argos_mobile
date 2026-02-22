@@ -25,7 +25,7 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
   Timer? _locationUpdateTimer;
   final ApiService _apiService = ApiService();
 
-  final GuardianState _currentState = GuardianState.monitoring;
+  GuardianState _currentState = GuardianState.monitoring;
   int _sentAlertsCount = 0;
   DateTime? _lastAlertTime;
 
