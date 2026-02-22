@@ -44,13 +44,23 @@ class ApiService {
     }
   }
 
-  // Nuevo método para clasificar el incidente
+  // Método para clasificar el incidente
   Future<void> clasificarIncidente(String alertaId, String tipo) async {
     try {
       await _supabase.from('alertas').update({'tipo': tipo}).eq('id', alertaId);
     } catch (e) {
       debugPrint("Error clasificando incidente: $e");
       throw Exception("Error al clasificar incidente");
+    }
+  }
+
+  // Método para cancelar una alerta (En caso de falso positivo)
+  Future<void> cancelarAlerta(String alertaId) async {
+    try {
+      await _supabase.from('alertas').delete().eq('id', alertaId);
+      UiUtils.showSuccess("Alerta cancelada correctamente");
+    } catch (e) {
+      debugPrint("Error cancelando alerta: $e");
     }
   }
 

@@ -2,12 +2,13 @@ import 'dart:async';
 import 'dart:math';
 // import 'dart:ui'; // Ya no es necesario el blur aquí porque el fondo viene del Main
 import 'package:flutter/material.dart';
+import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 
 import '../../../core/network/api_service.dart';
 import '../../../core/ui/glass_box.dart';
-import 'emergency_countdown_screen.dart';
+import 'alert_confirmation_screen.dart';
 
 class EyeGuardianScreen extends StatefulWidget {
   const EyeGuardianScreen({super.key});
@@ -24,7 +25,7 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
   Timer? _locationUpdateTimer;
   final ApiService _apiService = ApiService();
 
-  GuardianState _currentState = GuardianState.monitoring;
+  final GuardianState _currentState = GuardianState.monitoring;
   int _sentAlertsCount = 0;
   DateTime? _lastAlertTime;
 
@@ -88,25 +89,52 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
     });
   }
 
-  void _handleShakeDetected() async {
+  void _handleShakeDetected() {
     DateTime now = DateTime.now();
     if (_lastAlertTime != null) {
       if (now.difference(_lastAlertTime!).inSeconds < _cooldownSeconds) return;
     }
     _lastAlertTime = now;
+    _sendImmediatePanicAlert();
+  }
 
-    // Abrir la pantalla de cuenta regresiva
-    if (mounted) {
-      final bool? sent = await Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => const EmergencyCountdownScreen()),
+  Future<void> _sendImmediatePanicAlert() async {
+    // Vibración inmediata para confirmar detección
+    bool canVibrate = await Vibrate.canVibrate;
+    if (canVibrate) Vibrate.feedback(FeedbackType.heavy);
+
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 5),
+        ),
       );
 
-      // Si se envió con éxito, actualizamos contador local
-      if (sent == true) {
+      // ENVÍO INMEDIATO (Requerimiento de seguridad real)
+      final String? alertaId = await _apiService.enviarAlertaEmergencia(
+        position.latitude,
+        position.longitude,
+      );
+
+      // Notificar a guardianes automáticamente
+      final perfil = await _apiService.obtenerPerfilActual();
+      final nombre = perfil?['nombre_completo'] ?? "Un usuario";
+      await _apiService.enviarNotificacionEmergencia(nombre);
+
+      if (mounted) {
         setState(() => _sentAlertsCount++);
+
+        // Navegar a la pantalla de confirmación/cancelación
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AlertConfirmationScreen(alertaId: alertaId),
+          ),
+        );
       }
+    } catch (e) {
+      debugPrint("Error al enviar alerta inmediata: $e");
     }
   }
 
@@ -327,14 +355,7 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
             Padding(
               padding: const EdgeInsets.only(bottom: 50.0),
               child: GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const EmergencyCountdownScreen(),
-                    ),
-                  );
-                },
+                onTap: _sendImmediatePanicAlert,
                 child: GlassBox(
                   borderRadius: 30,
                   opacity: isDark ? 0.1 : 0.05,

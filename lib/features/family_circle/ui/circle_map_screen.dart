@@ -102,7 +102,18 @@ class _CircleMapScreenState extends State<CircleMapScreen> {
                         ),
                         width: 45,
                         height: 45,
-                        child: _buildMemberMarker(m),
+                        child: GestureDetector(
+                          onTap: () {
+                            _mapController.move(
+                              LatLng(
+                                (m['latitud'] as num).toDouble(),
+                                (m['longitud'] as num).toDouble(),
+                              ),
+                              17.5,
+                            );
+                          },
+                          child: _buildMemberMarker(m),
+                        ),
                       );
                     }).toList(),
                   ),
@@ -150,7 +161,7 @@ class _CircleMapScreenState extends State<CircleMapScreen> {
                                           (m['latitud'] as num).toDouble(),
                                           (m['longitud'] as num).toDouble(),
                                         ),
-                                        16,
+                                        17.5, // Zoom más cercano para identificar mejor
                                       );
                                     }
                                   },
