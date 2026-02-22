@@ -342,4 +342,37 @@ class ApiService {
       debugPrint("❌ Error en enviarNotificacionEmergencia: $e");
     }
   }
+
+  // 6. ACTUALIZAR MI UBICACIÓN EN TIEMPO REAL
+  Future<void> actualizarUbicacion(double lat, double lng) async {
+    try {
+      final user = _supabase.auth.currentUser;
+      if (user == null) return;
+
+      await _supabase.from('perfiles').update({
+        'latitud': lat,
+        'longitud': lng,
+        'ultima_conexion': DateTime.now().toUtc().toIso8601String(),
+      }).eq('id', user.id);
+    } catch (e) {
+      debugPrint("Error actualizando ubicación: $e");
+    }
+  }
+
+  // 7. STREAM DE UBICACIONES DEL CÍRCULO
+  // Permite ver en tiempo real a los protegidos/guardianes
+  Stream<List<Map<String, dynamic>>> streamUbicacionesCirculo(
+      List<String> ids) {
+    if (ids.isEmpty) return Stream.value([]);
+    // Usamos el canal de tiempo real de Supabase filtrado por IDs
+    return _supabase
+        .from('perfiles')
+        .stream(primaryKey: ['id'])
+        .order('nombre_completo')
+        .map((data) {
+          // Filtramos manualmente en el stream por ahora ya que .stream().in()
+          // puede tener limitaciones según la versión de supabase_flutter
+          return data.where((p) => ids.contains(p['id'])).toList();
+        });
+  }
 }

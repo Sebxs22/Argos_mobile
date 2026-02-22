@@ -4,6 +4,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../core/network/auth_service.dart';
 import '../../../core/ui/glass_box.dart';
 import '../../../core/utils/ui_utils.dart';
+import 'circle_map_screen.dart';
 
 class FamilyCircleScreen extends StatefulWidget {
   const FamilyCircleScreen({super.key});
@@ -240,6 +241,36 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
                             ),
                           ),
                         ),
+                        const SizedBox(height: 10),
+                        if (_misProtegidos.isNotEmpty ||
+                            _misGuardianes.isNotEmpty)
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                final allMembers = [
+                                  ..._misGuardianes,
+                                  ..._misProtegidos
+                                ];
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => CircleMapScreen(
+                                      initialMembers: allMembers,
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.map_rounded, size: 16),
+                              label: const Text("Ver Mapa en Tiempo Real"),
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(
+                                    color: Colors.blueAccent
+                                        .withValues(alpha: 0.5)),
+                                foregroundColor: Colors.blueAccent,
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),

@@ -22,6 +22,7 @@ enum GuardianState { monitoring, sending, success }
 class _EyeGuardianScreenState extends State<EyeGuardianScreen>
     with TickerProviderStateMixin {
   StreamSubscription? _accelerometerSubscription;
+  Timer? _locationUpdateTimer;
   final ApiService _apiService = ApiService();
 
   GuardianState _currentState = GuardianState.monitoring;
@@ -49,6 +50,32 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
       duration: const Duration(seconds: 10),
     )..repeat();
     _startManualShakeDetection();
+    _startLocationUpdates();
+  }
+
+  void _startLocationUpdates() {
+    // Actualizamos ubicación cada 45 segundos mientras la app esté abierta en esta pantalla
+    // Esto permite que el círculo familiar vea al usuario en el mapa
+    _updateLocation();
+    _locationUpdateTimer = Timer.periodic(const Duration(seconds: 45), (timer) {
+      _updateLocation();
+    });
+  }
+
+  Future<void> _updateLocation() async {
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.balanced,
+        ),
+      );
+      await _apiService.actualizarUbicacion(
+        position.latitude,
+        position.longitude,
+      );
+    } catch (e) {
+      debugPrint("Error en actualización periódica: $e");
+    }
   }
 
   void _startManualShakeDetection() {
@@ -108,6 +135,7 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
   @override
   void dispose() {
     _accelerometerSubscription?.cancel();
+    _locationUpdateTimer?.cancel();
     _pulseController.dispose();
     _rotateController.dispose();
     super.dispose();
