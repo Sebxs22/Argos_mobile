@@ -47,13 +47,35 @@ class ApiService {
   // Método para clasificar el incidente
   Future<void> clasificarIncidente(String alertaId, String tipo) async {
     try {
-      // Convertimos a int para asegurar compatibilidad con BIGINT en Postgres
-      final int id = int.tryParse(alertaId) ?? 0;
-      await _supabase.from('alertas').update({'tipo': tipo}).eq('id', id);
+      // 1. Definir un mensaje amigable según el tipo (Higiene v2.4.2)
+      String nuevoMensaje;
+      switch (tipo.toLowerCase()) {
+        case 'robo':
+          nuevoMensaje = "Incidente de Robo o Asalto reportado.";
+          break;
+        case 'acoso':
+          nuevoMensaje = "Reporte de Acoso o Seguimiento.";
+          break;
+        case 'medica':
+          nuevoMensaje = "Solicitud de Emergencia Médica.";
+          break;
+        case 'accidente':
+          nuevoMensaje = "Aviso de Accidente Vial en la zona.";
+          break;
+        default:
+          nuevoMensaje = "Situación de peligro reportada.";
+      }
+
+      // 2. Actualizar en Supabase (Usamos String para BigInt por seguridad)
+      await _supabase
+          .from('alertas')
+          .update({'tipo': tipo, 'mensaje': nuevoMensaje}).eq('id', alertaId);
 
       // --- LIMPIEZA DE CACHÉ (v2.4.1) ---
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('cached_danger_zones');
+      debugPrint(
+          "ARGOS: Alerta $alertaId clasificada como $tipo. Caché limpia.");
     } catch (e) {
       debugPrint("Error clasificando incidente: $e");
       throw Exception("Error al clasificar incidente");
@@ -63,14 +85,17 @@ class ApiService {
   // Método para cancelar una alerta (En caso de falso positivo)
   Future<void> cancelarAlerta(String alertaId) async {
     try {
-      final int id = int.tryParse(alertaId) ?? 0;
+      debugPrint("ARGOS: Intentando borrar alerta ID: $alertaId");
+
       // 1. Borrar de Supabase (Nube)
-      await _supabase.from('alertas').delete().eq('id', id);
+      // Usamos el ID directamente como String, Postgrest lo maneja mejor para BigInt
+      await _supabase.from('alertas').delete().eq('id', alertaId);
 
       // 2. Limpiar Caché Local (Higiene de Mapa v2.4.0)
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('cached_danger_zones');
 
+      debugPrint("ARGOS: Alerta $alertaId borrada exitosamente de la nube.");
       UiUtils.showSuccess("Alerta cancelada. Mapa purgado.");
     } catch (e) {
       debugPrint("Error cancelando alerta: $e");
