@@ -8,6 +8,7 @@ import 'package:sensors_plus/sensors_plus.dart';
 import 'package:geolocator/geolocator.dart'; // Geolocator
 import 'package:flutter_dotenv/flutter_dotenv.dart'; // Dotenv
 import 'package:supabase_flutter/supabase_flutter.dart'; // Supabase
+import 'package:shared_preferences/shared_preferences.dart'; // Memoria persistente Isolate
 import '../../../core/network/api_service.dart';
 
 // Variables de control de tráfico (Anti-Spam)
@@ -118,6 +119,14 @@ Future<void> _handlePanicAlert(
       "lng": position.longitude,
     });
 
+    // --- MEMORIA ARGOS (Persistencia para clasificación posterior) v2.3.0 ---
+    if (alertaId != null) {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('pending_alert_id', alertaId);
+      developer
+          .log("ARGOS MEMORY: Alerta guardada en SharedPreferences Isolate.");
+    }
+
     final user = Supabase.instance.client.auth.currentUser;
     if (user != null) {
       final res = await Supabase.instance.client
@@ -134,13 +143,15 @@ Future<void> _handlePanicAlert(
       id: 888,
       title: 'ARGOS: SOS ENVIADO',
       body: 'Confirmado. Ayuda en camino.',
-      notificationDetails: const NotificationDetails(
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           'argos_channel',
           'ARGOS',
           importance: Importance.max,
           priority: Priority.high,
           enableVibration: true,
+          vibrationPattern: Int64List.fromList(
+              [0, 200, 100, 200, 100, 500]), // Vibración final triple
           playSound: false,
         ),
       ),
@@ -199,7 +210,7 @@ class BackgroundServiceManager {
         isForegroundMode: true,
         notificationChannelId: 'argos_channel',
         initialNotificationTitle: '🔰 ARGOS: GUARDÍAN ACTIVO',
-        initialNotificationContent: 'Vigilando en todo momento. (v2.2.0)',
+        initialNotificationContent: 'Vigilando en todo momento. (v2.3.0)',
         foregroundServiceNotificationId: 888,
         autoStartOnBoot: true, // AUTO-INICIO AL ENCENDER
       ),

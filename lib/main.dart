@@ -6,6 +6,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart'; // Import dotenv
 import 'package:overlay_support/overlay_support.dart'; // Import OverlaySupport
 import 'package:geolocator/geolocator.dart'; // Import Geolocator
 import 'package:flutter_background_service/flutter_background_service.dart'; // Background Service
+import 'package:shared_preferences/shared_preferences.dart'; // Persistencia Local
 
 // --- NUEVAS PANTALLAS Y SERVICIOS ---
 import 'package:permission_handler/permission_handler.dart'; // Permissions
@@ -179,6 +180,32 @@ class _MainNavigatorState extends State<MainNavigator> {
     _cargarPerfil();
     _listenToBackgroundGlobal();
     _startLocationServices(); // Iniciar servicios de rastreo
+    _checkForPendingAlerts(); // Memoria SOS (v2.3.0)
+  }
+
+  Future<void> _checkForPendingAlerts() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? alertaId = prefs.getString('pending_alert_id');
+
+    if (alertaId != null && mounted) {
+      debugPrint(
+          "ARGOS: Detectada alerta pendiente de clasificación: $alertaId");
+
+      // Limpiar de inmediato para no repetir al volver a abrir
+      await prefs.remove('pending_alert_id');
+
+      // Pequeño delay para asegurar que el Navigator esté listo
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AlertConfirmationScreen(alertaId: alertaId),
+            ),
+          );
+        }
+      });
+    }
   }
 
   void _listenToBackgroundGlobal() {
