@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer' as developer;
+import 'dart:typed_data';
 import 'dart:ui';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -28,11 +29,11 @@ void onStart(ServiceInstance service) async {
   final FlutterLocalNotificationsPlugin notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  // Umbral de sensibilidad de PÁNICO (25.0 para capturar arranchones/tirones violentos)
-  double threshold = 25.0;
+  // Umbral de sensibilidad MILIMÉTRICA (15.0 para capturar tirones rápidos)
+  double threshold = 15.0;
 
   // Escucha del sensor en SEGUNDO PLANO - PROTECCIÓN 24/7
-  userAccelerometerEventStream().listen((UserAccelerometerEvent event) async {
+  userAccelerometerEvents.listen((UserAccelerometerEvent event) async {
     // Magnitud de la aceleración (Suma de cuadrados para eficiencia)
     double acceleration =
         (event.x * event.x + event.y * event.y + event.z * event.z);
@@ -76,6 +77,30 @@ Future<void> _handlePanicAlert(
   }
   _lastAlertTime = now;
   developer.log("ARGOS: ¡SOS DETECTADO! Ejecutando protocolos...");
+
+  // VIBRACIÓN INMEDIATA (Confirmación táctil para el usuario)
+  try {
+    // Usamos el canal de notificación para forzar la vibración inmediata
+    // ya que flutter_vibrate puede ser inestable en Isolates de fondo.
+    notifications.show(
+      id: 999,
+      title: '⚠️ ARRANCHÓN DETECTADO',
+      body: 'Enviando alerta...',
+      notificationDetails: NotificationDetails(
+        android: AndroidNotificationDetails(
+          'argos_urgent', 'ARGOS Urgente',
+          importance: Importance.max,
+          priority: Priority.high,
+          enableVibration: true,
+          vibrationPattern:
+              Int64List.fromList([0, 500, 200, 500]), // Vibración doble fuerte
+          playSound: false,
+        ),
+      ),
+    );
+  } catch (e) {
+    developer.log("Error vibrando: $e");
+  }
 
   try {
     Position position = await Geolocator.getCurrentPosition(
