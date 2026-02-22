@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart'; // Import OneSignal
 import 'package:flutter_dotenv/flutter_dotenv.dart'; // Import dotenv
 import 'package:overlay_support/overlay_support.dart'; // Import OverlaySupport
+import 'package:geolocator/geolocator.dart'; // Import Geolocator
 
 // --- NUEVAS PANTALLAS Y SERVICIOS ---
 import 'features/eye_guardian/ui/eye_guardian_screen.dart';
@@ -20,6 +21,7 @@ import 'core/ui/argos_background.dart'; // Import ArgosBackground
 import 'core/theme/theme_service.dart'; // Import ThemeService
 import 'features/profile/ui/settings_screen.dart'; // Import SettingsScreen
 import 'core/ui/connectivity_badge.dart'; // Import ConnectivityBadge
+import 'core/network/api_service.dart'; // Import ApiService
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -143,9 +145,31 @@ class _MainNavigatorState extends State<MainNavigator> {
     super.initState();
     _pageController = PageController();
     _cargarPerfil();
+    _checkLocationPermissionsAndStart();
+  }
 
-    // Iniciar el servicio de fondo automáticamente para rastreo en tiempo real
-    BackgroundServiceManager().start();
+  Future<void> _checkLocationPermissionsAndStart() async {
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.whileInUse ||
+          permission == LocationPermission.always) {
+        // Enviar ubicación de inmediato al inicio para evitar el mensaje de "No compartido"
+        Position pos = await Geolocator.getCurrentPosition(
+            locationSettings:
+                const LocationSettings(accuracy: LocationAccuracy.medium));
+        final ApiService api = ApiService();
+        await api.actualizarUbicacion(pos.latitude, pos.longitude);
+
+        // Iniciar servicio de fondo
+        BackgroundServiceManager().start();
+      }
+    } catch (e) {
+      debugPrint("Error iniciando servicios de ubicación: $e");
+    }
   }
 
   Future<void> _cargarPerfil() async {

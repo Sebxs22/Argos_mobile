@@ -190,10 +190,12 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
         statusSubtext = "ALERTA RECIBIDA";
         break;
       default:
-        // ESTILO ORIGINAL: Blanco/Azulado Premium con Check
-        mainColor = isDark ? Colors.white : Colors.blue.shade900;
-        glowColor = isDark ? Colors.blueAccent : Colors.blue.shade400;
-        centerIcon = Icons.verified_user_sharp; // O el "Ojo con Check"
+        // ESTILO ORIGINAL PERO MÁS AZULADO (Azul Glacial Premium)
+        mainColor = isDark ? const Color(0xFFE0F2F1) : Colors.blue.shade900;
+        glowColor = isDark
+            ? Colors.blueAccent.withValues(alpha: 0.8)
+            : Colors.blue.shade400;
+        centerIcon = Icons.verified_user_sharp;
         statusSubtext = "SISTEMA PROTEGIDO";
         break;
     }
