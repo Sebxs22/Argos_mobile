@@ -1,12 +1,6 @@
-import 'dart:async';
-import 'dart:math';
-// import 'dart:ui'; // Ya no es necesario el blur aquí porque el fondo viene del Main
 import 'package:flutter/material.dart';
-import 'package:flutter_vibrate/flutter_vibrate.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:sensors_plus/sensors_plus.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 
-import '../../../core/network/api_service.dart';
 import '../../../core/ui/glass_box.dart';
 import 'alert_confirmation_screen.dart';
 
@@ -21,16 +15,8 @@ enum GuardianState { monitoring, sending, success }
 
 class _EyeGuardianScreenState extends State<EyeGuardianScreen>
     with TickerProviderStateMixin {
-  StreamSubscription? _accelerometerSubscription;
-  Timer? _locationUpdateTimer;
-  final ApiService _apiService = ApiService();
-
   GuardianState _currentState = GuardianState.monitoring;
   int _sentAlertsCount = 0;
-  DateTime? _lastAlertTime;
-
-  static const int _cooldownSeconds = 10;
-  static const double _shakeThreshold = 15.0;
 
   late AnimationController _pulseController;
   late AnimationController _rotateController;
@@ -49,117 +35,51 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
       vsync: this,
       duration: const Duration(seconds: 10),
     )..repeat();
-    _startManualShakeDetection();
-    _startLocationUpdates();
+
+    // ESCUCHAR AL GUARDIÁN DE FONDO (El Sensor Maestro)
+    _listenToBackgroundService();
   }
 
-  void _startLocationUpdates() {
-    // Actualizamos ubicación cada 45 segundos mientras la app esté abierta en esta pantalla
-    // Esto permite que el círculo familiar vea al usuario en el mapa
-    _updateLocation();
-    _locationUpdateTimer = Timer.periodic(const Duration(seconds: 45), (timer) {
-      _updateLocation();
-    });
-  }
-
-  Future<void> _updateLocation() async {
-    try {
-      Position position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.medium,
-        ),
-      );
-      await _apiService.actualizarUbicacion(
-        position.latitude,
-        position.longitude,
-      );
-    } catch (e) {
-      debugPrint("Error en actualización periódica: $e");
-    }
-  }
-
-  void _startManualShakeDetection() {
-    _accelerometerSubscription = userAccelerometerEventStream().listen((
-      UserAccelerometerEvent event,
-    ) {
-      double acceleration = sqrt(
-        pow(event.x, 2) + pow(event.y, 2) + pow(event.z, 2),
-      );
-      if (acceleration > _shakeThreshold) _handleShakeDetected();
-    });
-  }
-
-  void _handleShakeDetected() {
-    DateTime now = DateTime.now();
-    if (_lastAlertTime != null) {
-      if (now.difference(_lastAlertTime!).inSeconds < _cooldownSeconds) return;
-    }
-    _lastAlertTime = now;
-    _sendImmediatePanicAlert();
-  }
-
-  Future<void> _sendImmediatePanicAlert() async {
-    // Vibración inmediata para confirmar detección
-    bool canVibrate = await Vibrate.canVibrate;
-    if (canVibrate) Vibrate.feedback(FeedbackType.heavy);
-
-    setState(() => _currentState = GuardianState.sending);
-
-    try {
-      Position position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 5),
-        ),
-      );
-
-      // ENVÍO INMEDIATO (Requerimiento de seguridad real)
-      final String? alertaId = await _apiService.enviarAlertaEmergencia(
-        position.latitude,
-        position.longitude,
-      );
-
-      // Notificar a guardianes automáticamente
-      final perfil = await _apiService.obtenerPerfilActual();
-      final nombre = perfil?['nombre_completo'] ?? "Un usuario";
-      await _apiService.enviarNotificacionEmergencia(nombre);
-
+  void _listenToBackgroundService() {
+    FlutterBackgroundService().on('onShake').listen((event) {
       if (mounted) {
-        setState(() {
-          _sentAlertsCount++;
-          _currentState = GuardianState.success;
+        _handleBackgroundShake(event);
+      }
+    });
+  }
+
+  void _handleBackgroundShake(Map<String, dynamic>? data) {
+    if (_currentState != GuardianState.monitoring) return;
+
+    final String? alertaId = data?['alertaId'];
+
+    setState(() {
+      _currentState = GuardianState.success;
+      _sentAlertsCount++;
+    });
+
+    // Navegar a confirmación si estamos en esta pantalla
+    Future.delayed(const Duration(milliseconds: 800), () {
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AlertConfirmationScreen(alertaId: alertaId),
+          ),
+        ).then((_) {
+          if (mounted) setState(() => _currentState = GuardianState.monitoring);
         });
-
-        // Esperar un momento para que el usuario vea el estado de éxito
-        await Future.delayed(const Duration(milliseconds: 800));
-
-        if (mounted) {
-          // Navegar a la pantalla de confirmación/cancelación
-          await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AlertConfirmationScreen(alertaId: alertaId),
-            ),
-          );
-
-          // Al volver, regresamos al monitoreo
-          if (mounted) {
-            setState(() => _currentState = GuardianState.monitoring);
-          }
-        }
       }
-    } catch (e) {
-      debugPrint("Error al enviar alerta inmediata: $e");
-      if (mounted) {
-        setState(() => _currentState = GuardianState.monitoring);
-      }
-    }
+    });
+  }
+
+  void _triggerManualAlert() {
+    setState(() => _currentState = GuardianState.sending);
+    FlutterBackgroundService().invoke('onManualAlert');
   }
 
   @override
   void dispose() {
-    _accelerometerSubscription?.cancel();
-    _locationUpdateTimer?.cancel();
     _pulseController.dispose();
     _rotateController.dispose();
     super.dispose();
@@ -376,7 +296,7 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
             Padding(
               padding: const EdgeInsets.only(bottom: 50.0),
               child: GestureDetector(
-                onTap: _sendImmediatePanicAlert,
+                onTap: _triggerManualAlert,
                 child: GlassBox(
                   borderRadius: 30,
                   opacity: isDark ? 0.1 : 0.05,

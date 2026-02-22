@@ -27,14 +27,17 @@ void onStart(ServiceInstance service) async {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  // Umbral de sensibilidad (ajústalo si es muy sensible o muy duro)
-  double threshold = 35.0;
+  // Umbral de sensibilidad equilibrado (28.0 es firme pero sensible)
+  double threshold = 28.0;
 
   // Escucha del sensor en SEGUNDO PLANO
   userAccelerometerEventStream().listen((UserAccelerometerEvent event) async {
-    double acceleration = event.x.abs() + event.y.abs() + event.z.abs();
+    // Cálculo matemático unificado (Raíz de la suma de cuadrados)
+    double acceleration =
+        (event.x * event.x + event.y * event.y + event.z * event.z);
 
-    if (acceleration > threshold) {
+    // Usamos el cuadrado del umbral para ahorrar la raíz cuadrada en cada evento
+    if (acceleration > (threshold * threshold)) {
       // 1. VERIFICACIÓN DE TIEMPO (Anti-Spam)
       final now = DateTime.now();
       if (_lastAlertTime != null &&
@@ -60,11 +63,17 @@ void onStart(ServiceInstance service) async {
         );
 
         // Enviar a la API con ubicación REAL
-        await apiService.enviarAlertaEmergencia(
+        final String? alertaId = await apiService.enviarAlertaEmergencia(
           position.latitude,
           position.longitude,
         );
 
+        // Notificar a la UI (si está abierta) para que reaccione visualmente
+        service.invoke('onShake', {
+          "alertaId": alertaId,
+          "lat": position.latitude,
+          "lng": position.longitude,
+        });
         // Notificar a Guardianes
         final user = Supabase.instance.client.auth.currentUser;
         if (user != null) {
@@ -123,6 +132,36 @@ void onStart(ServiceInstance service) async {
 
   service.on('stopService').listen((event) {
     service.stopSelf();
+  });
+
+  service.on('onManualAlert').listen((event) async {
+    // Reutilizamos la lógica de alerta (Idealmente extraer a función, pero aquí es directo)
+    developer.log("ARGOS BACKGROUND: Alerta MANUAL recibida de UI.");
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+        locationSettings:
+            const LocationSettings(accuracy: LocationAccuracy.high),
+      );
+      final String? alertaId = await apiService.enviarAlertaEmergencia(
+        position.latitude,
+        position.longitude,
+      );
+      service.invoke(
+          'onShake', {"alertaId": alertaId}); // Avisar a la UI para éxito
+
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        final res = await Supabase.instance.client
+            .from('perfiles')
+            .select('nombre_completo')
+            .eq('id', user.id)
+            .single();
+        await apiService.enviarNotificacionEmergencia(
+            res['nombre_completo'] ?? "Un usuario");
+      }
+    } catch (e) {
+      developer.log("Error en alerta manual background: $e");
+    }
   });
 }
 
