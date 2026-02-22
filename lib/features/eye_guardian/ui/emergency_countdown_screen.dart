@@ -1,11 +1,10 @@
 import 'dart:async';
-import 'dart:ui'; // Para el Blur
-import 'dart:developer' as developer;
-import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart'; // IMPORTANTE: Para obtener la ubicación real
 import '../../../core/network/api_service.dart';
 import '../../../core/ui/glass_box.dart';
 import '../../../core/ui/argos_background.dart';
+import '../../../core/utils/ui_utils.dart'; // Import UiUtils
+import 'dart:ui'; // Para el Blur
+import 'dart:developer' as developer;
 
 class EmergencyCountdownScreen extends StatefulWidget {
   const EmergencyCountdownScreen({super.key});
@@ -192,15 +191,7 @@ class _EmergencyCountdownScreenState extends State<EmergencyCountdownScreen> {
   void _cancelAlert() {
     _timer?.cancel();
     if (mounted) Navigator.of(context).pop(false);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text("Falsa alarma cancelada."),
-        backgroundColor: Colors.green.shade800,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      ),
-    );
+    UiUtils.showSuccess("Falsa alarma cancelada.");
   }
 
   @override
