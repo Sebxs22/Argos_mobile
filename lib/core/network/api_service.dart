@@ -79,10 +79,11 @@ class ApiService {
           .from('alertas')
           .update({'tipo': tipo, 'mensaje': nuevoMensaje}).eq('id', idNum);
 
-      // --- LIMPIEZA DE CACHÉ (v2.4.1) ---
+      // --- LIMPIEZA DE CACHÉ Y BLOQUEO (v2.4.7) ---
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('cached_danger_zones');
-      debugPrint("ARGOS: Alerta $idNum clasificada. Caché purgada.");
+      await prefs.remove('pending_alert_id');
+      debugPrint("ARGOS: Alerta $idNum clasificada. Memoria liberada.");
     } catch (e) {
       debugPrint("Error clasificando incidente: $e");
       throw Exception("Error al clasificar incidente");
@@ -105,11 +106,13 @@ class ApiService {
       // Usamos el ID como int, Dart int es 64-bit y mapea perfecto a BigInt
       await _supabase.from('alertas').delete().eq('id', idNum);
 
-      // 2. Limpiar Caché Local (Higiene de Mapa v2.4.0)
+      // 2. Limpiar Caché Local e ID Pendiente (v2.4.7)
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('cached_danger_zones');
+      await prefs.remove('pending_alert_id');
 
-      debugPrint("ARGOS: Alerta $idNum borrada física y localmente.");
+      debugPrint(
+          "ARGOS: Alerta $idNum borrada física y localmente. Memoria liberada.");
       UiUtils.showSuccess("Alerta cancelada. Mapa purgado.");
     } catch (e) {
       debugPrint("Error cancelando alerta: $e");

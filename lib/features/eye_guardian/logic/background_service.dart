@@ -76,6 +76,16 @@ Future<void> _handlePanicAlert(
       now.difference(_lastAlertTime!) < const Duration(seconds: 30)) {
     return;
   }
+
+  // --- BLOQUEO DE DUPLICADOS (v2.4.7) ---
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+  final String? existingAlertaId = prefs.getString('pending_alert_id');
+  if (existingAlertaId != null) {
+    developer.log(
+        "ARGOS: SOS ignorado. Ya existe una alerta pendiente ($existingAlertaId).");
+    return;
+  }
+
   _lastAlertTime = now;
   developer.log("ARGOS: ¡SOS DETECTADO! Ejecutando protocolos...");
 

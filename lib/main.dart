@@ -191,8 +191,7 @@ class _MainNavigatorState extends State<MainNavigator> {
       debugPrint(
           "ARGOS: Detectada alerta pendiente de clasificación: $alertaId");
 
-      // Limpiar de inmediato para no repetir al volver a abrir
-      await prefs.remove('pending_alert_id');
+      // YA NO BORRAMOS AQUÍ (v2.4.7 Fix): Solo se borra al clasificar o cancelar con éxito
 
       // Pequeño delay para asegurar que el Navigator esté listo
       Future.delayed(const Duration(milliseconds: 500), () {
