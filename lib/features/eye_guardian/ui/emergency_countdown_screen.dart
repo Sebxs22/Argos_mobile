@@ -128,31 +128,13 @@ class _EmergencyCountdownScreenState extends State<EmergencyCountdownScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                padding: const EdgeInsets.all(25),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.greenAccent.withValues(alpha: 0.2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.greenAccent.withValues(alpha: 0.3),
-                      blurRadius: 50,
-                      spreadRadius: 5,
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.check_circle_outline_rounded,
-                  color: Colors.greenAccent,
-                  size: 60,
-                ),
-              ),
+              const SizedBox(height: 10),
               const SizedBox(height: 25),
               const Text(
                 "¡ALERTA ENVIADA!",
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 22,
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 2.0,
                   fontFamily: 'Outfit',
@@ -267,7 +249,7 @@ class _EmergencyCountdownScreenState extends State<EmergencyCountdownScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text(
-                    "⚠️ INCIDENTE DETECTADO ⚠️",
+                    "INCIDENTE DETECTADO",
                     style: TextStyle(
                       color: Color(0xFFFF5252),
                       fontSize: 16,
@@ -349,24 +331,28 @@ class _EmergencyCountdownScreenState extends State<EmergencyCountdownScreen> {
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: secondaryTextColor,
-                            fontSize: 16,
+                            fontSize: 14,
                           ),
                         ),
-                        const SizedBox(height: 5),
+                        const SizedBox(height: 8),
                         // Indicador de precisión pequeño
                         _preciseLocation != null
-                            ? const Text(
-                                "✅ Señal Satelital: Fuerte (<3m)",
+                            ? Text(
+                                "Señal Satelital: Fuerte (<3m)",
                                 style: TextStyle(
-                                  color: Colors.greenAccent,
-                                  fontSize: 12,
+                                  color: isDark
+                                      ? Colors.greenAccent
+                                      : Colors.green.shade700,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               )
                             : const Text(
-                                "📡 Buscando satélites...",
+                                "Buscando satélites...",
                                 style: TextStyle(
                                   color: Colors.amber,
-                                  fontSize: 12,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                       ],
@@ -393,14 +379,13 @@ class _EmergencyCountdownScreenState extends State<EmergencyCountdownScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.close, color: textColor, size: 28),
-                          const SizedBox(width: 15),
                           Text(
                             "ESTOY BIEN, CANCELAR",
                             style: TextStyle(
                               color: textColor,
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
+                              letterSpacing: 1.1,
                             ),
                           ),
                         ],
