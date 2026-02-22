@@ -117,50 +117,67 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
 
   Future<void> _getCurrentLocation() async {
     try {
+      // 1. Verificar disponibilidad de servicios
       bool enabled = await Geolocator.isLocationServiceEnabled();
-      if (!enabled) return;
+      if (!enabled) {
+        _finishLoading();
+        return;
+      }
 
+      // 2. Revisar/Pedir Permisos
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
       }
 
-      if (permission == LocationPermission.whileInUse ||
-          permission == LocationPermission.always) {
-        Position position = await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.bestForNavigation,
-          ),
-        );
+      if (permission == LocationPermission.deniedForever ||
+          permission == LocationPermission.denied) {
+        _finishLoading();
+        return;
+      }
 
-        if (mounted) {
-          setState(
-            () =>
-                _currentCenter = LatLng(position.latitude, position.longitude),
-          );
+      // 3. ESTRATEGIA DE CARGA RÁPIDA (v2.4.5): Usar última ubicación conocida primero
+      final Position? lastPosition = await Geolocator.getLastKnownPosition();
+      if (lastPosition != null && mounted) {
+        _updateMapPosition(lastPosition);
+        // Si ya tenemos la última conocida, podemos quitar el radar antes
+        _finishLoading();
+      }
 
-          // Movemos el mapa con seguridad (evitando LateInitializationError)
-          try {
-            _mapController.move(_currentCenter, 16.0);
-          } catch (e) {
-            debugPrint(
-              "MapController no listo, moviendo en el siguiente frame.",
-            );
-          }
-        }
+      // 4. Obtener ubicación precisa en segundo plano
+      Position position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy
+              .medium, // Bajamos de 'best' a 'medium' para mayor velocidad
+          timeLimit:
+              Duration(seconds: 5), // Límite de 5s para no bloquear al usuario
+        ),
+      );
+
+      if (mounted) {
+        _updateMapPosition(position);
       }
     } catch (e) {
-      debugPrint("Error GPS: $e");
+      debugPrint("Error GPS (Optimizado): $e");
     } finally {
-      // Siempre finalizamos la carga para que el radar desaparezca
+      // Siempre nos aseguramos de quitar el splash de carga
       _finishLoading();
     }
+  }
+
+  void _updateMapPosition(Position position) {
+    setState(() {
+      _currentCenter = LatLng(position.latitude, position.longitude);
+    });
+    try {
+      _mapController.move(_currentCenter, 15.0);
+    } catch (_) {}
   }
 
   void _finishLoading() {
     if (mounted && _isLoadingLocation) {
       setState(() => _isLoadingLocation = false);
-      Future.delayed(const Duration(milliseconds: 500), () {
+      Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted) setState(() => _showHud = true);
       });
     }
