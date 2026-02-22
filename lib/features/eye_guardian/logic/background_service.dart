@@ -72,13 +72,15 @@ Future<void> _handlePanicAlert(
   FlutterLocalNotificationsPlugin notifications,
 ) async {
   final now = DateTime.now();
+  // Throttle reducido a 12s para mejor experiencia de prueba (v2.4.8)
   if (_lastAlertTime != null &&
-      now.difference(_lastAlertTime!) < const Duration(seconds: 30)) {
+      now.difference(_lastAlertTime!) < const Duration(seconds: 12)) {
     return;
   }
 
-  // --- BLOQUEO DE DUPLICADOS (v2.4.7) ---
+  // --- BLOQUEO DE DUPLICADOS (v2.4.8) ---
   final SharedPreferences prefs = await SharedPreferences.getInstance();
+  await prefs.reload(); // Sincronizar con el proceso principal (Main Isolate)
   final String? existingAlertaId = prefs.getString('pending_alert_id');
   if (existingAlertaId != null) {
     developer.log(
