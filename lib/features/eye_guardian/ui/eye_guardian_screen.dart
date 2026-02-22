@@ -66,7 +66,7 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
     try {
       Position position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.balanced,
+          accuracy: LocationAccuracy.medium,
         ),
       );
       await _apiService.actualizarUbicacion(
