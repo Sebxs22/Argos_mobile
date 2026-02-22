@@ -26,7 +26,7 @@ void onStart(ServiceInstance service) async {
   );
 
   final ApiService apiService = ApiService();
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+  final FlutterLocalNotificationsPlugin notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
   // Umbral de sensibilidad de PÁNICO (25.0 para capturar arranchones/tirones violentos)
@@ -41,7 +41,7 @@ void onStart(ServiceInstance service) async {
     // --- LÓGICA DE DETECCIÓN INTELIGENTE v2.0.5 ---
     if (acceleration > (threshold * threshold)) {
       // SOS: ALERTA DE PÁNICO (Detección de Arranchón)
-      _handlePanicAlert(apiService, service, flutterLocalNotificationsPlugin);
+      _handlePanicAlert(apiService, service, notificationsPlugin);
     } else if (acceleration > (12.0 * 12.0)) {
       // MOVIMIENTO: Reporte proactivo silencioso para rastreo preciso
       _handleProactiveLocation(apiService);
@@ -49,7 +49,6 @@ void onStart(ServiceInstance service) async {
   });
 
   // --- REPORTE DE VIDA (Corazón de seguridad) ---
-  // Se mantiene como seguro, pero el rastreo es mayormente reactivo.
   Timer.periodic(const Duration(minutes: 5), (timer) async {
     _handleProactiveLocation(apiService);
   });
@@ -60,7 +59,7 @@ void onStart(ServiceInstance service) async {
 
   service.on('onManualAlert').listen((event) async {
     developer.log("ARGOS BACKGROUND: Alerta MANUAL recibida.");
-    _handlePanicAlert(apiService, service, flutterLocalNotificationsPlugin);
+    _handlePanicAlert(apiService, service, notificationsPlugin);
   });
 }
 
@@ -72,7 +71,6 @@ Future<void> _handlePanicAlert(
   FlutterLocalNotificationsPlugin notifications,
 ) async {
   final now = DateTime.now();
-  // Anti-spam de 30 segundos
   if (_lastAlertTime != null &&
       now.difference(_lastAlertTime!) < const Duration(seconds: 30)) {
     return;
@@ -85,20 +83,17 @@ Future<void> _handlePanicAlert(
       locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
     );
 
-    // 1. Enviar Alerta a la Nube
     final String? alertaId = await apiService.enviarAlertaEmergencia(
       position.latitude,
       position.longitude,
     );
 
-    // 2. Notificar a la UI (Reacción visual)
     service.invoke('onShake', {
       "alertaId": alertaId,
       "lat": position.latitude,
       "lng": position.longitude,
     });
 
-    // 3. Notificar a Guardianes vía Push
     final user = Supabase.instance.client.auth.currentUser;
     if (user != null) {
       final res = await Supabase.instance.client
@@ -110,11 +105,11 @@ Future<void> _handlePanicAlert(
           .enviarNotificacionEmergencia(res['nombre_completo'] ?? "Un usuario");
     }
 
-    // 4. Notificación Local Crítica (Confirmación al usuario)
-    notifications.show(
+    // Notificación Local (Compatibilidad confirmada para v20+)
+    await notifications.show(
         888,
         'ARGOS: SOS ENVIADO',
-        'Tus contactos han sido notificados de inmediato.',
+        'Confirmado. Ayuda en camino.',
         const NotificationDetails(
             android: AndroidNotificationDetails('argos_channel', 'ARGOS',
                 importance: Importance.max,
@@ -122,13 +117,12 @@ Future<void> _handlePanicAlert(
                 enableVibration: true,
                 playSound: false)));
   } catch (e) {
-    developer.log("Error critico en SOS: $e");
+    developer.log("Error SOS: $e");
   }
 }
 
 Future<void> _handleProactiveLocation(ApiService apiService) async {
   final now = DateTime.now();
-  // Rate limiting de 30 segundos para el rastreo por movimiento
   if (_lastProactiveTime != null &&
       now.difference(_lastProactiveTime!) < const Duration(seconds: 30)) {
     return;
@@ -143,7 +137,7 @@ Future<void> _handleProactiveLocation(ApiService apiService) async {
     await apiService.actualizarUbicacion(position.latitude, position.longitude);
     developer.log("ARGOS: Ubicación actualizada proactivamente.");
   } catch (e) {
-    developer.log("Error en rastreo proactivo: $e");
+    developer.log("Error rastreo: $e");
   }
 }
 
@@ -154,27 +148,14 @@ class BackgroundServiceManager {
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
       'argos_channel',
       'ARGOS Service',
-      description: 'Protección 24/7 y detección de pánico',
+      description: 'Protección 24/7',
       importance: Importance.low,
     );
 
-    final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    final FlutterLocalNotificationsPlugin notifications =
         FlutterLocalNotificationsPlugin();
 
-    if (Theme.of(null == null
-                ? (WidgetsBinding.instance.platformDispatcher
-                                .platformBrightness ==
-                            Brightness.dark
-                        ? ThemeData.dark()
-                        : ThemeData.light())
-                    .focusColor as dynamic
-                : null)
-            .brightness ==
-        Brightness.dark) {
-      // Dummy check to use Theme if needed, but in manager it's fine
-    }
-
-    await flutterLocalNotificationsPlugin
+    await notifications
         .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(channel);
@@ -185,9 +166,8 @@ class BackgroundServiceManager {
         autoStart: true,
         isForegroundMode: true,
         notificationChannelId: 'argos_channel',
-        initialNotificationTitle: 'ARGOS: Sensor Maestro Activo',
-        initialNotificationContent:
-            'Protección permanente contra arranchones activa.',
+        initialNotificationTitle: 'ARGOS: Protegiéndote',
+        initialNotificationContent: 'Sacude el celular ante un peligro.',
         foregroundServiceNotificationId: 888,
       ),
       iosConfiguration: IosConfiguration(
