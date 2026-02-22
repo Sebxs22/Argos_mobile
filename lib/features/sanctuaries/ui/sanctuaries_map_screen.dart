@@ -68,6 +68,9 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
     // 4. Suscribirse a datos en Tiempo Real (v2.4.5)
     _subscribeToCircle();
     _subscribeToAlerts();
+
+    // 5. CARGA INICIAL (v2.4.6 Fix): Disparar localización al entrar
+    _getCurrentLocation();
   }
 
   void _subscribeToAlerts() {
