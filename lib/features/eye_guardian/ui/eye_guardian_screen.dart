@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 
 import '../../../core/ui/glass_box.dart';
-import 'alert_confirmation_screen.dart';
 
 class EyeGuardianScreen extends StatefulWidget {
   const EyeGuardianScreen({super.key});
@@ -35,49 +34,18 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
       vsync: this,
       duration: const Duration(seconds: 10),
     )..repeat();
-
-    // ESCUCHAR AL GUARDIÁN DE FONDO (El Sensor Maestro)
-    _listenToBackgroundService();
-  }
-
-  void _listenToBackgroundService() {
-    FlutterBackgroundService().on('onShake').listen((event) {
-      if (mounted) {
-        _handleBackgroundShake(event);
-      }
-    });
-  }
-
-  void _handleBackgroundShake(Map<String, dynamic>? data) {
-    // Si ya estamos en éxito, ignoramos para evitar duplicados,
-    // pero si estamos en 'monitoring' o 'sending', procedemos.
-    if (_currentState == GuardianState.success) return;
-
-    final String? alertaId = data?['alertaId'];
-
-    setState(() {
-      _currentState = GuardianState.success;
-      _sentAlertsCount++;
-    });
-
-    // Navegar a confirmación si estamos en esta pantalla
-    Future.delayed(const Duration(milliseconds: 800), () {
-      if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => AlertConfirmationScreen(alertaId: alertaId),
-          ),
-        ).then((_) {
-          if (mounted) setState(() => _currentState = GuardianState.monitoring);
-        });
-      }
-    });
   }
 
   void _triggerManualAlert() {
     setState(() => _currentState = GuardianState.sending);
     FlutterBackgroundService().invoke('onManualAlert');
+
+    // El MainNavigator se encargará de mostrar la pantalla de éxito.
+    // Nosotros reseteamos nuestro estado local después de un breve delay
+    // para que el usuario sienta la transición.
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) setState(() => _currentState = GuardianState.monitoring);
+    });
   }
 
   @override

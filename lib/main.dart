@@ -5,12 +5,14 @@ import 'package:onesignal_flutter/onesignal_flutter.dart'; // Import OneSignal
 import 'package:flutter_dotenv/flutter_dotenv.dart'; // Import dotenv
 import 'package:overlay_support/overlay_support.dart'; // Import OverlaySupport
 import 'package:geolocator/geolocator.dart'; // Import Geolocator
+import 'package:flutter_background_service/flutter_background_service.dart'; // Background Service
 
 // --- NUEVAS PANTALLAS Y SERVICIOS ---
 import 'features/eye_guardian/ui/eye_guardian_screen.dart';
 import 'features/routes/ui/routes_screen.dart';
 import 'features/sanctuaries/ui/sanctuaries_map_screen.dart';
 import 'features/auth/ui/login_screen.dart';
+import 'features/eye_guardian/ui/alert_confirmation_screen.dart'; // AlertConfirmation
 import 'core/network/auth_service.dart';
 import 'core/ui/glass_box.dart';
 import 'core/utils/connectivity_service.dart'; // Import connectivity service
@@ -146,6 +148,23 @@ class _MainNavigatorState extends State<MainNavigator> {
     _pageController = PageController();
     _cargarPerfil();
     _checkLocationPermissionsAndStart();
+    _listenToBackgroundGlobal();
+  }
+
+  void _listenToBackgroundGlobal() {
+    FlutterBackgroundService().on('onShake').listen((event) {
+      if (!mounted) return;
+
+      final String? alertaId = event?['alertaId'];
+
+      // Navegación Global Inmediata
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AlertConfirmationScreen(alertaId: alertaId),
+        ),
+      );
+    });
   }
 
   Future<void> _checkLocationPermissionsAndStart() async {
