@@ -37,7 +37,9 @@ class ApiService {
           .select('id')
           .single();
 
-      return response['id'].toString();
+      final String idGenerado = response['id'].toString();
+      debugPrint("ARGOS DATABASE: Alerta insertada con ID: $idGenerado");
+      return idGenerado;
     } catch (e) {
       debugPrint("Error al enviar alerta (Background Safe): $e");
       return null;
@@ -47,7 +49,11 @@ class ApiService {
   // Método para clasificar el incidente
   Future<void> clasificarIncidente(String alertaId, String tipo) async {
     try {
-      // 1. Definir un mensaje amigable según el tipo (Higiene v2.4.2)
+      // 0. Parseo a int (BigInt friendly)
+      final int idNum = int.tryParse(alertaId) ?? 0;
+      if (idNum == 0) throw Exception("ID de alerta inválido");
+
+      // 1. Definir un mensaje amigable según el tipo (Higiene v2.4.3)
       String nuevoMensaje;
       switch (tipo.toLowerCase()) {
         case 'robo':
@@ -66,16 +72,17 @@ class ApiService {
           nuevoMensaje = "Situación de peligro reportada.";
       }
 
-      // 2. Actualizar en Supabase (Usamos String para BigInt por seguridad)
+      debugPrint("ARGOS: Clasificando ID $idNum como $tipo...");
+
+      // 2. Actualizar en Supabase (Usamos int numérico para BigInt)
       await _supabase
           .from('alertas')
-          .update({'tipo': tipo, 'mensaje': nuevoMensaje}).eq('id', alertaId);
+          .update({'tipo': tipo, 'mensaje': nuevoMensaje}).eq('id', idNum);
 
       // --- LIMPIEZA DE CACHÉ (v2.4.1) ---
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('cached_danger_zones');
-      debugPrint(
-          "ARGOS: Alerta $alertaId clasificada como $tipo. Caché limpia.");
+      debugPrint("ARGOS: Alerta $idNum clasificada. Caché purgada.");
     } catch (e) {
       debugPrint("Error clasificando incidente: $e");
       throw Exception("Error al clasificar incidente");
@@ -85,17 +92,24 @@ class ApiService {
   // Método para cancelar una alerta (En caso de falso positivo)
   Future<void> cancelarAlerta(String alertaId) async {
     try {
-      debugPrint("ARGOS: Intentando borrar alerta ID: $alertaId");
+      final int idNum = int.tryParse(alertaId) ?? 0;
+      if (idNum == 0) {
+        debugPrint(
+            "ARGOS ERROR: Intento de cancelar con ID inválido ($alertaId)");
+        return;
+      }
+
+      debugPrint("ARGOS: Intentando borrar de Supabase ID: $idNum");
 
       // 1. Borrar de Supabase (Nube)
-      // Usamos el ID directamente como String, Postgrest lo maneja mejor para BigInt
-      await _supabase.from('alertas').delete().eq('id', alertaId);
+      // Usamos el ID como int, Dart int es 64-bit y mapea perfecto a BigInt
+      await _supabase.from('alertas').delete().eq('id', idNum);
 
       // 2. Limpiar Caché Local (Higiene de Mapa v2.4.0)
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('cached_danger_zones');
 
-      debugPrint("ARGOS: Alerta $alertaId borrada exitosamente de la nube.");
+      debugPrint("ARGOS: Alerta $idNum borrada física y localmente.");
       UiUtils.showSuccess("Alerta cancelada. Mapa purgado.");
     } catch (e) {
       debugPrint("Error cancelando alerta: $e");
