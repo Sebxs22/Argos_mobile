@@ -168,14 +168,15 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
       case GuardianState.success:
         mainColor = const Color(0xFF00E676);
         glowColor = Colors.greenAccent;
-        centerIcon = Icons.check;
+        centerIcon = Icons.check_circle_outline_rounded;
         statusSubtext = "ALERTA RECIBIDA";
         break;
       default:
-        mainColor = Colors.blueAccent;
-        glowColor = Colors.blue;
-        centerIcon = Icons.remove_red_eye_outlined;
-        statusSubtext = "Monitoreo activo";
+        // ESTILO ORIGINAL: Blanco/Azulado Premium con Check
+        mainColor = isDark ? Colors.white : Colors.blue.shade900;
+        glowColor = isDark ? Colors.blueAccent : Colors.blue.shade400;
+        centerIcon = Icons.verified_user_sharp; // O el "Ojo con Check"
+        statusSubtext = "SISTEMA PROTEGIDO";
         break;
     }
 
@@ -320,12 +321,12 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
                               child: Icon(
                                 centerIcon,
                                 key: ValueKey(_currentState),
-                                size: 60,
-                                color:
-                                    _currentState == GuardianState.monitoring &&
-                                            !isDark
-                                        ? Colors.blueAccent
-                                        : Colors.white,
+                                size: 70,
+                                color: _currentState == GuardianState.monitoring
+                                    ? (isDark
+                                        ? Colors.white
+                                        : Colors.blue.shade900)
+                                    : Colors.white,
                               ),
                             ),
                           ),

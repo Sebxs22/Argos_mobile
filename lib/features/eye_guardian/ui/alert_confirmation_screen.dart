@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/network/api_service.dart';
 import '../../../core/ui/argos_background.dart';
+import '../../../core/ui/glass_box.dart';
 import 'incident_classification_screen.dart';
 
 class AlertConfirmationScreen extends StatefulWidget {
@@ -36,26 +37,46 @@ class _AlertConfirmationScreenState extends State<AlertConfirmationScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Icono de éxito pulsante
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.redAccent.withValues(alpha: 0.1),
-                  border: Border.all(color: Colors.redAccent, width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.redAccent.withValues(alpha: 0.3),
-                      blurRadius: 30,
-                      spreadRadius: 5,
+              // Icono central con efecto Aura
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    width: 160,
+                    height: 160,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.redAccent.withValues(alpha: 0.05),
                     ),
-                  ],
-                ),
-                child: const Icon(Icons.security_rounded,
-                    color: Colors.redAccent, size: 60),
+                  ),
+                  Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.redAccent.withValues(alpha: 0.4),
+                          blurRadius: 40,
+                          spreadRadius: 10,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.redAccent, width: 3),
+                      color: Colors.redAccent.withValues(alpha: 0.1),
+                    ),
+                    child: const Icon(Icons.shield_rounded,
+                        color: Colors.redAccent, size: 50),
+                  ),
+                ],
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 50),
               Text(
                 "¡ALERTA ENVIADA!",
                 style: TextStyle(
@@ -77,48 +98,74 @@ class _AlertConfirmationScreenState extends State<AlertConfirmationScreen> {
               ),
               const SizedBox(height: 60),
 
-              // Botón de Clasificar
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (widget.alertaId != null) {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => IncidentClassificationScreen(
-                              alertaId: widget.alertaId!),
+              // Card de vidrio para la acción principal
+              GlassBox(
+                borderRadius: 30,
+                opacity: isDark ? 0.1 : 0.05,
+                blur: 10,
+                padding: const EdgeInsets.all(25),
+                child: Column(
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF2563EB), Color(0xFF1E40AF)],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.blueAccent.withValues(alpha: 0.3),
+                              blurRadius: 15,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
                         ),
-                      );
-                    } else {
-                      Navigator.pop(context);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20)),
-                  ),
-                  child: const Text("CLASIFICAR INCIDENTE",
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, letterSpacing: 1.2)),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Botón de Falsa Alarma
-              TextButton(
-                onPressed: _cancelAlert,
-                child: Text(
-                  "FUE UNA FALSA ALARMA (CANCELAR)",
-                  style: TextStyle(
-                    color: textColor.withValues(alpha: 0.5),
-                    fontWeight: FontWeight.bold,
-                    decoration: TextDecoration.underline,
-                  ),
+                        child: ElevatedButton(
+                          onPressed: () {
+                            if (widget.alertaId != null) {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      IncidentClassificationScreen(
+                                          alertaId: widget.alertaId!),
+                                ),
+                              );
+                            } else {
+                              Navigator.pop(context);
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 20),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20)),
+                          ),
+                          child: const Text("CLASIFICAR INCIDENTE",
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.2)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    TextButton(
+                      onPressed: _cancelAlert,
+                      child: Text(
+                        "CANCELAR FALSA ALARMA",
+                        style: TextStyle(
+                          color: textColor.withValues(alpha: 0.4),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
