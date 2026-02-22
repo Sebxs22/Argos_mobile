@@ -37,7 +37,7 @@ class ApiService {
           .select('id')
           .single();
 
-      return response['id'] as String;
+      return response['id'].toString();
     } catch (e) {
       UiUtils.showError("Error al enviar alerta: $e");
       return null;
@@ -106,7 +106,10 @@ class ApiService {
       for (var item in data) {
         if (item['latitud'] == null || item['longitud'] == null) continue;
 
-        LatLng puntoAlerta = LatLng(item['latitud'], item['longitud']);
+        LatLng puntoAlerta = LatLng(
+          (item['latitud'] as num).toDouble(),
+          (item['longitud'] as num).toDouble(),
+        );
         String fechaStr = item['fecha'] ?? "";
         String tiempoTexto = calcularTiempoTranscurrido(fechaStr);
         String tipo = item['tipo'] ?? "ALERTA";
@@ -246,7 +249,10 @@ class ApiService {
 
       final List<dynamic> coordinates =
           data['routes'][0]['geometry']['coordinates'];
-      List<LatLng> points = coordinates.map((c) => LatLng(c[1], c[0])).toList();
+      List<LatLng> points = coordinates
+          .map(
+              (c) => LatLng((c[1] as num).toDouble(), (c[0] as num).toDouble()))
+          .toList();
 
       final double duracion = (data['routes'][0]['duration'] ?? 0).toDouble();
       final double distancia = (data['routes'][0]['distance'] ?? 0).toDouble();

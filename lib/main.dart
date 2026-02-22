@@ -143,6 +143,9 @@ class _MainNavigatorState extends State<MainNavigator> {
     super.initState();
     _pageController = PageController();
     _cargarPerfil();
+
+    // Iniciar el servicio de fondo automáticamente para rastreo en tiempo real
+    BackgroundServiceManager().start();
   }
 
   Future<void> _cargarPerfil() async {
