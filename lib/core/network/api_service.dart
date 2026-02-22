@@ -32,9 +32,9 @@ class ApiService {
         // Guardamos en UTC para evitar desfases de horario entre países
         'fecha': DateTime.now().toUtc().toIso8601String(),
       });
-      UiUtils.showSuccess("✅ Alerta enviada a la nube");
+      UiUtils.showSuccess("Alerta enviada a la nube");
     } catch (e) {
-      UiUtils.showError("❌ Error al enviar alerta: $e");
+      UiUtils.showError("Error al enviar alerta: $e");
     }
   }
 
