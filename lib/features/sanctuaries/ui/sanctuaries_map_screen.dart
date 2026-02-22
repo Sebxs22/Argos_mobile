@@ -732,31 +732,65 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
   }
 
   Widget _buildMemberMarker(Map<String, dynamic> member) {
-    return Tooltip(
-      message: member['nombre_completo'] ?? "",
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 5,
+    final String name = member['nombre_completo'] ?? "Usuario";
+    final String initial = name.isNotEmpty ? name[0].toUpperCase() : "U";
+
+    // Generar un color basado en el ID para que sea consistente
+    final String id = member['id'] ?? "";
+    final Color memberColor =
+        Colors.primaries[id.hashCode % Colors.primaries.length];
+
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // Etiqueta de nombre (Glass)
+        Positioned(
+          top: 0,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(10),
             ),
-          ],
-          border: Border.all(color: Colors.blueAccent, width: 2),
-        ),
-        child: Center(
-          child: Text(
-            (member['nombre_completo'] as String? ?? "U")[0].toUpperCase(),
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: Colors.blueAccent,
+            child: Text(
+              name.split(' ')[0], // Solo el primer nombre
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 8,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ),
-      ),
+        // Avatar Circular
+        Container(
+          margin: const EdgeInsets.only(top: 12),
+          width: 35,
+          height: 35,
+          decoration: BoxDecoration(
+            color: memberColor.withValues(alpha: 0.2),
+            shape: BoxShape.circle,
+            border: Border.all(color: memberColor, width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: memberColor.withValues(alpha: 0.3),
+                blurRadius: 8,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: Center(
+            child: Text(
+              initial,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: memberColor,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -90,7 +90,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       setState(() => _isLoading = false);
       if (error == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("¡Bienvenido a la Red ARGOS!")),
+          const SnackBar(content: Text("Bienvenido a la Red ARGOS")),
         );
         // Al registrarse, lo mandamos directo al Navigator principal
         Navigator.pushAndRemoveUntil(

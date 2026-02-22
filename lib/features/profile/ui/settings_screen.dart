@@ -52,13 +52,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _guardarPerfil() async {
     try {
-      UiUtils.showWarning("Actualizando perfil...");
       await _auth.actualizarPerfil(
         nombre: _nombreController.text,
         telefono: _telefonoController.text,
         cedula: _cedulaController.text,
       );
-      UiUtils.showSuccess("Perfil actualizado correctamente");
+      if (mounted) {
+        UiUtils.showSuccess("Perfil actualizado");
+        Navigator.pop(context);
+      }
     } catch (e) {
       UiUtils.showError("Error al actualizar perfil");
     }

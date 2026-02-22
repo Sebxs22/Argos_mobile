@@ -37,21 +37,21 @@ class AuthService {
         },
       );
       if (res.user != null) {
-        debugPrint("✅ Registro exitoso en Supabase Auth");
+        debugPrint("Registro exitoso en Supabase Auth");
         // No esperamos (await) a OneSignal para no bloquear el inicio de la app
         actualizarPushToken();
-        UiUtils.showSuccess("Cuenta creada exitosamente");
+        UiUtils.showSuccess("Cuenta creada correctamente");
         return null;
       } else {
-        UiUtils.showError("Error al crear cuenta");
-        return "Error al crear cuenta";
+        UiUtils.showError("No se pudo crear la cuenta");
+        return "No se pudo crear la cuenta";
       }
     } on AuthException catch (e) {
       UiUtils.showError(e.message);
       return e.message;
     } catch (e) {
-      UiUtils.showError("Error inesperado: $e");
-      return "Error inesperado: $e";
+      UiUtils.showError("Error inesperado al registrar");
+      return "Error inesperado al registrar";
     }
   }
 
@@ -61,21 +61,21 @@ class AuthService {
     required String password,
   }) async {
     try {
-      debugPrint("🚀 Intentando iniciar sesión: $email");
+      debugPrint("Intentando iniciar sesión: $email");
       final AuthResponse res = await _supabase.auth.signInWithPassword(
         email: email,
         password: password,
       );
       if (res.user == null) {
-        debugPrint("❌ Error: Usuario nulo tras login");
-        UiUtils.showError("Credenciales inválidas");
-        return "Credenciales inválidas";
+        debugPrint("Error: Usuario nulo tras login");
+        UiUtils.showError("Correo o contraseña incorrectos");
+        return "Correo o contraseña incorrectos";
       }
-      debugPrint("✅ Login exitoso");
+      debugPrint("Login exitoso");
       actualizarPushToken(); // Sincronizar OneSignal (sin await)
       return null;
     } on AuthException catch (e) {
-      debugPrint("❌ AuthException: ${e.message}");
+      debugPrint("AuthException: ${e.message}");
       UiUtils.showError("Correo o contraseña incorrectos");
       return "Correo o contraseña incorrectos";
     } catch (e) {

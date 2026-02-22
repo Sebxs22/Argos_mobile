@@ -35,7 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (mounted) {
       setState(() => _isLoading = false);
       if (error == null) {
-        UiUtils.showSuccess("¡Bienvenido a ARGOS!");
+        UiUtils.showSuccess("Bienvenido a ARGOS");
         // Navegamos al MainNavigator para tener acceso a todas las pestañas
         Navigator.pushReplacement(
           context,
