@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../core/network/api_service.dart';
 import '../../../core/ui/glass_box.dart';
+import '../../../core/utils/ui_utils.dart';
 
 class CircleMapScreen extends StatefulWidget {
   final List<Map<String, dynamic>> initialMembers;
@@ -154,6 +155,8 @@ class _CircleMapScreenState extends State<CircleMapScreen> {
                               return Padding(
                                 padding: const EdgeInsets.only(right: 15),
                                 child: GestureDetector(
+                                  behavior: HitTestBehavior
+                                      .opaque, // Área de toque mejorada
                                   onTap: () {
                                     if (hasLocation) {
                                       _mapController.move(
@@ -161,8 +164,11 @@ class _CircleMapScreenState extends State<CircleMapScreen> {
                                           (m['latitud'] as num).toDouble(),
                                           (m['longitud'] as num).toDouble(),
                                         ),
-                                        17.5, // Zoom más cercano para identificar mejor
+                                        17.5,
                                       );
+                                    } else {
+                                      UiUtils.showWarning(
+                                          "${m['nombre_completo'] ?? 'El miembro'} no ha compartido su ubicación aún");
                                     }
                                   },
                                   child: Column(
@@ -257,8 +263,8 @@ class _CircleMapScreenState extends State<CircleMapScreen> {
         // Avatar Circular
         Container(
           margin: const EdgeInsets.only(top: 12),
-          width: 33,
-          height: 33,
+          width: 40,
+          height: 40,
           decoration: BoxDecoration(
             color: memberColor.withValues(alpha: 0.2),
             shape: BoxShape.circle,
@@ -275,7 +281,7 @@ class _CircleMapScreenState extends State<CircleMapScreen> {
             child: Text(
               initial,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: memberColor,
               ),

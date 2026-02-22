@@ -102,8 +102,8 @@ void onStart(ServiceInstance service) async {
     }
   });
 
-  // --- REPORTE PERIÓDICO DE UBICACIÓN (Cada 5 minutos) ---
-  Timer.periodic(const Duration(minutes: 5), (timer) async {
+  // --- REPORTE PERIÓDICO DE UBICACIÓN (Cada 1 minuto para tiempo real) ---
+  Timer.periodic(const Duration(minutes: 1), (timer) async {
     try {
       Position position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
