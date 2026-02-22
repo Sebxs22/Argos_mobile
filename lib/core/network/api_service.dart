@@ -39,7 +39,7 @@ class ApiService {
 
       return response['id'].toString();
     } catch (e) {
-      UiUtils.showError("Error al enviar alerta: $e");
+      debugPrint("Error al enviar alerta (Background Safe): $e");
       return null;
     }
   }

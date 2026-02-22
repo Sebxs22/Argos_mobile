@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../core/network/api_service.dart';
@@ -17,6 +19,9 @@ class _CircleMapScreenState extends State<CircleMapScreen> {
   final ApiService _apiService = ApiService();
   final MapController _mapController = MapController();
 
+  LatLng? _myLocation;
+  Timer? _locationTimer;
+
   late Stream<List<Map<String, dynamic>>> _membersStream;
   List<Map<String, dynamic>> _currentMembers = [];
   bool _hasCentered = false;
@@ -33,6 +38,29 @@ class _CircleMapScreenState extends State<CircleMapScreen> {
         .toList();
 
     _membersStream = _apiService.streamUbicacionesCirculo(ids);
+    _startLocationTracking();
+  }
+
+  void _startLocationTracking() {
+    _updateMyLocation();
+    _locationTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      _updateMyLocation();
+    });
+  }
+
+  Future<void> _updateMyLocation() async {
+    try {
+      Position pos = await Geolocator.getCurrentPosition(
+        locationSettings:
+            const LocationSettings(accuracy: LocationAccuracy.medium),
+      );
+      if (mounted) {
+        setState(() => _myLocation = LatLng(pos.latitude, pos.longitude));
+        await _apiService.actualizarUbicacion(pos.latitude, pos.longitude);
+      }
+    } catch (e) {
+      debugPrint("Error rastreo mapa círculo: $e");
+    }
   }
 
   @override
@@ -118,6 +146,28 @@ class _CircleMapScreenState extends State<CircleMapScreen> {
                       );
                     }).toList(),
                   ),
+
+                  // MARCADOR PROPIO (Tú)
+                  if (_myLocation != null)
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: _myLocation!,
+                          width: 45,
+                          height: 45,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.blueAccent.withValues(alpha: 0.2),
+                              border: Border.all(
+                                  color: Colors.blueAccent, width: 2),
+                            ),
+                            child: const Icon(Icons.person_pin_circle,
+                                color: Colors.blueAccent, size: 30),
+                          ),
+                        ),
+                      ],
+                    ),
                 ],
               ),
 
@@ -227,6 +277,13 @@ class _CircleMapScreenState extends State<CircleMapScreen> {
       }
     }
     return const LatLng(-1.67098, -78.64712); // Default Riobamba
+  }
+
+  @override
+  void dispose() {
+    _locationTimer?.cancel();
+    _mapController.dispose();
+    super.dispose();
   }
 
   Widget _buildMemberMarker(Map<String, dynamic> member) {

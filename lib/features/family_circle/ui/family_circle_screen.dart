@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:geolocator/geolocator.dart';
+import '../../../core/network/api_service.dart';
 import '../../../core/network/auth_service.dart';
 import '../../../core/ui/glass_box.dart';
 import '../../../core/utils/ui_utils.dart';
@@ -32,6 +34,19 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
 
   Future<void> _cargarDatos() async {
     setState(() => _isLoading = true);
+
+    // REPORTE PROACTIVO: Avisamos nuestra ubicación para que el círculo nos vea.
+    try {
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings:
+            const LocationSettings(accuracy: LocationAccuracy.medium),
+      );
+      final api = ApiService();
+      await api.actualizarUbicacion(pos.latitude, pos.longitude);
+    } catch (e) {
+      debugPrint("Error reporte proactivo: $e");
+    }
+
     final perfil = await _authService.obtenerMiPerfil();
     final guardianes = await _authService.obtenerMisGuardianes();
     final protegidos = await _authService.obtenerAQuienesProtejo();

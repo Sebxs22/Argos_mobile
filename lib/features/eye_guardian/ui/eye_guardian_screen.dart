@@ -49,7 +49,9 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
   }
 
   void _handleBackgroundShake(Map<String, dynamic>? data) {
-    if (_currentState != GuardianState.monitoring) return;
+    // Si ya estamos en éxito, ignoramos para evitar duplicados,
+    // pero si estamos en 'monitoring' o 'sending', procedemos.
+    if (_currentState == GuardianState.success) return;
 
     final String? alertaId = data?['alertaId'];
 
