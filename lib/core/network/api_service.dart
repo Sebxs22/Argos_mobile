@@ -59,8 +59,14 @@ class ApiService {
   // Método para cancelar una alerta (En caso de falso positivo)
   Future<void> cancelarAlerta(String alertaId) async {
     try {
+      // 1. Borrar de Supabase (Nube)
       await _supabase.from('alertas').delete().eq('id', alertaId);
-      UiUtils.showSuccess("Alerta cancelada correctamente");
+
+      // 2. Limpiar Caché Local (Higiene de Mapa v2.4.0)
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('cached_danger_zones');
+
+      UiUtils.showSuccess("Alerta cancelada. Mapa purgado.");
     } catch (e) {
       debugPrint("Error cancelando alerta: $e");
     }
