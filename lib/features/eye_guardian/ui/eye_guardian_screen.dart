@@ -2,11 +2,9 @@ import 'dart:async';
 import 'dart:math';
 // import 'dart:ui'; // Ya no es necesario el blur aquí porque el fondo viene del Main
 import 'package:flutter/material.dart';
-import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 
-import 'incident_classification_screen.dart';
 import '../../../core/network/api_service.dart';
 import '../../../core/ui/glass_box.dart';
 import 'emergency_countdown_screen.dart';
@@ -90,57 +88,25 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
     });
   }
 
-  void _handleShakeDetected() {
+  void _handleShakeDetected() async {
     DateTime now = DateTime.now();
     if (_lastAlertTime != null) {
       if (now.difference(_lastAlertTime!).inSeconds < _cooldownSeconds) return;
     }
     _lastAlertTime = now;
-    _sendImmediatePanicAlert();
-  }
 
-  Future<void> _sendImmediatePanicAlert() async {
-    if (_currentState == GuardianState.sending) return;
-    setState(() => _currentState = GuardianState.sending);
-
-    bool canVibrate = await Vibrate.canVibrate;
-    if (canVibrate) Vibrate.feedback(FeedbackType.heavy);
-
-    try {
-      Position position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 5),
-        ),
-      );
-      final String? alertaId = await _apiService.enviarAlertaEmergencia(
-        position.latitude,
-        position.longitude,
+    // Abrir la pantalla de cuenta regresiva
+    if (mounted) {
+      final bool? sent = await Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => const EmergencyCountdownScreen()),
       );
 
-      if (mounted) {
-        setState(() {
-          _currentState = GuardianState.monitoring;
-          _sentAlertsCount++;
-        });
-
-        // Si tenemos el ID, vamos a Clasificar
-        if (alertaId != null && mounted) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) =>
-                  IncidentClassificationScreen(alertaId: alertaId),
-            ),
-          );
-        }
-        if (canVibrate) Vibrate.feedback(FeedbackType.success);
+      // Si se envió con éxito, actualizamos contador local
+      if (sent == true) {
+        setState(() => _sentAlertsCount++);
       }
-    } catch (e) {
-      if (mounted) setState(() => _currentState = GuardianState.monitoring);
-    } finally {
-      await Future.delayed(const Duration(seconds: 3));
-      if (mounted) setState(() => _currentState = GuardianState.monitoring);
     }
   }
 

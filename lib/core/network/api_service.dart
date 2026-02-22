@@ -432,4 +432,49 @@ class ApiService {
       return [];
     }
   }
+
+  // 8. ENVIAR NOTIFICACIÓN COMUNITARIA POR PROXIMIDAD (Geofencing)
+  Future<void> enviarNotificacionComunitaria(
+    double lat,
+    double lng,
+    String mensaje,
+  ) async {
+    try {
+      // Definimos un radio aproximado de 1km (aprox 0.009 grados)
+      const double delta = 0.009;
+
+      final res = await _supabase
+          .from('perfiles')
+          .select('onesignal_id')
+          .gte('latitud', lat - delta)
+          .lte('latitud', lat + delta)
+          .gte('longitud', lng - delta)
+          .lte('longitud', lng + delta);
+
+      final List<String> targetIds = (res as List)
+          .map((e) => e['onesignal_id'] as String?)
+          .where((id) => id != null && id.isNotEmpty)
+          .cast<String>()
+          .toList();
+
+      if (targetIds.isEmpty) return;
+
+      await http.post(
+        Uri.parse('https://onesignal.com/api/v1/notifications'),
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Authorization': 'Basic ${dotenv.env['ONESIGNAL_REST_API_KEY']}',
+        },
+        body: jsonEncode({
+          'app_id': dotenv.env['ONESIGNAL_APP_ID'],
+          'include_player_ids': targetIds,
+          'contents': {'es': '⚠️ PELIGRO CERCA: $mensaje'},
+          'headings': {'es': 'ALERTA COMUNITARIA ARGOS'},
+          'priority': 5,
+        }),
+      );
+    } catch (e) {
+      debugPrint("Error en enviarNotificacionComunitaria: $e");
+    }
+  }
 }

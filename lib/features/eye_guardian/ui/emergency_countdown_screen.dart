@@ -7,6 +7,7 @@ import '../../../core/network/api_service.dart';
 import '../../../core/ui/glass_box.dart';
 import '../../../core/ui/argos_background.dart';
 import '../../../core/utils/ui_utils.dart'; // Import UiUtils
+import 'incident_classification_screen.dart';
 
 class EmergencyCountdownScreen extends StatefulWidget {
   const EmergencyCountdownScreen({super.key});
@@ -99,7 +100,8 @@ class _EmergencyCountdownScreenState extends State<EmergencyCountdownScreen> {
       "ENVIANDO ALERTA PRECISA A: $finalLat, $finalLng",
       name: 'ArgosEmergency',
     );
-    await _apiService.enviarAlertaEmergencia(finalLat, finalLng);
+    final String? alertaId =
+        await _apiService.enviarAlertaEmergencia(finalLat, finalLng);
 
     // 3. NOTIFICACIÓN PUSH A GUARDIANES
     try {
@@ -159,8 +161,18 @@ class _EmergencyCountdownScreenState extends State<EmergencyCountdownScreen> {
                   blur: 5,
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.of(context).pop();
-                      Navigator.of(context).pop(true);
+                      Navigator.of(context).pop(); // Cerrar Dialog
+
+                      if (alertaId != null) {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (context) => IncidentClassificationScreen(
+                                alertaId: alertaId),
+                          ),
+                        );
+                      } else {
+                        Navigator.of(context).pop(true);
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white.withValues(alpha: 0.1),

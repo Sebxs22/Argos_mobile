@@ -102,6 +102,25 @@ void onStart(ServiceInstance service) async {
     }
   });
 
+  // --- REPORTE PERIÓDICO DE UBICACIÓN (Cada 5 minutos) ---
+  Timer.periodic(const Duration(minutes: 5), (timer) async {
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy:
+              LocationAccuracy.medium, // Menor precisión para ahorrar batería
+        ),
+      );
+      await apiService.actualizarUbicacion(
+        position.latitude,
+        position.longitude,
+      );
+      developer.log("ARGOS: Ubicación de rutina actualizada.");
+    } catch (e) {
+      developer.log("Error en reporte periódico: $e");
+    }
+  });
+
   service.on('stopService').listen((event) {
     service.stopSelf();
   });

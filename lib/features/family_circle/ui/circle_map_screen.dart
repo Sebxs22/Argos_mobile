@@ -18,6 +18,7 @@ class _CircleMapScreenState extends State<CircleMapScreen> {
 
   late Stream<List<Map<String, dynamic>>> _membersStream;
   List<Map<String, dynamic>> _currentMembers = [];
+  bool _hasCentered = false;
 
   @override
   void initState() {
@@ -59,6 +60,19 @@ class _CircleMapScreenState extends State<CircleMapScreen> {
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             _currentMembers = snapshot.data!;
+            // Centrar automáticamente la primera vez que recibimos datos reales
+            if (!_hasCentered &&
+                _currentMembers.any((m) => m['latitud'] != null)) {
+              _hasCentered = true;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                final firstWithLoc =
+                    _currentMembers.firstWhere((m) => m['latitud'] != null);
+                _mapController.move(
+                    LatLng((firstWithLoc['latitud'] as num).toDouble(),
+                        (firstWithLoc['longitud'] as num).toDouble()),
+                    14.0);
+              });
+            }
           }
 
           return Stack(
