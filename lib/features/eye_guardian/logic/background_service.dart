@@ -33,7 +33,7 @@ void onStart(ServiceInstance service) async {
   double threshold = 15.0;
 
   // Escucha del sensor en SEGUNDO PLANO - PROTECCIÓN 24/7
-  userAccelerometerEvents.listen((UserAccelerometerEvent event) async {
+  userAccelerometerEventStream().listen((UserAccelerometerEvent event) async {
     // Magnitud de la aceleración (Suma de cuadrados para eficiencia)
     double acceleration =
         (event.x * event.x + event.y * event.y + event.z * event.z);

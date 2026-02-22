@@ -15,7 +15,7 @@ enum GuardianState { monitoring, sending, success }
 class _EyeGuardianScreenState extends State<EyeGuardianScreen>
     with TickerProviderStateMixin {
   GuardianState _currentState = GuardianState.monitoring;
-  int _sentAlertsCount = 0;
+  final int _sentAlertsCount = 0;
 
   late AnimationController _pulseController;
   late AnimationController _rotateController;
