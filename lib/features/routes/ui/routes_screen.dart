@@ -480,7 +480,7 @@ class _RoutesScreenState extends State<RoutesScreen> {
                         ),
                       ),
                       subtitle: Text(
-                        "${report.description} (${report.timeAgo})",
+                        "${report.description} (${_apiService.calcularTiempoTranscurrido(report.timestamp.toIso8601String())})",
                         style: TextStyle(
                             color: isDark ? Colors.white54 : Colors.black54),
                       ),

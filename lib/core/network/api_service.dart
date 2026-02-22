@@ -166,7 +166,8 @@ class ApiService {
         (item['longitud'] as num).toDouble(),
       );
       String fechaStr = item['fecha'] ?? "";
-      String tiempoTexto = calcularTiempoTranscurrido(fechaStr);
+      DateTime timestamp =
+          DateTime.tryParse(fechaStr)?.toLocal() ?? DateTime.now();
       String tipo = item['tipo'] ?? "ALERTA";
 
       // MAPEO DINÁMICO DE ICONOS
@@ -190,7 +191,7 @@ class ApiService {
 
       ReportModel nuevoReporte = ReportModel(
         tipo.replaceAll('_', ' ').toUpperCase(),
-        tiempoTexto,
+        timestamp,
         item['mensaje'] ?? "Alerta de seguridad",
         iconMapping,
       );

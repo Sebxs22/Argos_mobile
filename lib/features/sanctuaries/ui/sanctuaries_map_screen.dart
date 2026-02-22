@@ -40,6 +40,7 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
   List<Map<String, dynamic>> _circleMembers = [];
   StreamSubscription? _circleSubscription;
   StreamSubscription? _alertsSubscription;
+  Timer? _refreshTimer;
 
   // Filtros activos (Todos por defecto)
   final Set<String> _activeFilters = {
@@ -71,6 +72,11 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
 
     // 5. CARGA INICIAL (v2.4.6 Fix): Disparar localización al entrar
     _getCurrentLocation();
+
+    // 6. TIMER DE REFRESCO (v2.4.9): Actualizar "hace x min" en tiempo real cada 30s
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      if (mounted) setState(() {});
+    });
   }
 
   void _subscribeToAlerts() {
@@ -103,6 +109,7 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
     _radarController.dispose();
     _circleSubscription?.cancel();
     _alertsSubscription?.cancel();
+    _refreshTimer?.cancel();
     super.dispose();
   }
 
@@ -308,7 +315,8 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
                               ),
                             ),
                             Text(
-                              report.timeAgo,
+                              _apiService.calcularTiempoTranscurrido(
+                                  report.timestamp.toIso8601String()),
                               style: TextStyle(
                                 color: isDark ? Colors.white38 : Colors.black38,
                                 fontSize: 10,
