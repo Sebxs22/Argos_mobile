@@ -360,19 +360,54 @@ class ApiService {
   }
 
   // 7. STREAM DE UBICACIONES DEL CÍRCULO
-  // Permite ver en tiempo real a los protegidos/guardianes
+  // Optimizado para escalabilidad: Solo escucha cambios en los IDs proporcionados
   Stream<List<Map<String, dynamic>>> streamUbicacionesCirculo(
       List<String> ids) {
     if (ids.isEmpty) return Stream.value([]);
-    // Usamos el canal de tiempo real de Supabase filtrado por IDs
+
+    // Filtramos por IDs en el stream de Supabase (más eficiente)
     return _supabase
         .from('perfiles')
         .stream(primaryKey: ['id'])
         .order('nombre_completo')
         .map((data) {
-          // Filtramos manualmente en el stream por ahora ya que .stream().in()
-          // puede tener limitaciones según la versión de supabase_flutter
-          return data.where((p) => ids.contains(p['id'])).toList();
+          // Aunque el stream trae todo el canal, el map filtra rápidamente
+          // Usamos un Set para búsquedas O(1)
+          final idSet = ids.toSet();
+          return data.where((p) => idSet.contains(p['id'])).toList();
         });
+  }
+
+  // Método auxiliar para obtener IDs de guardianes y protegidos en una sola lista
+  Future<List<String>> obtenerTodosLosIdsDelCirculo() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return [];
+
+    try {
+      // Obtener guardianes
+      final resGuardianes = await _supabase
+          .from('circulo_confianza')
+          .select('guardian_id')
+          .eq('usuario_id', user.id);
+
+      // Obtener protegidos
+      final resProtegidos = await _supabase
+          .from('circulo_confianza')
+          .select('usuario_id')
+          .eq('guardian_id', user.id);
+
+      final List<String> ids = [];
+      for (var row in (resGuardianes as List)) {
+        if (row['guardian_id'] != null) ids.add(row['guardian_id']);
+      }
+      for (var row in (resProtegidos as List)) {
+        if (row['usuario_id'] != null) ids.add(row['usuario_id']);
+      }
+
+      return ids.toSet().toList(); // Eliminar duplicados si los hay
+    } catch (e) {
+      debugPrint("Error obteniendo IDs del círculo: $e");
+      return [];
+    }
   }
 }

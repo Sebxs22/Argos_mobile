@@ -355,7 +355,7 @@ class _MainNavigatorState extends State<MainNavigator> {
                       1,
                       Icons.shield_outlined,
                       Icons.shield,
-                      "Santuarios",
+                      "Mapa",
                     ),
                     _buildNavItem(2, Icons.map_outlined, Icons.map, "Rutas"),
                   ],

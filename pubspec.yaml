@@ -38,9 +38,6 @@ dependencies:
   # Geolocalización avanzada
   geolocator: ^14.0.2
   
-  # Mapas para la Red Santuario y rutas seguras
-  google_maps_flutter: ^2.6.0
-  
   # Comunicación con el Backend (FastAPI)
   http: ^1.2.1
 

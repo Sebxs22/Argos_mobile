@@ -9,6 +9,7 @@ import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart'; // 
 import '../../../core/ui/glass_box.dart';
 import '../data/mock_sanctuaries_data.dart';
 import '../../../core/network/api_service.dart';
+import '../../family_circle/ui/family_circle_screen.dart'; // Import
 
 class SanctuariesMapScreen extends StatefulWidget {
   const SanctuariesMapScreen({super.key});
@@ -36,11 +37,16 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
   // Lista de zonas de peligro de Supabase
   List<DangerZoneModel> _activeDangerZones = [];
 
+  // Miembros del círculo familiar
+  List<Map<String, dynamic>> _circleMembers = [];
+  StreamSubscription? _circleSubscription;
+
   // Filtros activos (Todos por defecto)
   final Set<String> _activeFilters = {
     'Peligro',
     'Policía',
     'Salud',
+    'Círculo', // Añadimos Círculo por defecto o según prefieras
     'Farmacia',
     'Educación',
     'Tienda',
@@ -67,6 +73,23 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
 
     // 3. Obtener ubicación GPS
     _getCurrentLocation();
+
+    // 4. Suscribirse al círculo familiar
+    _subscribeToCircle();
+  }
+
+  Future<void> _subscribeToCircle() async {
+    final ids = await _apiService.obtenerTodosLosIdsDelCirculo();
+    if (ids.isEmpty) return;
+
+    _circleSubscription =
+        _apiService.streamUbicacionesCirculo(ids).listen((members) {
+      if (mounted) {
+        setState(() {
+          _circleMembers = members;
+        });
+      }
+    });
   }
 
   @override
@@ -74,6 +97,7 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
     WidgetsBinding.instance.removeObserver(this);
     _radarController.dispose();
     _autoRefreshTimer?.cancel();
+    _circleSubscription?.cancel();
     super.dispose();
   }
 
@@ -312,12 +336,28 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
           isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF8FAFC),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 90.0),
-        child: FloatingActionButton(
-          heroTag: "btnCenter",
-          mini: true,
-          onPressed: _getCurrentLocation, // Centra y actualiza GPS
-          backgroundColor: const Color(0xFFE53935),
-          child: const Icon(Icons.my_location, color: Colors.white),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FloatingActionButton(
+              heroTag: "btnFamily",
+              mini: true,
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (c) => const FamilyCircleScreen()),
+              ),
+              backgroundColor: Colors.blueAccent,
+              child: const Icon(Icons.group_add, color: Colors.white, size: 20),
+            ),
+            const SizedBox(height: 10),
+            FloatingActionButton(
+              heroTag: "btnCenter",
+              mini: true,
+              onPressed: _getCurrentLocation, // Centra y actualiza GPS
+              backgroundColor: const Color(0xFFE53935),
+              child: const Icon(Icons.my_location, color: Colors.white),
+            ),
+          ],
         ),
       ),
       body: Stack(
@@ -443,6 +483,20 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
                       child: _buildDynamicMarkerIcon(site),
                     ),
                   ),
+
+              // MIEMBROS DEL CÍRCULO
+              if (_activeFilters.contains('Círculo'))
+                ..._circleMembers
+                    .where((m) => m['latitud'] != null && m['longitud'] != null)
+                    .map((m) => Marker(
+                          point: LatLng(
+                            (m['latitud'] as num).toDouble(),
+                            (m['longitud'] as num).toDouble(),
+                          ),
+                          width: 45,
+                          height: 45,
+                          child: _buildMemberMarker(m),
+                        )),
             ],
             builder: (context, markers) {
               return Container(
@@ -473,6 +527,11 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
         'id': 'Policía',
         'icon': Icons.local_police,
         'color': Colors.greenAccent,
+      },
+      {
+        'id': 'Círculo',
+        'icon': Icons.group_outlined,
+        'color': Colors.blueAccent,
       },
       {'id': 'Salud', 'icon': Icons.local_hospital, 'color': Colors.blue},
       {
@@ -667,6 +726,35 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
               spreadRadius: 2,
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMemberMarker(Map<String, dynamic> member) {
+    return Tooltip(
+      message: member['nombre_completo'] ?? "",
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.2),
+              blurRadius: 5,
+            ),
+          ],
+          border: Border.all(color: Colors.blueAccent, width: 2),
+        ),
+        child: Center(
+          child: Text(
+            (member['nombre_completo'] as String? ?? "U")[0].toUpperCase(),
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Colors.blueAccent,
+            ),
+          ),
         ),
       ),
     );

@@ -29,6 +29,9 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
   int _sentAlertsCount = 0;
   DateTime? _lastAlertTime;
 
+  List<Map<String, dynamic>> _circleMembers = [];
+  bool _loadingCircle = true;
+
   static const int _cooldownSeconds = 10;
   static const double _shakeThreshold = 15.0;
 
@@ -51,6 +54,24 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
     )..repeat();
     _startManualShakeDetection();
     _startLocationUpdates();
+    _loadCircleMembers();
+  }
+
+  Future<void> _loadCircleMembers() async {
+    final ids = await _apiService.obtenerTodosLosIdsDelCirculo();
+    if (ids.isEmpty) {
+      if (mounted) setState(() => _loadingCircle = false);
+      return;
+    }
+
+    _apiService.streamUbicacionesCirculo(ids).listen((members) {
+      if (mounted) {
+        setState(() {
+          _circleMembers = members;
+          _loadingCircle = false;
+        });
+      }
+    });
   }
 
   void _startLocationUpdates() {
@@ -347,7 +368,7 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
 
             // BOTÓN MANUAL
             Padding(
-              padding: const EdgeInsets.only(bottom: 50.0),
+              padding: const EdgeInsets.only(bottom: 20.0),
               child: GestureDetector(
                 onTap: () {
                   Navigator.push(
@@ -399,6 +420,54 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
                 ),
               ),
             ),
+
+            // MINI RESUMEN DEL CÍRCULO (ACCESO RÁPIDO)
+            if (!_loadingCircle && _circleMembers.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 30.0),
+                child: Column(
+                  children: [
+                    Text(
+                      "CÍRCULO ACTIVO",
+                      style: TextStyle(
+                        color: secondaryTextColor,
+                        fontSize: 9,
+                        letterSpacing: 1.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: _circleMembers.map((m) {
+                          return Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: Tooltip(
+                              message: m['nombre_completo'] ?? "",
+                              child: CircleAvatar(
+                                radius: 15,
+                                backgroundColor:
+                                    Colors.blueAccent.withValues(alpha: 0.1),
+                                child: Text(
+                                  (m['nombre_completo'] as String? ?? "U")[0]
+                                      .toUpperCase(),
+                                  style: const TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.blueAccent),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),
