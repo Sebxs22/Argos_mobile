@@ -116,15 +116,124 @@ class ApiService {
     }
   }
 
-  // 2. OBTENER ALERTAS CON AGRUPAMIENTO INTELIGENTE Y CACHÉ
-  // Trae los datos de la nube y une reportes cercanos en una sola "Zona de Riesgo".
+  // 2. OBTENER ALERTAS CON TIEMPO REAL, AGRUPAMIENTO Y CACHÉ
+  // Escucha cambios en Supabase (INSERT, UPDATE, DELETE) para actualizar el mapa al instante.
+  Stream<List<DangerZoneModel>> streamAlertas() {
+    return _supabase
+        .from('alertas')
+        .stream(primaryKey: ['id'])
+        .order('fecha', ascending: false)
+        .map((data) {
+          // Filtro de tiempo: Solo mostrar alertas de las últimas 48 horas (v2.4.4)
+          final fortyEightHoursAgo =
+              DateTime.now().toUtc().subtract(const Duration(hours: 48));
+
+          final filteredData = data.where((item) {
+            try {
+              final fecha = DateTime.parse(item['fecha'] ?? "");
+              return fecha.isAfter(fortyEightHoursAgo);
+            } catch (_) {
+              return false;
+            }
+          }).toList();
+
+          // Guardar en caché para modo offline
+          _saveAlertsToCache(filteredData);
+
+          return _procesarAlertasEnZonas(filteredData);
+        });
+  }
+
+  // Guardar en caché local de forma asíncrona (Fire & Forget)
+  void _saveAlertsToCache(List<dynamic> data) async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString('cached_danger_zones', jsonEncode(data));
+  }
+
+  // Lógica de procesamiento de alertas (Clustering) extraída para reutilización
+  List<DangerZoneModel> _procesarAlertasEnZonas(List<dynamic> data) {
+    List<DangerZoneModel> zonasAgrupadas = [];
+    const Distance distanceCalc = Distance();
+
+    for (var item in data) {
+      if (item['latitud'] == null || item['longitud'] == null) continue;
+
+      LatLng puntoAlerta = LatLng(
+        (item['latitud'] as num).toDouble(),
+        (item['longitud'] as num).toDouble(),
+      );
+      String fechaStr = item['fecha'] ?? "";
+      String tiempoTexto = calcularTiempoTranscurrido(fechaStr);
+      String tipo = item['tipo'] ?? "ALERTA";
+
+      // MAPEO DINÁMICO DE ICONOS
+      IconData iconMapping;
+      switch (tipo.toLowerCase()) {
+        case 'robo':
+          iconMapping = Icons.gavel_rounded;
+          break;
+        case 'acoso':
+          iconMapping = Icons.visibility_rounded;
+          break;
+        case 'medica':
+          iconMapping = Icons.medical_services_rounded;
+          break;
+        case 'accidente':
+          iconMapping = Icons.car_crash_rounded;
+          break;
+        default:
+          iconMapping = Icons.warning_amber_rounded;
+      }
+
+      ReportModel nuevoReporte = ReportModel(
+        tipo.replaceAll('_', ' ').toUpperCase(),
+        tiempoTexto,
+        item['mensaje'] ?? "Alerta de seguridad",
+        iconMapping,
+      );
+
+      // Algoritmo de Clustering: Si hay un reporte a menos de 100m, se agrupan.
+      int indexZonaCercana = -1;
+      for (int i = 0; i < zonasAgrupadas.length; i++) {
+        if (distanceCalc.as(
+              LengthUnit.Meter,
+              puntoAlerta,
+              zonasAgrupadas[i].center,
+            ) <
+            100) {
+          indexZonaCercana = i;
+          break;
+        }
+      }
+
+      if (indexZonaCercana != -1) {
+        var zonaExistente = zonasAgrupadas[indexZonaCercana];
+        List<ReportModel> listaActualizada = List.from(zonaExistente.reports)
+          ..add(nuevoReporte);
+
+        zonasAgrupadas[indexZonaCercana] = DangerZoneModel(
+          center: zonaExistente.center,
+          radius: zonaExistente.radius,
+          reports: listaActualizada,
+        );
+      } else {
+        zonasAgrupadas.add(
+          DangerZoneModel(
+            center: puntoAlerta,
+            radius: 150,
+            reports: [nuevoReporte],
+          ),
+        );
+      }
+    }
+    return zonasAgrupadas;
+  }
+
+  // Método legacy (Sincrónico) mantenido por compatibilidad pero que ahora usa la lógica centralizada
   Future<List<DangerZoneModel>> obtenerAlertas() async {
     final prefs = await SharedPreferences.getInstance();
     const String cacheKey = 'cached_danger_zones';
 
-    List<dynamic> data = [];
-
-    // Intentar obtener de RED
     try {
       final fortyEightHoursAgo = DateTime.now()
           .toUtc()
@@ -137,100 +246,13 @@ class ApiService {
           .gte('fecha', fortyEightHoursAgo)
           .order('fecha', ascending: false);
 
-      data = remoteData;
-      // Guardar en caché
-      prefs.setString(cacheKey, jsonEncode(remoteData));
+      _saveAlertsToCache(remoteData);
+      return _procesarAlertasEnZonas(remoteData);
     } catch (e) {
-      debugPrint("⚠️ Sin conexión a Supabase. Usando caché local.");
-      // Fallback a CACHÉ
       if (prefs.containsKey(cacheKey)) {
-        data = jsonDecode(prefs.getString(cacheKey)!);
-        UiUtils.showWarning("Modo Offline: Mostrando alertas guardadas");
-      } else {
-        return [];
+        final data = jsonDecode(prefs.getString(cacheKey)!);
+        return _procesarAlertasEnZonas(data);
       }
-    }
-
-    try {
-      List<DangerZoneModel> zonasAgrupadas = [];
-      const Distance distanceCalc = Distance();
-
-      for (var item in data) {
-        if (item['latitud'] == null || item['longitud'] == null) continue;
-
-        LatLng puntoAlerta = LatLng(
-          (item['latitud'] as num).toDouble(),
-          (item['longitud'] as num).toDouble(),
-        );
-        String fechaStr = item['fecha'] ?? "";
-        String tiempoTexto = calcularTiempoTranscurrido(fechaStr);
-        String tipo = item['tipo'] ?? "ALERTA";
-
-        // MAPEO DINÁMICO DE ICONOS
-        IconData iconMapping;
-        switch (tipo.toLowerCase()) {
-          case 'robo':
-            iconMapping = Icons.gavel_rounded;
-            break;
-          case 'acoso':
-            iconMapping = Icons.visibility_rounded;
-            break;
-          case 'medica':
-            iconMapping = Icons.medical_services_rounded;
-            break;
-          case 'accidente':
-            iconMapping = Icons.car_crash_rounded;
-            break;
-          default:
-            iconMapping = Icons.warning_amber_rounded;
-        }
-
-        ReportModel nuevoReporte = ReportModel(
-          tipo.toUpperCase(),
-          tiempoTexto,
-          item['mensaje'] ?? "Alerta de seguridad",
-          iconMapping,
-        );
-
-        // Algoritmo de Clustering: Si hay un reporte a menos de 100m, se agrupan.
-        int indexZonaCercana = -1;
-        for (int i = 0; i < zonasAgrupadas.length; i++) {
-          if (distanceCalc.as(
-                LengthUnit.Meter,
-                puntoAlerta,
-                zonasAgrupadas[i].center,
-              ) <
-              100) {
-            indexZonaCercana = i;
-            break;
-          }
-        }
-
-        if (indexZonaCercana != -1) {
-          // Agregar al historial de la zona existente
-          var zonaExistente = zonasAgrupadas[indexZonaCercana];
-          List<ReportModel> listaActualizada = List.from(zonaExistente.reports)
-            ..add(nuevoReporte);
-
-          zonasAgrupadas[indexZonaCercana] = DangerZoneModel(
-            center: zonaExistente.center,
-            radius: zonaExistente.radius,
-            reports: listaActualizada,
-          );
-        } else {
-          // Crear una zona nueva
-          zonasAgrupadas.add(
-            DangerZoneModel(
-              center: puntoAlerta,
-              radius: 150, // Radio visual en metros
-              reports: [nuevoReporte],
-            ),
-          );
-        }
-      }
-      return zonasAgrupadas;
-    } catch (e) {
-      debugPrint("Error procesando alertas: $e");
       return [];
     }
   }

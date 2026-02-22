@@ -32,14 +32,14 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
   bool _isLoadingLocation = true;
   bool _showHud = false;
   late AnimationController _radarController;
-  Timer? _autoRefreshTimer;
 
-  // Lista de zonas de peligro de Supabase
+  // Lista de zonas de peligro de Supabase (Refrescada por el Stream)
   List<DangerZoneModel> _activeDangerZones = [];
 
-  // Miembros del círculo familiar
+  // Miembros del círculo familiar y Alertas Real-time
   List<Map<String, dynamic>> _circleMembers = [];
   StreamSubscription? _circleSubscription;
+  StreamSubscription? _alertsSubscription;
 
   // Filtros activos (Todos por defecto)
   final Set<String> _activeFilters = {
@@ -65,17 +65,19 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
       duration: const Duration(seconds: 2),
     )..repeat();
 
-    // 1. Carga de datos de la nube
-    _loadMapData();
-
-    // 2. Actualización automática cada 5 segundos
-    _startAutoRefresh();
-
-    // 3. Obtener ubicación GPS
-    _getCurrentLocation();
-
-    // 4. Suscribirse al círculo familiar
+    // 4. Suscribirse a datos en Tiempo Real (v2.4.5)
     _subscribeToCircle();
+    _subscribeToAlerts();
+  }
+
+  void _subscribeToAlerts() {
+    _alertsSubscription = _apiService.streamAlertas().listen((zones) {
+      if (mounted) {
+        setState(() {
+          _activeDangerZones = zones;
+        });
+      }
+    });
   }
 
   Future<void> _subscribeToCircle() async {
@@ -96,8 +98,8 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _radarController.dispose();
-    _autoRefreshTimer?.cancel();
     _circleSubscription?.cancel();
+    _alertsSubscription?.cancel();
     super.dispose();
   }
 
@@ -109,25 +111,9 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
     }
   }
 
-  void _startAutoRefresh() {
-    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
-      _loadMapData();
-    });
-  }
-
-  Future<void> _loadMapData() async {
-    try {
-      // ApiService ya gestiona la agrupación inteligente y el tiempo real
-      List<DangerZoneModel> realAlerts = await _apiService.obtenerAlertas();
-      if (mounted) {
-        setState(() {
-          _activeDangerZones = realAlerts;
-        });
-      }
-    } catch (e) {
-      debugPrint("Error recargando alertas: $e");
-    }
-  }
+  // El método _loadMapData ya no es necesario para el refresco periódico.
+  // Pero se mantiene vacío o se elimina si no hay otras referencias.
+  Future<void> _loadMapData() async {}
 
   Future<void> _getCurrentLocation() async {
     try {
