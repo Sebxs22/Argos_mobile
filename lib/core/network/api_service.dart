@@ -50,6 +50,10 @@ class ApiService {
       // Convertimos a int para asegurar compatibilidad con BIGINT en Postgres
       final int id = int.tryParse(alertaId) ?? 0;
       await _supabase.from('alertas').update({'tipo': tipo}).eq('id', id);
+
+      // --- LIMPIEZA DE CACHÉ (v2.4.1) ---
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('cached_danger_zones');
     } catch (e) {
       debugPrint("Error clasificando incidente: $e");
       throw Exception("Error al clasificar incidente");
@@ -59,8 +63,9 @@ class ApiService {
   // Método para cancelar una alerta (En caso de falso positivo)
   Future<void> cancelarAlerta(String alertaId) async {
     try {
+      final int id = int.tryParse(alertaId) ?? 0;
       // 1. Borrar de Supabase (Nube)
-      await _supabase.from('alertas').delete().eq('id', alertaId);
+      await _supabase.from('alertas').delete().eq('id', id);
 
       // 2. Limpiar Caché Local (Higiene de Mapa v2.4.0)
       final prefs = await SharedPreferences.getInstance();

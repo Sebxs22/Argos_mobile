@@ -49,12 +49,6 @@ class _IncidentClassificationScreenState
       'icon': Icons.help_outline_rounded,
       'color': Colors.grey
     },
-    {
-      'id': 'falsa_alarma',
-      'label': 'Falsa Alarma / Error',
-      'icon': Icons.delete_sweep_rounded,
-      'color': Colors.teal
-    },
   ];
 
   Future<void> _saveClassification() async {
@@ -62,20 +56,11 @@ class _IncidentClassificationScreenState
 
     setState(() => _isSaving = true);
     try {
-      if (_selectedType == 'falsa_alarma') {
-        // Si es falsa alarma, borramos la alerta por completo (Higiene de Mapa v2.4.0)
-        await _apiService.cancelarAlerta(widget.alertaId);
-        if (mounted) {
-          UiUtils.showSuccess("Reporte cancelado. Mapa purgado.");
-          Navigator.pop(context);
-        }
-      } else {
-        await _apiService.clasificarIncidente(widget.alertaId, _selectedType!);
-        if (mounted) {
-          UiUtils.showSuccess(
-              "Gracias por tu reporte. Ayudas a proteger la comunidad.");
-          Navigator.pop(context);
-        }
+      await _apiService.clasificarIncidente(widget.alertaId, _selectedType!);
+      if (mounted) {
+        UiUtils.showSuccess(
+            "Gracias por tu reporte. Ayudas a proteger la comunidad.");
+        Navigator.pop(context);
       }
     } catch (e) {
       UiUtils.showError("No se pudo guardar la clasificación");
