@@ -6,6 +6,7 @@ import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 
+import 'incident_classification_screen.dart';
 import '../../../core/network/api_service.dart';
 import '../../../core/ui/glass_box.dart';
 import 'emergency_countdown_screen.dart';
@@ -112,16 +113,27 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
           timeLimit: Duration(seconds: 5),
         ),
       );
-      await _apiService.enviarAlertaEmergencia(
+      final String? alertaId = await _apiService.enviarAlertaEmergencia(
         position.latitude,
         position.longitude,
       );
 
       if (mounted) {
         setState(() {
-          _currentState = GuardianState.success;
+          _currentState = GuardianState.monitoring;
           _sentAlertsCount++;
         });
+
+        // Si tenemos el ID, vamos a Clasificar
+        if (alertaId != null && mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  IncidentClassificationScreen(alertaId: alertaId),
+            ),
+          );
+        }
         if (canVibrate) Vibrate.feedback(FeedbackType.success);
       }
     } catch (e) {

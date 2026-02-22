@@ -22,19 +22,35 @@ class ApiService {
 
   // 1. ENVIAR ALERTA (POST DIRECTO A SUPABASE)
   // Se encarga de guardar el reporte de pánico en la nube.
-  Future<void> enviarAlertaEmergencia(double lat, double long) async {
+  Future<String?> enviarAlertaEmergencia(double lat, double long) async {
     try {
-      await _supabase.from('alertas').insert({
-        'latitud': lat,
-        'longitud': long,
-        'tipo': 'emergencia',
-        'mensaje': 'S.O.S. Ayuda solicitada desde dispositivo móvil',
-        // Guardamos en UTC para evitar desfases de horario entre países
-        'fecha': DateTime.now().toUtc().toIso8601String(),
-      });
-      UiUtils.showSuccess("Alerta enviada a la nube");
+      final response = await _supabase
+          .from('alertas')
+          .insert({
+            'latitud': lat,
+            'longitud': long,
+            'tipo': 'emergencia',
+            'mensaje': 'S.O.S. Ayuda solicitada desde dispositivo móvil',
+            // Guardamos en UTC para evitar desfases de horario entre países
+            'fecha': DateTime.now().toUtc().toIso8601String(),
+          })
+          .select('id')
+          .single();
+
+      return response['id'] as String;
     } catch (e) {
       UiUtils.showError("Error al enviar alerta: $e");
+      return null;
+    }
+  }
+
+  // Nuevo método para clasificar el incidente
+  Future<void> clasificarIncidente(String alertaId, String tipo) async {
+    try {
+      await _supabase.from('alertas').update({'tipo': tipo}).eq('id', alertaId);
+    } catch (e) {
+      debugPrint("Error clasificando incidente: $e");
+      throw Exception("Error al clasificar incidente");
     }
   }
 
@@ -48,9 +64,15 @@ class ApiService {
 
     // Intentar obtener de RED
     try {
+      final fortyEightHoursAgo = DateTime.now()
+          .toUtc()
+          .subtract(const Duration(hours: 48))
+          .toIso8601String();
+
       final List<dynamic> remoteData = await _supabase
           .from('alertas')
           .select()
+          .gte('fecha', fortyEightHoursAgo)
           .order('fecha', ascending: false);
 
       data = remoteData;
