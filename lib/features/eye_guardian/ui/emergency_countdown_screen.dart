@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:ui'; // Para el Blur
+import 'dart:developer' as developer;
+import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart'; // IMPORTANTE: Para obtener la ubicación real
 import '../../../core/network/api_service.dart';
 import '../../../core/ui/glass_box.dart';
 import '../../../core/ui/argos_background.dart';
 import '../../../core/utils/ui_utils.dart'; // Import UiUtils
-import 'dart:ui'; // Para el Blur
-import 'dart:developer' as developer;
 
 class EmergencyCountdownScreen extends StatefulWidget {
   const EmergencyCountdownScreen({super.key});
@@ -116,69 +118,85 @@ class _EmergencyCountdownScreenState extends State<EmergencyCountdownScreen> {
       barrierDismissible: false,
       builder: (_) => Dialog(
         backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
         child: GlassBox(
           borderRadius: 30,
-          blur: 20,
-          opacity: 0.1,
-          border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+          blur: 25,
+          opacity: 0.15,
+          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+          padding: const EdgeInsets.all(30),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(25),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.green.withValues(alpha: 0.2),
+                  color: Colors.greenAccent.withValues(alpha: 0.2),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.green.withValues(alpha: 0.4),
-                      blurRadius: 40,
+                      color: Colors.greenAccent.withValues(alpha: 0.3),
+                      blurRadius: 50,
                       spreadRadius: 5,
                     ),
                   ],
                 ),
                 child: const Icon(
-                  Icons.check,
+                  Icons.check_circle_outline_rounded,
                   color: Colors.greenAccent,
-                  size: 50,
+                  size: 60,
                 ),
               ),
-              const SizedBox(height: 20),
-
+              const SizedBox(height: 25),
               const Text(
-                "ALERTA ENVIADA",
+                "¡ALERTA ENVIADA!",
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 20,
+                  fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  letterSpacing: 1.5,
+                  letterSpacing: 2.0,
+                  fontFamily: 'Outfit',
                 ),
               ),
               const SizedBox(height: 15),
-              // Mostramos la precisión al usuario para darle confianza
               Text(
-                "Ubicación exacta ${_preciseLocation != null ? 'CONFIRMADA' : 'ESTIMADA'}\ncompartida con la red.",
+                "Ubicación exacta ${_preciseLocation != null ? 'CONFIRMADA' : 'ESTIMADA'}\ncompartida con la red de emergencia.",
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.white70),
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.8),
+                  fontSize: 14,
+                  height: 1.4,
+                ),
               ),
-              const SizedBox(height: 30),
-
+              const SizedBox(height: 35),
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    Navigator.of(context).pop(true);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white.withValues(alpha: 0.1),
-                    foregroundColor: Colors.white,
-                    side: BorderSide(
-                      color: Colors.white.withValues(alpha: 0.2),
+                child: GlassBox(
+                  borderRadius: 15,
+                  opacity: 0.1,
+                  blur: 5,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).pop(true);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white.withValues(alpha: 0.1),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 18),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    child: const Text(
+                      "ENTENDIDO",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
                   ),
-                  child: const Text("ENTENDIDO"),
                 ),
               ),
             ],
