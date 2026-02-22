@@ -47,7 +47,9 @@ class ApiService {
   // Método para clasificar el incidente
   Future<void> clasificarIncidente(String alertaId, String tipo) async {
     try {
-      await _supabase.from('alertas').update({'tipo': tipo}).eq('id', alertaId);
+      // Convertimos a int para asegurar compatibilidad con BIGINT en Postgres
+      final int id = int.tryParse(alertaId) ?? 0;
+      await _supabase.from('alertas').update({'tipo': tipo}).eq('id', id);
     } catch (e) {
       debugPrint("Error clasificando incidente: $e");
       throw Exception("Error al clasificar incidente");
@@ -114,11 +116,30 @@ class ApiService {
         String tiempoTexto = calcularTiempoTranscurrido(fechaStr);
         String tipo = item['tipo'] ?? "ALERTA";
 
+        // MAPEO DINÁMICO DE ICONOS
+        IconData iconMapping;
+        switch (tipo.toLowerCase()) {
+          case 'robo':
+            iconMapping = Icons.gavel_rounded;
+            break;
+          case 'acoso':
+            iconMapping = Icons.visibility_rounded;
+            break;
+          case 'medica':
+            iconMapping = Icons.medical_services_rounded;
+            break;
+          case 'accidente':
+            iconMapping = Icons.car_crash_rounded;
+            break;
+          default:
+            iconMapping = Icons.warning_amber_rounded;
+        }
+
         ReportModel nuevoReporte = ReportModel(
           tipo.toUpperCase(),
           tiempoTexto,
           item['mensaje'] ?? "Alerta de seguridad",
-          Icons.warning_amber_rounded,
+          iconMapping,
         );
 
         // Algoritmo de Clustering: Si hay un reporte a menos de 100m, se agrupan.

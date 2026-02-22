@@ -274,9 +274,8 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
                         ),
                         child: Row(
                           children: [
-                            const Icon(
-                              Icons
-                                  .warning_amber, // Simplificamos el acceso al icono si report.icon falla
+                            Icon(
+                              report.icon,
                               color: Colors.redAccent,
                               size: 20,
                             ),
@@ -464,6 +463,31 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
             padding: const EdgeInsets.all(50),
             maxZoom: 15,
             markers: [
+              // ZONAS DE PELIGRO COMO MARCADORES (Si el filtro está activo)
+              if (_activeFilters.contains('Peligro'))
+                ..._activeDangerZones.map((zone) => Marker(
+                      point: zone.center,
+                      width: 50,
+                      height: 50,
+                      child: GestureDetector(
+                        onTap: () => _showZoneDetails(zone),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.red.withValues(alpha: 0.2),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.red, width: 2),
+                          ),
+                          child: Icon(
+                            zone.reports.isNotEmpty
+                                ? zone.reports.first.icon
+                                : Icons.warning_amber_rounded,
+                            color: Colors.red,
+                            size: 25,
+                          ),
+                        ),
+                      ),
+                    )),
+
               // Mi Posición (No se agrupa o se agrupa con otros, depende de preferencia. Aquí lo incluimos)
               Marker(
                 point: _currentCenter,
