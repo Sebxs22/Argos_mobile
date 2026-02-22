@@ -8,6 +8,7 @@ import 'package:geolocator/geolocator.dart'; // Import Geolocator
 import 'package:flutter_background_service/flutter_background_service.dart'; // Background Service
 
 // --- NUEVAS PANTALLAS Y SERVICIOS ---
+import 'package:permission_handler/permission_handler.dart'; // Permissions
 import 'features/eye_guardian/ui/eye_guardian_screen.dart';
 import 'features/routes/ui/routes_screen.dart';
 import 'features/sanctuaries/ui/sanctuaries_map_screen.dart';
@@ -24,6 +25,8 @@ import 'core/theme/theme_service.dart'; // Import ThemeService
 import 'features/profile/ui/settings_screen.dart'; // Import SettingsScreen
 import 'core/ui/connectivity_badge.dart'; // Import ConnectivityBadge
 import 'core/network/api_service.dart'; // Import ApiService
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -77,6 +80,7 @@ class ArgosApp extends StatelessWidget {
         builder: (context, currentMode, _) {
           return MaterialApp(
             title: 'ARGOS',
+            navigatorKey: navigatorKey,
             debugShowCheckedModeBanner: false,
             themeMode: currentMode,
             // MODO CLARO
@@ -118,9 +122,35 @@ class _InitialCheckWrapperState extends State<InitialCheckWrapper> {
   @override
   void initState() {
     super.initState();
+    _initializeApp();
+  }
+
+  Future<void> _initializeApp() async {
+    // 1. Verificar Versión
     WidgetsBinding.instance.addPostFrameCallback((_) {
       VersionService().checkForUpdates(context);
     });
+
+    // 2. Pedir Permisos Críticos (Efecto Life360)
+    await _requestPermissions();
+  }
+
+  Future<void> _requestPermissions() async {
+    // Solicitar Ubicación (Siempre) + Notificaciones
+    Map<Permission, PermissionStatus> statuses = await [
+      Permission.locationAlways,
+      Permission.notification,
+    ].request();
+
+    // Si nos niegan el "Always", pedimos al menos el "WhileInUse"
+    if (statuses[Permission.locationAlways]?.isDenied ?? true) {
+      await Permission.location.request();
+    }
+
+    // IGNORAR OPTIMIZACIONES DE BATERÍA (Android Crítico)
+    if (await Permission.ignoreBatteryOptimizations.isDenied) {
+      await Permission.ignoreBatteryOptimizations.request();
+    }
   }
 
   @override
@@ -147,19 +177,16 @@ class _MainNavigatorState extends State<MainNavigator> {
     super.initState();
     _pageController = PageController();
     _cargarPerfil();
-    _checkLocationPermissionsAndStart();
     _listenToBackgroundGlobal();
+    _startLocationServices(); // Iniciar servicios de rastreo
   }
 
   void _listenToBackgroundGlobal() {
     FlutterBackgroundService().on('onShake').listen((event) {
-      if (!mounted) return;
-
       final String? alertaId = event?['alertaId'];
 
-      // Navegación Global Inmediata
-      Navigator.push(
-        context,
+      // Navegación Global Usando navigatorKey (Omnipresencial)
+      navigatorKey.currentState?.push(
         MaterialPageRoute(
           builder: (context) => AlertConfirmationScreen(alertaId: alertaId),
         ),
@@ -167,7 +194,7 @@ class _MainNavigatorState extends State<MainNavigator> {
     });
   }
 
-  Future<void> _checkLocationPermissionsAndStart() async {
+  Future<void> _startLocationServices() async {
     try {
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {

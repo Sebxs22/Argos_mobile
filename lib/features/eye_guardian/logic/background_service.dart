@@ -195,8 +195,9 @@ class BackgroundServiceManager {
         autoStart: true,
         isForegroundMode: true,
         notificationChannelId: 'argos_channel',
-        initialNotificationTitle: 'ARGOS: Protegiéndote',
-        initialNotificationContent: 'Sacude el celular ante un peligro.',
+        initialNotificationTitle: 'ARGOS: Sensor Maestro Activo',
+        initialNotificationContent:
+            'Sacude el celular ante un peligro. (v2.1.0)',
         foregroundServiceNotificationId: 888,
       ),
       iosConfiguration: IosConfiguration(
