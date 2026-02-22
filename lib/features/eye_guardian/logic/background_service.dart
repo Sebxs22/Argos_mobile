@@ -176,9 +176,12 @@ class BackgroundServiceManager {
 
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
       'argos_channel',
-      'ARGOS Service',
-      description: 'Protección 24/7',
-      importance: Importance.low,
+      'ARGOS: Protección Activa',
+      description: 'Detección de peligro 24/7',
+      importance: Importance.max, // PRIORIDAD MÁXIMA
+      enableVibration: true,
+      playSound: false,
+      showBadge: true,
     );
 
     final FlutterLocalNotificationsPlugin notifications =
@@ -195,10 +198,10 @@ class BackgroundServiceManager {
         autoStart: true,
         isForegroundMode: true,
         notificationChannelId: 'argos_channel',
-        initialNotificationTitle: 'ARGOS: Sensor Maestro Activo',
-        initialNotificationContent:
-            'Sacude el celular ante un peligro. (v2.1.0)',
+        initialNotificationTitle: '🔰 ARGOS: GUARDÍAN ACTIVO',
+        initialNotificationContent: 'Vigilando en todo momento. (v2.2.0)',
         foregroundServiceNotificationId: 888,
+        autoStartOnBoot: true, // AUTO-INICIO AL ENCENDER
       ),
       iosConfiguration: IosConfiguration(
         autoStart: true,
