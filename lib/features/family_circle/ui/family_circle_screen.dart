@@ -35,29 +35,31 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
   Future<void> _cargarDatos() async {
     setState(() => _isLoading = true);
 
-    // REPORTE PROACTIVO: Avisamos nuestra ubicación para que el círculo nos vea.
     try {
-      final pos = await Geolocator.getCurrentPosition(
-        locationSettings:
-            const LocationSettings(accuracy: LocationAccuracy.medium),
-      );
-      final api = ApiService();
-      await api.actualizarUbicacion(pos.latitude, pos.longitude);
+      // 1. CARGA EN PARALELO (v2.5.0)
+      final results = await Future.wait([
+        _authService.obtenerMiPerfil(),
+        _authService.obtenerMisGuardianes(),
+        _authService.obtenerAQuienesProtejo(),
+        // Reporte proactivo al entrar
+        Geolocator.getCurrentPosition(
+          locationSettings:
+              const LocationSettings(accuracy: LocationAccuracy.medium),
+        ).then((pos) =>
+            ApiService().actualizarUbicacion(pos.latitude, pos.longitude)),
+      ]);
+
+      if (mounted) {
+        setState(() {
+          _miPerfil = results[0] as Map<String, dynamic>?;
+          _misGuardianes = results[1] as List<Map<String, dynamic>>;
+          _misProtegidos = results[2] as List<Map<String, dynamic>>;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      debugPrint("Error reporte proactivo: $e");
-    }
-
-    final perfil = await _authService.obtenerMiPerfil();
-    final guardianes = await _authService.obtenerMisGuardianes();
-    final protegidos = await _authService.obtenerAQuienesProtejo();
-
-    if (mounted) {
-      setState(() {
-        _miPerfil = perfil;
-        _misGuardianes = guardianes;
-        _misProtegidos = protegidos;
-        _isLoading = false;
-      });
+      debugPrint("Error cargando círculo: $e");
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

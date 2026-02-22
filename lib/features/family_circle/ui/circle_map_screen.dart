@@ -19,21 +19,22 @@ class _CircleMapScreenState extends State<CircleMapScreen> {
   final ApiService _apiService = ApiService();
   final MapController _mapController = MapController();
 
-  LatLng? _myLocation;
   Timer? _locationTimer;
 
   late Stream<List<Map<String, dynamic>>> _membersStream;
   List<Map<String, dynamic>> _currentMembers = [];
   bool _hasCentered = false;
+  String? _focusedMemberId; // v2.5.0: Para "Seguir" a alguien
 
   @override
   void initState() {
     super.initState();
     _currentMembers = widget.initialMembers;
 
-    // Obtener IDs para el stream
+    // Aseguramos IDs limpios (v2.5.0 Fix)
     final List<String> ids = widget.initialMembers
-        .map((m) => m['id'] as String? ?? "")
+        .map((m) =>
+            (m['id'] ?? m['usuario_id'] ?? m['guardian_id']) as String? ?? "")
         .where((id) => id.isNotEmpty)
         .toList();
 
@@ -41,9 +42,41 @@ class _CircleMapScreenState extends State<CircleMapScreen> {
     _startLocationTracking();
   }
 
+  void _animatedMapMove(LatLng destLocation, double destZoom) {
+    final latTween = Tween<double>(
+        begin: _mapController.camera.center.latitude,
+        end: destLocation.latitude);
+    final lngTween = Tween<double>(
+        begin: _mapController.camera.center.longitude,
+        end: destLocation.longitude);
+    final zoomTween =
+        Tween<double>(begin: _mapController.camera.zoom, end: destZoom);
+
+    final controller = AnimationController(
+        duration: const Duration(milliseconds: 1000), vsync: this);
+    final animation =
+        CurvedAnimation(parent: controller, curve: Curves.fastOutSlowIn);
+
+    controller.addListener(() {
+      _mapController.move(
+          LatLng(latTween.evaluate(animation), lngTween.evaluate(animation)),
+          zoomTween.evaluate(animation));
+    });
+
+    animation.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        controller.dispose();
+      } else if (status == AnimationStatus.dismissed) {
+        controller.dispose();
+      }
+    });
+
+    controller.forward();
+  }
+
   void _startLocationTracking() {
     _updateMyLocation();
-    _locationTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+    _locationTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
       _updateMyLocation();
     });
   }
@@ -55,7 +88,6 @@ class _CircleMapScreenState extends State<CircleMapScreen> {
             const LocationSettings(accuracy: LocationAccuracy.medium),
       );
       if (mounted) {
-        setState(() => _myLocation = LatLng(pos.latitude, pos.longitude));
         await _apiService.actualizarUbicacion(pos.latitude, pos.longitude);
       }
     } catch (e) {
@@ -89,17 +121,35 @@ class _CircleMapScreenState extends State<CircleMapScreen> {
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             _currentMembers = snapshot.data!;
-            // Centrar automáticamente la primera vez que recibimos datos reales
+
+            // LÓGICA DE SEGUIMIENTO (SNAP MAPS STYLE v2.5.0)
+            if (_focusedMemberId != null) {
+              final focused = _currentMembers.firstWhere(
+                (m) => m['id'] == _focusedMemberId && m['latitud'] != null,
+                orElse: () => {},
+              );
+              if (focused.isNotEmpty) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _mapController.move(
+                    LatLng((focused['latitud'] as num).toDouble(),
+                        (focused['longitud'] as num).toDouble()),
+                    _mapController.camera.zoom,
+                  );
+                });
+              }
+            }
+
+            // Centrar automáticamente la primera vez
             if (!_hasCentered &&
                 _currentMembers.any((m) => m['latitud'] != null)) {
               _hasCentered = true;
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 final firstWithLoc =
                     _currentMembers.firstWhere((m) => m['latitud'] != null);
-                _mapController.move(
+                _animatedMapMove(
                     LatLng((firstWithLoc['latitud'] as num).toDouble(),
                         (firstWithLoc['longitud'] as num).toDouble()),
-                    14.0);
+                    15.0);
               });
             }
           }
@@ -124,51 +174,60 @@ class _CircleMapScreenState extends State<CircleMapScreen> {
                         .where((m) =>
                             m['latitud'] != null && m['longitud'] != null)
                         .map((m) {
+                      final bool isFocused = _focusedMemberId == m['id'];
                       return Marker(
                         point: LatLng(
                           (m['latitud'] as num).toDouble(),
                           (m['longitud'] as num).toDouble(),
                         ),
-                        width: 45,
-                        height: 45,
+                        width: isFocused ? 70 : 55,
+                        height: isFocused ? 70 : 55,
+                        rotate: true,
                         child: GestureDetector(
                           onTap: () {
-                            _mapController.move(
-                              LatLng(
-                                (m['latitud'] as num).toDouble(),
-                                (m['longitud'] as num).toDouble(),
-                              ),
-                              17.5,
-                            );
+                            setState(() {
+                              _focusedMemberId = isFocused ? null : m['id'];
+                            });
+                            if (!isFocused) {
+                              _animatedMapMove(
+                                LatLng(
+                                  (m['latitud'] as num).toDouble(),
+                                  (m['longitud'] as num).toDouble(),
+                                ),
+                                17.0,
+                              );
+                            }
                           },
-                          child: _buildMemberMarker(m),
+                          child: _buildMemberMarker(m, isFocused: isFocused),
                         ),
                       );
                     }).toList(),
                   ),
-
-                  // MARCADOR PROPIO (Tú)
-                  if (_myLocation != null)
-                    MarkerLayer(
-                      markers: [
-                        Marker(
-                          point: _myLocation!,
-                          width: 45,
-                          height: 45,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.blueAccent.withValues(alpha: 0.2),
-                              border: Border.all(
-                                  color: Colors.blueAccent, width: 2),
-                            ),
-                            child: const Icon(Icons.person_pin_circle,
-                                color: Colors.blueAccent, size: 30),
-                          ),
-                        ),
-                      ],
-                    ),
                 ],
+              ),
+
+              // BOTÓN CENTRAR TODO (v2.5.0)
+              Positioned(
+                right: 20,
+                bottom: 160,
+                child: FloatingActionButton(
+                  mini: true,
+                  onPressed: () {
+                    setState(() => _focusedMemberId = null);
+                    if (_currentMembers.any((m) => m['latitud'] != null)) {
+                      final first = _currentMembers
+                          .firstWhere((m) => m['latitud'] != null);
+                      _animatedMapMove(
+                        LatLng((first['latitud'] as num).toDouble(),
+                            (first['longitud'] as num).toDouble()),
+                        14.0,
+                      );
+                    }
+                  },
+                  backgroundColor: Colors.white.withValues(alpha: 0.9),
+                  child: const Icon(Icons.group_work_rounded,
+                      color: Colors.blueAccent),
+                ),
               ),
 
               // PANEL INFERIOR CON RESUMEN
@@ -201,43 +260,69 @@ class _CircleMapScreenState extends State<CircleMapScreen> {
                             itemCount: _currentMembers.length,
                             itemBuilder: (context, index) {
                               final m = _currentMembers[index];
+                              final id = m['id'] ??
+                                  m['usuario_id'] ??
+                                  m['guardian_id'];
                               final hasLocation = m['latitud'] != null;
+                              final isFocused = _focusedMemberId == id;
+
                               return Padding(
                                 padding: const EdgeInsets.only(right: 15),
                                 child: GestureDetector(
-                                  behavior: HitTestBehavior
-                                      .opaque, // Área de toque mejorada
+                                  behavior: HitTestBehavior.opaque,
                                   onTap: () {
                                     if (hasLocation) {
-                                      _mapController.move(
-                                        LatLng(
-                                          (m['latitud'] as num).toDouble(),
-                                          (m['longitud'] as num).toDouble(),
-                                        ),
-                                        17.5,
-                                      );
+                                      setState(() {
+                                        _focusedMemberId =
+                                            isFocused ? null : id;
+                                      });
+                                      if (!isFocused) {
+                                        _animatedMapMove(
+                                          LatLng(
+                                            (m['latitud'] as num).toDouble(),
+                                            (m['longitud'] as num).toDouble(),
+                                          ),
+                                          17.0,
+                                        );
+                                      }
                                     } else {
                                       UiUtils.showWarning(
-                                          "${m['nombre_completo'] ?? 'El miembro'} no ha compartido su ubicación aún");
+                                          "${m['nombre_completo'] ?? 'El miembro'} no ha compartido su ubicación.");
                                     }
                                   },
                                   child: Column(
                                     children: [
-                                      CircleAvatar(
-                                        radius: 20,
-                                        backgroundColor: hasLocation
-                                            ? Colors.blue.withValues(alpha: 0.2)
-                                            : Colors.grey
-                                                .withValues(alpha: 0.2),
-                                        child: Text(
-                                          (m['nombre_completo'] as String? ??
-                                                  "U")[0]
-                                              .toUpperCase(),
-                                          style: TextStyle(
-                                            color: hasLocation
-                                                ? Colors.blue
-                                                : Colors.grey,
-                                            fontWeight: FontWeight.bold,
+                                      AnimatedContainer(
+                                        duration:
+                                            const Duration(milliseconds: 300),
+                                        padding: const EdgeInsets.all(2),
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: isFocused
+                                                ? Colors.blueAccent
+                                                : Colors.transparent,
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: CircleAvatar(
+                                          radius: 18,
+                                          backgroundColor: hasLocation
+                                              ? Colors.blue
+                                                  .withValues(alpha: 0.2)
+                                              : Colors.grey
+                                                  .withValues(alpha: 0.2),
+                                          child: Text(
+                                            (m['nombre_completo'] as String? ??
+                                                    "U")[0]
+                                                .toUpperCase(),
+                                            style: TextStyle(
+                                              color: hasLocation
+                                                  ? Colors.blue
+                                                  : Colors.grey,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -246,7 +331,13 @@ class _CircleMapScreenState extends State<CircleMapScreen> {
                                         (m['nombre_completo'] as String? ?? "")
                                             .split(' ')[0],
                                         style: TextStyle(
-                                            color: textColor, fontSize: 8),
+                                            color: isFocused
+                                                ? Colors.blueAccent
+                                                : textColor,
+                                            fontSize: 8,
+                                            fontWeight: isFocused
+                                                ? FontWeight.bold
+                                                : FontWeight.normal),
                                       ),
                                     ],
                                   ),
@@ -286,7 +377,8 @@ class _CircleMapScreenState extends State<CircleMapScreen> {
     super.dispose();
   }
 
-  Widget _buildMemberMarker(Map<String, dynamic> member) {
+  Widget _buildMemberMarker(Map<String, dynamic> member,
+      {bool isFocused = false}) {
     final String name = member['nombre_completo'] ?? "Usuario";
     final String initial = name.isNotEmpty ? name[0].toUpperCase() : "U";
 
@@ -298,71 +390,81 @@ class _CircleMapScreenState extends State<CircleMapScreen> {
     final String lastConnect = member['ultima_conexion'] ?? "";
     final String timeAgo = _apiService.calcularTiempoTranscurrido(lastConnect);
 
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        // Etiqueta de nombre y tiempo (Sutil)
-        Positioned(
-          top: 0,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.7),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                  color: memberColor.withValues(alpha: 0.3), width: 0.5),
+    return AnimatedScale(
+      scale: isFocused ? 1.2 : 1.0,
+      duration: const Duration(milliseconds: 300),
+      child: Stack(
+        alignment: Alignment.center,
+        clipBehavior: Clip.none,
+        children: [
+          // Etiqueta de nombre y tiempo (Sutil)
+          Positioned(
+            top: -25,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: isFocused ? Colors.blueAccent : Colors.black87,
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 4,
+                      offset: Offset(0, 2))
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    name.split(' ')[0],
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    timeAgo,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      fontSize: 8,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  name.split(' ')[0], // Solo el primer nombre
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  timeAgo,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.7),
-                    fontSize: 7,
-                  ),
+          ),
+          // Avatar Circular
+          Container(
+            width: isFocused ? 50 : 40,
+            height: isFocused ? 50 : 40,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(
+                  color: isFocused ? Colors.blueAccent : memberColor, width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: (isFocused ? Colors.blueAccent : memberColor)
+                      .withValues(alpha: 0.4),
+                  blurRadius: 10,
+                  spreadRadius: 2,
                 ),
               ],
             ),
-          ),
-        ),
-        // Avatar Circular
-        Container(
-          margin: const EdgeInsets.only(top: 12),
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: memberColor.withValues(alpha: 0.2),
-            shape: BoxShape.circle,
-            border: Border.all(color: memberColor, width: 2),
-            boxShadow: [
-              BoxShadow(
-                color: memberColor.withValues(alpha: 0.3),
-                blurRadius: 8,
-                spreadRadius: 2,
-              ),
-            ],
-          ),
-          child: Center(
-            child: Text(
-              initial,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: memberColor,
+            child: Center(
+              child: Text(
+                initial,
+                style: TextStyle(
+                  fontSize: isFocused ? 18 : 14,
+                  fontWeight: FontWeight.bold,
+                  color: isFocused ? Colors.blueAccent : memberColor,
+                ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
