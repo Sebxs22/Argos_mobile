@@ -103,6 +103,8 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
     bool canVibrate = await Vibrate.canVibrate;
     if (canVibrate) Vibrate.feedback(FeedbackType.heavy);
 
+    setState(() => _currentState = GuardianState.sending);
+
     try {
       Position position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
@@ -123,18 +125,34 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
       await _apiService.enviarNotificacionEmergencia(nombre);
 
       if (mounted) {
-        setState(() => _sentAlertsCount++);
+        setState(() {
+          _sentAlertsCount++;
+          _currentState = GuardianState.success;
+        });
 
-        // Navegar a la pantalla de confirmación/cancelación
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => AlertConfirmationScreen(alertaId: alertaId),
-          ),
-        );
+        // Esperar un momento para que el usuario vea el estado de éxito
+        await Future.delayed(const Duration(milliseconds: 800));
+
+        if (mounted) {
+          // Navegar a la pantalla de confirmación/cancelación
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AlertConfirmationScreen(alertaId: alertaId),
+            ),
+          );
+
+          // Al volver, regresamos al monitoreo
+          if (mounted) {
+            setState(() => _currentState = GuardianState.monitoring);
+          }
+        }
       }
     } catch (e) {
       debugPrint("Error al enviar alerta inmediata: $e");
+      if (mounted) {
+        setState(() => _currentState = GuardianState.monitoring);
+      }
     }
   }
 
