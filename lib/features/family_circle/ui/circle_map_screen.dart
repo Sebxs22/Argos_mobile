@@ -86,8 +86,8 @@ class _CircleMapScreenState extends State<CircleMapScreen> {
                           (m['latitud'] as num).toDouble(),
                           (m['longitud'] as num).toDouble(),
                         ),
-                        width: 60,
-                        height: 60,
+                        width: 45,
+                        height: 45,
                         child: _buildMemberMarker(m),
                       );
                     }).toList(),
@@ -199,43 +199,62 @@ class _CircleMapScreenState extends State<CircleMapScreen> {
   }
 
   Widget _buildMemberMarker(Map<String, dynamic> member) {
-    return Column(
+    final String name = member['nombre_completo'] ?? "Usuario";
+    final String initial = name.isNotEmpty ? name[0].toUpperCase() : "U";
+
+    // Generar un color basado en el ID para que sea consistente
+    final String id = member['id'] ?? "";
+    final Color memberColor =
+        Colors.primaries[id.hashCode % Colors.primaries.length];
+
+    return Stack(
+      alignment: Alignment.center,
       children: [
-        Container(
-          padding: const EdgeInsets.all(2),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
-                blurRadius: 5,
-                spreadRadius: 1,
-              ),
-            ],
-          ),
-          child: CircleAvatar(
-            radius: 12,
-            backgroundColor: Colors.blueAccent,
+        // Etiqueta de nombre (Sutil)
+        Positioned(
+          top: 0,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(10),
+            ),
             child: Text(
-              (member['nombre_completo'] as String? ?? "U")[0].toUpperCase(),
+              name.split(' ')[0], // Solo el primer nombre
               style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold),
+                color: Colors.white,
+                fontSize: 8,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ),
-        const SizedBox(height: 2),
+        // Avatar Circular
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+          margin: const EdgeInsets.only(top: 12),
+          width: 33,
+          height: 33,
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.6),
-            borderRadius: BorderRadius.circular(5),
+            color: memberColor.withValues(alpha: 0.2),
+            shape: BoxShape.circle,
+            border: Border.all(color: memberColor, width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: memberColor.withValues(alpha: 0.3),
+                blurRadius: 8,
+                spreadRadius: 2,
+              ),
+            ],
           ),
-          child: Text(
-            (member['nombre_completo'] as String? ?? "").split(' ')[0],
-            style: const TextStyle(color: Colors.white, fontSize: 8),
+          child: Center(
+            child: Text(
+              initial,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: memberColor,
+              ),
+            ),
           ),
         ),
       ],

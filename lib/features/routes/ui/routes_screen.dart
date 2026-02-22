@@ -376,7 +376,7 @@ class _RoutesScreenState extends State<RoutesScreen> {
                 FlutterBackgroundService().startService();
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text("🛡️ Argos vigilando. Modo Travesía activo."),
+                    content: Text("Argos vigilando. Modo Travesía activo."),
                   ),
                 );
               },

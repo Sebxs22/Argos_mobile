@@ -123,8 +123,7 @@ class BackgroundServiceManager {
 
     await flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
+            AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(channel);
 
     await service.configure(
@@ -133,7 +132,7 @@ class BackgroundServiceManager {
         autoStart: false,
         isForegroundMode: true,
         notificationChannelId: 'argos_channel',
-        initialNotificationTitle: '🛡️ Modo Travesía Activo',
+        initialNotificationTitle: 'Modo Travesía Activo',
         initialNotificationContent: 'Sacude el celular en caso de emergencia.',
         foregroundServiceNotificationId: 888,
       ),
