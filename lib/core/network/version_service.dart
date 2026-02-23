@@ -2,6 +2,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
 import '../ui/update_progress_dialog.dart';
+import '../utils/ui_utils.dart'; // Import UiUtils (v2.6.6)
 
 class VersionService {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -34,24 +35,13 @@ class VersionService {
           );
         }
       } else if (manual && context.mounted) {
-        // Si es manual y ya está actualizado
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text("🚀 Argos está actualizado (v${packageInfo.version})"),
-            backgroundColor: Colors.green,
-          ),
-        );
+        // Mejorado con UiUtils v2.6.6
+        UiUtils.showSuccess("Argos está al día (v$currentVersion)");
       }
     } catch (e) {
       debugPrint("Error checking for updates: $e");
       if (manual && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("❌ Error al verificar la versión"),
-            backgroundColor: Colors.red,
-          ),
-        );
+        UiUtils.showError("No se pudo verificar la versión");
       }
     }
   }
