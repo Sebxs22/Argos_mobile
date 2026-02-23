@@ -283,6 +283,14 @@ class _MainNavigatorState extends State<MainNavigator> {
         } catch (e) {
           debugPrint("❌ ARGOS DEEP-LINK Error: $e");
         }
+      } else if (type == 'app_update') {
+        // v2.8.5: Deep link directo a la actualización
+        debugPrint(
+            "🚀 ARGOS DEEP-LINK: Notificación de actualización detectada.");
+        final context = navigatorKey.currentContext;
+        if (context != null) {
+          VersionService().checkForUpdates(context, manual: true);
+        }
       }
     });
   }

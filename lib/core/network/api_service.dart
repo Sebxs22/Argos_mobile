@@ -581,7 +581,47 @@ class ApiService {
     }
   }
 
-  // 7. ACTUALIZAR MI UBICACIÓN EN TIEMPO REAL
+  // 7. Notificar Nueva Versión (v2.8.5 - BroadCast Global)
+  Future<void> notificarNuevaVersion(String version) async {
+    try {
+      final appId = dotenv.env['ONESIGNAL_APP_ID'];
+      final restKey = dotenv.env['ONESIGNAL_REST_API_KEY'];
+      if (appId == null || restKey == null) return;
+
+      final response = await http.post(
+        Uri.parse('https://onesignal.com/api/v1/notifications'),
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Authorization': 'Basic $restKey',
+        },
+        body: jsonEncode({
+          'app_id': appId,
+          'included_segments': ['Total Subscriptions'], // Envío global
+          'contents': {
+            'es':
+                '🚀 ¡Nueva versión de ARGOS disponible (v$version)! Toca aquí para actualizar y mantenerte protegido.',
+            'en':
+                '🚀 New ARGOS version available (v$version)! Tap here to update and stay protected.',
+          },
+          'headings': {
+            'es': 'ACTUALIZACIÓN DISPONIBLE',
+            'en': 'UPDATE AVAILABLE'
+          },
+          'priority': 10,
+          'android_group': 'argos_updates',
+          'data': {
+            'type': 'app_update', // Gatilla Deep Link en main.dart
+          },
+        }),
+      );
+
+      debugPrint("🚀 ARGOS BROADCAST UPDATE: ${response.statusCode}");
+    } catch (e) {
+      debugPrint("❌ Error en broadcast de actualización: $e");
+    }
+  }
+
+  // 8. ACTUALIZAR MI UBICACIÓN EN TIEMPO REAL
   Future<void> actualizarUbicacion(double lat, double lng) async {
     try {
       final user = _supabase.auth.currentUser;
