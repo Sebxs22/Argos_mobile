@@ -158,9 +158,16 @@ class _InitialCheckWrapperState extends State<InitialCheckWrapper> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(child: CircularProgressIndicator()),
+      return const ArgosBackground(
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Center(
+            child: CircularProgressIndicator(
+              color: Colors.white24,
+              strokeWidth: 2,
+            ),
+          ),
+        ),
       );
     }
 

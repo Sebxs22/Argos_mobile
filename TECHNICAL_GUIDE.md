@@ -1,4 +1,4 @@
-# 🛡️ ARGOS: Manual de Arquitectura y Sistema de Seguridad (v2.8.7.1)
+# 🛡️ ARGOS: Manual de Arquitectura y Sistema de Seguridad (v2.8.7.2)
 
 > [!IMPORTANT]
 > Este documento es la "Fuente de Verdad" técnica de ARGOS. Explica no solo el **cómo**, sino el **por qué** detrás de cada decisión de ingeniería, desde la detección de sensores hasta el renderizado de vidrio líquido.
