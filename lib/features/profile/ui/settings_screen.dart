@@ -6,6 +6,7 @@ import '../../../core/ui/glass_box.dart';
 import '../../../core/ui/argos_background.dart';
 import '../../../core/utils/ui_utils.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import '../../../core/network/version_service.dart'; // Import VersionService
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -123,6 +124,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             controller: _cedulaController,
                             icon: Icons.badge_outlined,
                             isDark: isDark,
+                            readOnly: true, // v2.6.4: Solo lectura
                           ),
                           const SizedBox(height: 20),
                           SizedBox(
@@ -192,19 +194,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       borderRadius: 20,
                       opacity: isDark ? 0.05 : 0.03,
                       padding: const EdgeInsets.all(20),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      child: Column(
                         children: [
-                          Text("Versión instalada",
-                              style: TextStyle(
-                                  color: isDark
-                                      ? Colors.white70
-                                      : Colors.black54)),
-                          Text(
-                            _appVersion,
-                            style: const TextStyle(
-                                color: Colors.blueAccent,
-                                fontWeight: FontWeight.bold),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text("Versión instalada",
+                                  style: TextStyle(
+                                      color: isDark
+                                          ? Colors.white70
+                                          : Colors.black54)),
+                              Text(
+                                _appVersion,
+                                style: const TextStyle(
+                                    color: Colors.blueAccent,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                          const Divider(height: 30, color: Colors.white10),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: () => VersionService()
+                                  .checkForUpdates(context, manual: true),
+                              icon:
+                                  const Icon(Icons.system_update_alt, size: 18),
+                              label: const Text("Buscar actualización"),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.blueAccent,
+                                side:
+                                    const BorderSide(color: Colors.blueAccent),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -268,6 +292,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required IconData icon,
     required bool isDark,
     TextInputType keyboardType = TextInputType.text,
+    bool readOnly = false, // Nuevo parámetro
   }) {
     final textColor = isDark ? Colors.white : Colors.black87;
     return Column(
@@ -280,9 +305,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
         TextField(
           controller: controller,
           keyboardType: keyboardType,
-          style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
+          readOnly: readOnly, // Aplicar readOnly
+          style: TextStyle(
+            color: readOnly ? textColor.withValues(alpha: 0.5) : textColor,
+            fontWeight: FontWeight.bold,
+          ),
           decoration: InputDecoration(
             prefixIcon: Icon(icon, color: Colors.blueAccent, size: 20),
+            suffixIcon: readOnly
+                ? const Icon(Icons.lock_outline,
+                    size: 16, color: Colors.blueGrey)
+                : null,
             filled: true,
             fillColor:
                 isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.05),
