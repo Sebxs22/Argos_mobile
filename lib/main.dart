@@ -21,6 +21,7 @@ import 'core/ui/glass_box.dart';
 import 'core/utils/connectivity_service.dart'; // Import connectivity service
 import 'features/eye_guardian/logic/background_service.dart'; // Import REAL background service
 import 'features/family_circle/ui/family_circle_screen.dart'; // Import Family Circle Screen
+import 'features/family_circle/ui/circle_map_screen.dart'; // Import v2.7.1 Deep Linking
 import 'core/network/version_service.dart'; // Import VersionService
 import 'core/ui/argos_background.dart'; // Import ArgosBackground
 import 'core/theme/theme_service.dart'; // Import ThemeService
@@ -195,6 +196,46 @@ class _MainNavigatorState extends State<MainNavigator> {
     _listenToBackgroundGlobal();
     _startLocationServices(); // Iniciar servicios de rastreo
     _checkForPendingAlerts(); // Memoria SOS (v2.3.0)
+    _setupNotificationListeners(); // v2.7.1 Deep Linking
+  }
+
+  void _setupNotificationListeners() {
+    OneSignal.Notifications.addClickListener((event) async {
+      final data = event.notification.additionalData;
+      if (data == null) return;
+
+      final type = data['type'];
+      final targetUserId = data['usuario_id'];
+
+      if (type == 'emergency_alert' && targetUserId != null) {
+        debugPrint(
+            "🚀 ARGOS DEEP-LINK: Notificación de emergencia de $targetUserId");
+
+        // 1. Obtener miembros del círculo antes de navegar
+        try {
+          final resG = await _auth.obtenerMisGuardianes();
+          final resP = await _auth.obtenerAQuienesProtejo();
+          final List<Map<String, dynamic>> members = [...resG, ...resP];
+
+          if (members.isEmpty) {
+            debugPrint("⚠️ ARGOS DEEP-LINK: No se encontraron miembros.");
+            return;
+          }
+
+          // 2. Navegar al Mapa (v2.7.1)
+          navigatorKey.currentState?.push(
+            MaterialPageRoute(
+              builder: (context) => CircleMapScreen(
+                initialMembers: members,
+                alertMemberId: targetUserId.toString(),
+              ),
+            ),
+          );
+        } catch (e) {
+          debugPrint("❌ ARGOS DEEP-LINK Error: $e");
+        }
+      }
+    });
   }
 
   Future<void> _checkForPendingAlerts() async {

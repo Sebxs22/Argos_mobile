@@ -495,6 +495,10 @@ class ApiService {
           'headings': {'es': 'ALERTA ARGOS', 'en': 'ARGOS EMERGENCY'},
           'priority': 10,
           'android_group': 'argos_emergency',
+          'data': {
+            'type': 'emergency_alert',
+            'usuario_id': user.id, // ID de quien envía la alerta
+          },
         }),
       );
 

@@ -170,7 +170,7 @@ class _CircleMapScreenState extends State<CircleMapScreen>
               }
             }
 
-            // Seguimiento dinámico
+            // Seguimiento dinámico (v2.7.1: Prioridad a alerta)
             if (_focusedMemberId != null) {
               final focused = _currentMembers.firstWhere(
                 (m) =>
@@ -179,12 +179,13 @@ class _CircleMapScreenState extends State<CircleMapScreen>
                     m['latitud'] != null,
                 orElse: () => {},
               );
-              if (focused.isNotEmpty) {
+              if (focused.isNotEmpty && !_hasCentered) {
+                _hasCentered = true; // Evitar saltos constantes
                 WidgetsBinding.instance.addPostFrameCallback((_) {
-                  _mapController.move(
+                  _animatedMapMove(
                     LatLng((focused['latitud'] as num).toDouble(),
                         (focused['longitud'] as num).toDouble()),
-                    _mapController.camera.zoom,
+                    16.0,
                   );
                 });
               }
