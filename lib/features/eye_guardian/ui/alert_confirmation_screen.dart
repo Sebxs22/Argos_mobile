@@ -17,14 +17,17 @@ class _AlertConfirmationScreenState extends State<AlertConfirmationScreen> {
   final ApiService _apiService = ApiService();
 
   Future<void> _cancelAlert() async {
+    // v2.8.7: Salida instantánea para fluidez máxima
+    Navigator.pop(context);
+
     if (widget.alertaId != null) {
-      await _apiService.cancelarAlerta(widget.alertaId!);
-      // v2.8.3: Notificar cancelación
-      await _apiService.enviarNotificacionClasificacion("Falsa Alarma",
-          isCancelacion: true);
-      if (mounted) Navigator.pop(context);
-    } else {
-      Navigator.pop(context);
+      // Ejecutamos las llamadas de red en segundo plano
+      _apiService
+          .cancelarAlerta(widget.alertaId!)
+          .catchError((e) => debugPrint("Error cancelando: $e"));
+      _apiService
+          .enviarNotificacionClasificacion("Falsa Alarma", isCancelacion: true)
+          .catchError((e) => debugPrint("Error notif: $e"));
     }
   }
 

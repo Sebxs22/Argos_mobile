@@ -43,17 +43,26 @@ class GlassBox extends StatelessWidget {
           child: Container(
             padding: padding ?? const EdgeInsets.all(20.0),
             decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withValues(alpha: opacity)
-                  : Colors.white.withValues(alpha: 0.05), // Más sutil en light
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  isDark
+                      ? Colors.white.withValues(alpha: opacity)
+                      : Colors.white.withValues(alpha: 0.1),
+                  isDark
+                      ? Colors.white.withValues(alpha: opacity * 0.5)
+                      : Colors.white.withValues(alpha: 0.02),
+                ],
+              ),
               borderRadius: BorderRadius.circular(borderRadius),
               border: border ??
                   Border.all(
                     color: isDark
-                        ? Colors.white.withValues(alpha: 0.1)
-                        : Colors.black
-                            .withValues(alpha: 0.15), // v2.8.0: Más visible
-                    width: 0.5, // v2.7.0: Borde ultra-fino tipo Apple
+                        ? Colors.white.withValues(alpha: 0.15)
+                        : Colors.white.withValues(
+                            alpha: 0.4), // v2.8.7: Brillante en los bordes
+                    width: 0.8, // v2.8.7: Un poco más definido
                   ),
             ),
             child: child,

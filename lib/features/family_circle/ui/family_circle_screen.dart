@@ -327,15 +327,13 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
                 ],
               ),
         floatingActionButton: Padding(
-          padding:
-              const EdgeInsets.only(bottom: 85.0), // v2.8.2 better alignment
-          child: FloatingActionButton.extended(
+          padding: const EdgeInsets.only(
+              bottom: 95.0), // v2.8.7 Adjusted for larger Nav Bar
+          child: FloatingActionButton(
             onPressed: _agregarGuardian,
             backgroundColor: Colors.blueAccent,
-            icon: const Icon(Icons.person_add, color: Colors.white),
-            label: const Text("AGREGAR AL CÍRCULO",
-                style: TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold)),
+            elevation: 8, // v2.8.7
+            child: const Icon(Icons.person_add, color: Colors.white, size: 28),
           ),
         ),
       ),

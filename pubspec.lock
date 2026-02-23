@@ -696,14 +696,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.4.1"
-  optimization_battery:
-    dependency: "direct main"
-    description:
-      name: optimization_battery
-      sha256: "124252266ef2ab78e8c570a1f8fd63ab34328d0c0e360bb421101f4fffcc8071"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.0.7"
   ota_update:
     dependency: "direct main"
     description:

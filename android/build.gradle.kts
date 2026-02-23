@@ -37,29 +37,6 @@ subprojects {
                 defaultConfig {
                     targetSdkVersion(34)
                 }
-                
-                // v2.8.6: Robust fix for optimization_battery (namespace + manifest cleanup)
-                if (project.name == "optimization_battery") {
-                    namespace = "com.ali.optimization_battery"
-                    
-                    project.tasks.matching { it.name.contains("process") && it.name.contains("Manifest") }.configureEach {
-                        doFirst {
-                            val manifestFile = project.file("src/main/AndroidManifest.xml")
-                            if (manifestFile.exists()) {
-                                try {
-                                    var content = manifestFile.readText()
-                                    if (content.contains("package=\"com.ali.optimization_battery\"")) {
-                                        content = content.replace("package=\"com.ali.optimization_battery\"", "")
-                                        manifestFile.writeText(content)
-                                        println("🚀 ARGOS BUILD: Patched optimization_battery manifest (removed legacy package attribute)")
-                                    }
-                                } catch (e: Exception) {
-                                    println("⚠️ ARGOS BUILD: Could not patch manifest: ${e.message}")
-                                }
-                            }
-                        }
-                    }
-                }
             }
 
             if (!project.hasProperty("flutter")) {

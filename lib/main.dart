@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:optimization_battery/optimization_battery.dart'; // v2.8.2
-import 'dart:io'; // v2.8.2
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart'; // Import OneSignal
 import 'package:flutter_dotenv/flutter_dotenv.dart'; // Import dotenv
@@ -139,41 +137,8 @@ class _InitialCheckWrapperState extends State<InitialCheckWrapper> {
       VersionService().checkForUpdates(context);
     });
 
-    // 2. Optimización de Batería (v2.8.2)
-    if (Platform.isAndroid) {
-      final isOptimizing =
-          await OptimizationBattery.isIgnoringBatteryOptimizations();
-      if (!isOptimizing) {
-        if (mounted) {
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (context) => AlertDialog(
-              backgroundColor: const Color(0xFF0F172A),
-              title: const Text("🛡️ PROTECCIÓN ACTIVA",
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold)),
-              content: const Text(
-                "Para que ARGOS pueda protegerte 24/7 sin que el sistema lo detenga, por favor selecciona 'SIN RESTRICCIÓN' en la siguiente pantalla.",
-                style: TextStyle(color: Colors.white70),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    OptimizationBattery.openBatteryOptimizationSettings();
-                  },
-                  child: const Text("CONFIGURAR AHORA",
-                      style: TextStyle(color: Colors.blueAccent)),
-                ),
-              ],
-            ),
-          );
-        }
-      }
-    }
+    // 2. Otros Checks (v2.8.2)
+    // El check de batería ahora es manual en la pantalla de permisos.
 
     // 3. Verificar Permisos Críticos (v2.6.5)
     await _checkPermissionsStatus();
@@ -517,8 +482,8 @@ class _MainNavigatorState extends State<MainNavigator> {
               child: GlassBox(
                 borderRadius: 40,
                 // v2.7.0: Usa los nuevos defaults de blur y borde
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 15, vertical: 12), // v2.8.7: Más espacioso
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -574,7 +539,7 @@ class _MainNavigatorState extends State<MainNavigator> {
         child: Icon(
           Icons.person_outline,
           color: isDark ? Colors.white70 : Colors.black54,
-          size: 22,
+          size: 26, // v2.8.7
         ),
       ),
     );
@@ -608,7 +573,7 @@ class _MainNavigatorState extends State<MainNavigator> {
               color: isSelected
                   ? const Color(0xFFFF5252)
                   : (isDark ? Colors.white60 : Colors.black45),
-              size: 24,
+              size: 28, // v2.8.7: Iconos más grandes para accesibilidad
             ),
             if (isSelected) ...[
               const SizedBox(width: 8),

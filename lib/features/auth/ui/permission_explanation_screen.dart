@@ -123,6 +123,16 @@ class _PermissionExplanationScreenState
                   isDark: isDark,
                 ),
 
+                const SizedBox(height: 15),
+
+                _buildPermissionRule(
+                  icon: Icons.battery_saver_rounded,
+                  title: "Sin Restricciones de Batería",
+                  desc:
+                      "En la configuración de la app, selecciona 'Batería' > 'Sin restricciones' para evitar que el sistema cierre ARGOS.",
+                  isDark: isDark,
+                ),
+
                 const Spacer(),
 
                 // Botón Acción
