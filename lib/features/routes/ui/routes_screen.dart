@@ -166,10 +166,38 @@ class _RoutesScreenState extends State<RoutesScreen> {
           _buildMap(isDark),
           _buildTopInterface(isDark),
           if (_isLoading)
-            const Center(
-              child: CircularProgressIndicator(color: Colors.redAccent),
+            Center(
+              child: GlassBox(
+                borderRadius: 20,
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CircularProgressIndicator(color: Colors.redAccent),
+                    const SizedBox(height: 15),
+                    Text("TRAZANDO RUTA SEGURA...",
+                        style: TextStyle(
+                            color: textColor,
+                            fontSize: 10,
+                            letterSpacing: 1.5,
+                            fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
             ),
           if (_routePoints.isNotEmpty) _buildBottomDetails(isDark, textColor),
+          // Botón de Volver
+          Positioned(
+            top: 50,
+            left: 20,
+            child: FloatingActionButton.small(
+              heroTag: "btnBackRoute",
+              onPressed: () => Navigator.pop(context),
+              backgroundColor: isDark ? Colors.black54 : Colors.white,
+              child: Icon(Icons.arrow_back,
+                  color: isDark ? Colors.white : Colors.black87),
+            ),
+          ),
         ],
       ),
     );
@@ -240,54 +268,77 @@ class _RoutesScreenState extends State<RoutesScreen> {
 
   Widget _buildTopInterface(bool isDark) {
     return Positioned(
-      top: 60,
+      top: 100, // v2.13.0: Bajado para no tapar botón de volver
       left: 20,
       right: 20,
       child: GlassBox(
-        borderRadius: 20,
-        opacity: isDark ? 0.1 : 0.08,
-        blur: 15,
-        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 10),
+        borderRadius: 25,
+        opacity: isDark ? 0.15 : 0.08,
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 15),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _transportIcon(Icons.directions_walk, 'foot', isDark),
-            _transportIcon(Icons.directions_car, 'car', isDark),
-            _transportIcon(Icons.directions_bike, 'bicycle', isDark),
+            _transportOption(Icons.directions_walk, 'foot', "A PIE", isDark),
+            _transportOption(Icons.directions_car, 'car', "AUTO", isDark),
+            _transportOption(Icons.directions_bike, 'bicycle', "BICI", isDark),
           ],
         ),
       ),
     );
   }
 
-  Widget _transportIcon(IconData icon, String mode, bool isDark) {
+  Widget _transportOption(
+      IconData icon, String mode, String label, bool isDark) {
     bool isSelected = _selectedMode == mode;
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? Colors.redAccent.withValues(alpha: isDark ? 0.15 : 0.1)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: IconButton(
-        icon: Icon(
-          icon,
+    final activeColor = Colors.redAccent;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedMode = mode;
+          _routePoints = [];
+          _eta = "--";
+          _distance = "--";
+          _securityScore = 0;
+        });
+        if (_destination != null) _obtenerRuta();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
           color: isSelected
-              ? Colors.redAccent
-              : (isDark ? Colors.white54 : Colors.black45),
-          size: 26,
+              ? activeColor.withValues(alpha: 0.15)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(
+            color: isSelected ? activeColor : Colors.transparent,
+            width: 1.5,
+          ),
         ),
-        onPressed: () {
-          setState(() {
-            _selectedMode = mode;
-            _routePoints = []; // Reset visual
-            _eta = "--";
-            _distance = "--";
-            _securityScore = 0;
-          });
-          if (_destination != null) _obtenerRuta();
-        },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isSelected
+                  ? activeColor
+                  : (isDark ? Colors.white54 : Colors.black45),
+              size: 24,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected
+                    ? activeColor
+                    : (isDark ? Colors.white38 : Colors.black38),
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

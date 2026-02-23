@@ -184,13 +184,13 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
     }
   }
 
-  Future<void> _scanRealSanctuaries(LatLng pos) async {
+  Future<void> _scanRealSanctuaries(LatLng pos, {bool force = false}) async {
     // 1. Evitar escaneos simultáneos
     if (_isScanningSanctuaries) return;
 
     // 2. Lógica de Redundancia (v2.10.0)
     // Si ya escaneamos en esta posición (o muy cerca, < 100m manual, < 500m auto), ignoramos.
-    if (_lastScannedPosition != null) {
+    if (_lastScannedPosition != null && !force) {
       const Distance distance = Distance();
       final double meters =
           distance.as(LengthUnit.Meter, pos, _lastScannedPosition!);
@@ -254,6 +254,12 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
 
     // 2. Si no tocó peligro, verificar Santuarios (Cercanía de 30m)
     // El toque directo ya es manejado por el GestureDetector en el marcador (v2.12.1)
+  }
+
+  // v2.13.0: Escaneo forzado desde el botón
+  void _manualScan() {
+    debugPrint("📡 ARGOS SCAN: Escaneo manual solicitado.");
+    _scanRealSanctuaries(_mapController.camera.center, force: true);
   }
 
   void _showSanctuaryDetails(SanctuaryModel site) {
@@ -508,6 +514,14 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
               onPressed: _getCurrentLocation, // Centra y actualiza GPS
               backgroundColor: const Color(0xFFE53935),
               child: const Icon(Icons.my_location, color: Colors.white),
+            ),
+            const SizedBox(height: 10),
+            FloatingActionButton(
+              heroTag: "btnScan",
+              mini: true,
+              onPressed: _manualScan, // Escaneo manual
+              backgroundColor: Colors.blueAccent,
+              child: const Icon(Icons.radar, color: Colors.white),
             ),
           ],
         ),

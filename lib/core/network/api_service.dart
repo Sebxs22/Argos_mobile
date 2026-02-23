@@ -316,13 +316,13 @@ class ApiService {
           perfilOSRM = 'driving';
           break;
         case 'foot':
-          perfilOSRM = 'foot-walking';
+          perfilOSRM = 'walking'; // v2.13.0: Standard OSRM
           break;
         case 'bicycle':
           perfilOSRM = 'cycling';
           break;
         default:
-          perfilOSRM = 'foot-walking';
+          perfilOSRM = 'walking';
       }
 
       final url = Uri.parse(

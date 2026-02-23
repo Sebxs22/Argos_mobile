@@ -148,7 +148,8 @@ class _SettingsScreenState extends State<SettingsScreen>
     await Future.delayed(const Duration(seconds: 2));
     if (mounted) {
       await VersionService().checkForUpdates(context, manual: true);
-      _radarController.stop();
+      _radarController.animateTo(0,
+          duration: const Duration(milliseconds: 500), curve: Curves.easeOut);
       setState(() => _isCheckingUpdate = false);
     }
   }
