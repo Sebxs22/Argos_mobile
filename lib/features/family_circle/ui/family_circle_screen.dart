@@ -270,15 +270,31 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
                             width: double.infinity,
                             child: OutlinedButton.icon(
                               onPressed: () {
-                                final allMembers = [
-                                  ..._misGuardianes,
-                                  ..._misProtegidos
-                                ];
+                                // v2.5.3: Deduplicación proactiva (Evita dobles en mapa)
+                                final Map<String, Map<String, dynamic>> dedup =
+                                    {};
+
+                                for (var m in _misGuardianes) {
+                                  final id = (m['id'] ??
+                                      m['usuario_id'] ??
+                                      m['guardian_id']) as String;
+                                  dedup[id] = m;
+                                }
+                                for (var m in _misProtegidos) {
+                                  final id = (m['id'] ??
+                                      m['usuario_id'] ??
+                                      m['guardian_id']) as String;
+                                  dedup[id] = {
+                                    ...(dedup[id] ?? {}),
+                                    ...m,
+                                  };
+                                }
+
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => CircleMapScreen(
-                                      initialMembers: allMembers,
+                                      initialMembers: dedup.values.toList(),
                                     ),
                                   ),
                                 );
