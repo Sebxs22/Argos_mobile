@@ -41,6 +41,7 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
   bool _isScanningSanctuaries = false;
 
   StreamSubscription? _alertsSubscription;
+  StreamSubscription<Position>? _positionStream; // v2.9.3: Escaneo inteligente
   Timer? _refreshTimer;
 
   final Set<String> _activeFilters = {
@@ -68,6 +69,9 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
     // 4. Suscribirse a datos en Tiempo Real (v2.4.5)
     _subscribeToAlerts();
 
+    // 4.1 Suscribirse a movimiento para escaneo dinámico (v2.9.3)
+    _initMovementScan();
+
     // 5. CARGA INICIAL (v2.4.6 Fix): Disparar localización al entrar
     _getCurrentLocation();
 
@@ -92,6 +96,7 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
     WidgetsBinding.instance.removeObserver(this);
     _radarController.dispose();
     _alertsSubscription?.cancel();
+    _positionStream?.cancel();
     _refreshTimer?.cancel();
     super.dispose();
   }
@@ -107,6 +112,20 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
   // El método _loadMapData ya no es necesario para el refresco periódico.
   // Pero se mantiene vacío o se elimina si no hay otras referencias.
   Future<void> _loadMapData() async {}
+
+  void _initMovementScan() {
+    _positionStream = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.medium,
+        distanceFilter: 500, // Re-escanear cada 500 metros
+      ),
+    ).listen((Position pos) {
+      if (mounted) {
+        debugPrint("🚀 ARGOS SCAN: Se detectó movimiento, re-escaneando...");
+        _scanRealSanctuaries(LatLng(pos.latitude, pos.longitude));
+      }
+    });
+  }
 
   Future<void> _getCurrentLocation() async {
     try {
@@ -133,29 +152,28 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
       final Position? lastPosition = await Geolocator.getLastKnownPosition();
       if (lastPosition != null && mounted) {
         _updateMapPosition(lastPosition);
-        // Si ya tenemos la última conocida, podemos quitar el radar antes
         _finishLoading();
+
+        // v2.9.3: Escaneo inicial
+        _scanRealSanctuaries(
+            LatLng(lastPosition.latitude, lastPosition.longitude));
       }
 
-      // 4. Obtener ubicación precisa en segundo plano
+      // 4. Obtener ubicación precisa
       Position position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy
-              .medium, // Bajamos de 'best' a 'medium' para mayor velocidad
-          timeLimit:
-              Duration(seconds: 5), // Límite de 5s para no bloquear al usuario
+          accuracy: LocationAccuracy.medium,
+          timeLimit: Duration(seconds: 5),
         ),
       );
 
       if (mounted) {
         _updateMapPosition(position);
-        // v2.8.8: Disparar escaneo de santuarios reales
         _scanRealSanctuaries(LatLng(position.latitude, position.longitude));
       }
     } catch (e) {
       debugPrint("Error GPS (Optimizado): $e");
     } finally {
-      // Siempre nos aseguramos de quitar el splash de carga
       _finishLoading();
     }
   }

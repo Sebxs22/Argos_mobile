@@ -742,16 +742,14 @@ class ApiService {
       final double lng = position.longitude;
       const double radius = 3000; // 3km de búsqueda
 
-      // Query Overpass: Buscamos amenities de seguridad, salud y conveniencia
+      // Query Overpass: Buscamos amenities de seguridad, salud y conveniencia (v2.9.3)
       final String query = """
-      [out:json][timeout:25];
+      [out:json][timeout:30];
       (
-        node["amenity"~"police|hospital|doctors|pharmacy|clinic|school|university|college|place_of_worship"](around:$radius,$lat,$lng);
-        way["amenity"~"police|hospital|doctors|pharmacy|clinic|school|university|college|place_of_worship"](around:$radius,$lat,$lng);
-        node["shop"~"supermarket|convenience"](around:$radius,$lat,$lng);
-        way["shop"~"supermarket|convenience"](around:$radius,$lat,$lng);
-        node["leisure"~"park"](around:$radius,$lat,$lng);
-        way["leisure"~"park"](around:$radius,$lat,$lng);
+        nwr["amenity"~"police|hospital|doctors|pharmacy|clinic|school|university|college|place_of_worship|fire_station"](around:$radius,$lat,$lng);
+        nwr["healthcare"~"hospital|clinic|doctors"](around:$radius,$lat,$lng);
+        nwr["shop"~"supermarket|convenience"](around:$radius,$lat,$lng);
+        nwr["leisure"~"park"](around:$radius,$lat,$lng);
       );
       out center;
       """;
