@@ -8,7 +8,9 @@ class SanctuaryModel {
   final String name;
   final LatLng location;
   final SanctuaryType type;
-  const SanctuaryModel(this.name, this.location, this.type);
+  final String? address; // v2.11.0: Dirección o info extra
+
+  const SanctuaryModel(this.name, this.location, this.type, {this.address});
 }
 
 class ReportModel {

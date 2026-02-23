@@ -769,8 +769,10 @@ class ApiService {
 
         for (var e in elements) {
           final tags = e['tags'] ?? {};
-          final String name =
-              tags['name'] ?? tags['operator'] ?? "Lugar de Refugio";
+          final String name = tags['name'] ??
+              tags['operator'] ??
+              tags['brand'] ??
+              "Lugar de Refugio";
 
           double? eLat =
               e['lat']?.toDouble() ?? e['center']?['lat']?.toDouble();
@@ -779,6 +781,16 @@ class ApiService {
 
           if (eLat == null || eLng == null) continue;
 
+          // v2.11.0: Construir dirección amigable
+          final street = tags['addr:street'] ?? "";
+          final houseNumber = tags['addr:housenumber'] ?? "";
+          final city = tags['addr:city'] ?? "";
+          String? address;
+          if (street.isNotEmpty) {
+            address = "$street $houseNumber".trim();
+            if (city.isNotEmpty) address += ", $city";
+          }
+
           // Mapeo dinámico a iconos de ARGOS
           final SanctuaryType type = _mapOsmToArgosType(tags);
 
@@ -786,6 +798,7 @@ class ApiService {
             name,
             LatLng(eLat, eLng),
             type,
+            address: address,
           ));
         }
 

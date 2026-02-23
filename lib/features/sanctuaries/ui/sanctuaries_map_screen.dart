@@ -306,9 +306,32 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
                             style: TextStyle(
                               color: Colors.blueAccent,
                               fontSize: 12,
+                              fontWeight: FontWeight.w600,
                               letterSpacing: 1.1,
                             ),
                           ),
+                          if (site.address != null &&
+                              site.address!.isNotEmpty) ...[
+                            const SizedBox(height: 5),
+                            Row(
+                              children: [
+                                const Icon(Icons.location_on,
+                                    size: 12, color: Colors.white54),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    site.address!,
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 11,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ),
