@@ -137,15 +137,19 @@ class _InitialCheckWrapperState extends State<InitialCheckWrapper> {
   }
 
   Future<void> _requestPermissions() async {
-    // Solicitar Ubicación (Siempre) + Notificaciones
+    // Solicitar Ubicación (Precisa + Siempre) + Notificaciones
     Map<Permission, PermissionStatus> statuses = await [
+      Permission.location, // Pedir primero el permiso base
       Permission.locationAlways,
       Permission.notification,
     ].request();
 
-    // Si nos niegan el "Always", pedimos al menos el "WhileInUse"
+    // Si nos niegan el "Always", nos aseguramos de tener al menos el normal
     if (statuses[Permission.locationAlways]?.isDenied ?? true) {
-      await Permission.location.request();
+      final status = await Permission.location.request();
+      if (status.isPermanentlyDenied) {
+        openAppSettings();
+      }
     }
 
     // IGNORAR OPTIMIZACIONES DE BATERÍA (Android Crítico)
@@ -177,7 +181,9 @@ class _MainNavigatorState extends State<MainNavigator> {
   void initState() {
     super.initState();
     _pageController = PageController();
-    _cargarPerfil();
+    _auth
+        .actualizarPushToken(); // Sincronización v2.6.3 (Cada vez que se abre la app)
+    _cargarPerfil(); // Cargar datos del perfil
     _listenToBackgroundGlobal();
     _startLocationServices(); // Iniciar servicios de rastreo
     _checkForPendingAlerts(); // Memoria SOS (v2.3.0)

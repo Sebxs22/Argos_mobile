@@ -116,9 +116,25 @@ Future<void> _handlePanicAlert(
   }
 
   try {
-    Position position = await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
-    );
+    Position position;
+    try {
+      // Intento 1: Alta Precisión (v2.6.3) con timeout de 5s
+      position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 5),
+        ),
+      );
+    } catch (e) {
+      developer
+          .log("ARGOS: Alta precisión falló/timeout. Usando alternativa...");
+      // Intento 2: Precisión Media (Más rápida/Antenas)
+      position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+        ),
+      );
+    }
 
     final String? alertaId = await apiService.enviarAlertaEmergencia(
       position.latitude,

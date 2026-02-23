@@ -187,20 +187,32 @@ class AuthService {
   }
   // --- 5. NOTIFICACIONES PUSH ---
 
-  // Vincular el ID de OneSignal con el perfil de Supabase
+  // Vincular el ID de OneSignal con el perfil de Supabase (v2.6.3 con Reintentos)
   Future<void> actualizarPushToken() async {
     try {
       final yo = usuarioActual;
       if (yo == null) return;
 
-      // Obtener el ID de OneSignal (Subscription ID)
-      final status = OneSignal.User.pushSubscription.id;
+      String? status;
+      int retries = 0;
+
+      // Reintentar hasta 5 veces (una vez por segundo) si el ID es nulo inicialmente
+      while (status == null && retries < 5) {
+        status = OneSignal.User.pushSubscription.id;
+        if (status != null && status.isNotEmpty) break;
+
+        debugPrint("⏳ Esperando ID de OneSignal (Intento ${retries + 1})...");
+        await Future.delayed(const Duration(seconds: 1));
+        retries++;
+      }
 
       if (status != null && status.isNotEmpty) {
         await _supabase
             .from('perfiles')
             .update({'onesignal_id': status}).eq('id', yo.id);
-        debugPrint("✅ Token de OneSignal registrado: $status");
+        debugPrint("✅ Token de OneSignal sincronizado: $status");
+      } else {
+        debugPrint("⚠️ OneSignal ID no disponible tras reintentos.");
       }
     } catch (e) {
       debugPrint("❌ Error al registrar OneSignal ID: $e");
