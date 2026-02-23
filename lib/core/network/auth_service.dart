@@ -234,4 +234,44 @@ class AuthService {
       'cedula': cedula,
     }).eq('id', yo.id);
   }
+
+  // --- 7. STORAGE: SUBIR FOTO DE PERFIL (v2.12.0) ---
+  Future<String?> subirFotoPerfil(dynamic fileBytes, String fileName) async {
+    try {
+      final yo = usuarioActual;
+      if (yo == null) return null;
+
+      final String path = '${yo.id}/$fileName';
+
+      // 1. Subir a Supabase Storage (Bucket: 'profiles')
+      await _supabase.storage.from('profiles').uploadBinary(
+            path,
+            fileBytes,
+            fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
+          );
+
+      // 2. Obtener URL Pública
+      final String publicUrl =
+          _supabase.storage.from('profiles').getPublicUrl(path);
+
+      // 3. Actualizar campo avatar_url en perfiles
+      await _supabase.from('perfiles').update({
+        'avatar_url': publicUrl,
+      }).eq('id', yo.id);
+
+      return publicUrl;
+    } catch (e) {
+      debugPrint("❌ Error al subir foto a Supabase: $e");
+      return null;
+    }
+  }
+
+  // --- 8. AVATARES PREDETERMINADOS (v2.12.0) ---
+  Future<void> setAvatarUrl(String url) async {
+    final yo = usuarioActual;
+    if (yo == null) return;
+    await _supabase
+        .from('perfiles')
+        .update({'avatar_url': url}).eq('id', yo.id);
+  }
 }

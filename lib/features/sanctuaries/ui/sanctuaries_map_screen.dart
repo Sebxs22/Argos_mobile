@@ -61,6 +61,12 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
     // Registrar observador para detectar cuando el usuario vuelve a la app
     WidgetsBinding.instance.addObserver(this);
 
+    // v2.12.1: Cargar desde Caché si existe
+    if (ApiService.cacheSantuarios.isNotEmpty) {
+      _dynamicSanctuaries = ApiService.cacheSantuarios;
+      _lastScannedPosition = ApiService.ultimaPosicionSantuarios;
+    }
+
     _radarController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -247,13 +253,7 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
     }
 
     // 2. Si no tocó peligro, verificar Santuarios (Cercanía de 30m)
-    const Distance distance = Distance();
-    for (var site in _dynamicSanctuaries) {
-      if (distance.as(LengthUnit.Meter, point, site.location) <= 30) {
-        _showSanctuaryDetails(site);
-        return;
-      }
-    }
+    // El toque directo ya es manejado por el GestureDetector en el marcador (v2.12.1)
   }
 
   void _showSanctuaryDetails(SanctuaryModel site) {
@@ -269,7 +269,7 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
           child: Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: panelColor.withOpacity(0.9),
+              color: panelColor.withValues(alpha: 0.9),
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(25)),
             ),
@@ -301,37 +301,16 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
                               fontSize: 16,
                             ),
                           ),
+                          const SizedBox(height: 4),
                           Text(
-                            "SANTUARIO: ${_getFilterName(site.type)}",
+                            site.address?.isNotEmpty == true
+                                ? site.address!
+                                : "DIRECCIÓN: UBICACIÓN DETECTADA POR ARGOS",
                             style: TextStyle(
-                              color: Colors.blueAccent,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 1.1,
+                              color: isDark ? Colors.white70 : Colors.black54,
+                              fontSize: 11,
                             ),
                           ),
-                          if (site.address != null &&
-                              site.address!.isNotEmpty) ...[
-                            const SizedBox(height: 5),
-                            Row(
-                              children: [
-                                const Icon(Icons.location_on,
-                                    size: 12, color: Colors.white54),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(
-                                    site.address!,
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 11,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
                         ],
                       ),
                     ),
@@ -348,9 +327,13 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15)),
                     ),
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.check_circle_outline),
-                    label: const Text("ENTENDIDO"),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      // v2.12.1: Zoom e Ir al punto
+                      _mapController.move(site.location, 17.5);
+                    },
+                    icon: const Icon(Icons.near_me_outlined),
+                    label: const Text("IR AL PUNTO / ACERCAR"),
                   ),
                 ),
               ],
@@ -649,7 +632,10 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
                       point: site.location,
                       width: 50,
                       height: 50,
-                      child: _buildDynamicMarkerIcon(site),
+                      child: GestureDetector(
+                        onTap: () => _showSanctuaryDetails(site),
+                        child: _buildDynamicMarkerIcon(site),
+                      ),
                     ),
                   ),
 
@@ -663,7 +649,10 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
                       point: site.location,
                       width: 50,
                       height: 50,
-                      child: _buildDynamicMarkerIcon(site),
+                      child: GestureDetector(
+                        onTap: () => _showSanctuaryDetails(site),
+                        child: _buildDynamicMarkerIcon(site),
+                      ),
                     ),
                   ),
             ],

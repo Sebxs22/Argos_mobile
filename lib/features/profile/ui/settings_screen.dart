@@ -6,7 +6,10 @@ import '../../../core/ui/glass_box.dart';
 import '../../../core/ui/argos_background.dart';
 import '../../../core/utils/ui_utils.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import '../../../core/network/version_service.dart'; // Import VersionService
+import '../../../core/network/version_service.dart';
+import 'package:image_picker/image_picker.dart';
+// import 'dart:io'; // v2.12.0: Removed unused
+// import 'dart:typed_data'; // v2.12.0: Removed unused
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -15,13 +18,17 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends State<SettingsScreen>
+    with SingleTickerProviderStateMixin {
   final AuthService _auth = AuthService();
   final ThemeService _themeService = ThemeService();
 
   bool _isLoading = true;
   bool _isCheckingUpdate = false; // v2.8.4
   String _appVersion = "...";
+  String? _avatarUrl;
+
+  late AnimationController _radarController;
 
   // Form controllers
   final _nombreController = TextEditingController();
@@ -31,7 +38,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
+    _radarController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    );
     _cargarDatos();
+  }
+
+  @override
+  void dispose() {
+    _radarController.dispose();
+    _nombreController.dispose();
+    _telefonoController.dispose();
+    _cedulaController.dispose();
+    super.dispose();
   }
 
   Future<void> _cargarDatos() async {
@@ -46,9 +66,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _nombreController.text = data['nombre_completo'] ?? "";
           _telefonoController.text = data['telefono'] ?? "";
           _cedulaController.text = data['cedula'] ?? "";
+          _avatarUrl = data['avatar_url'];
         }
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _seleccionarFoto() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 50,
+      maxWidth: 500,
+    );
+
+    if (image != null) {
+      UiUtils.showSuccess("Subiendo imagen...");
+      final bytes = await image.readAsBytes();
+      final String fileName =
+          "profile_${DateTime.now().millisecondsSinceEpoch}.jpg";
+
+      final url = await _auth.subirFotoPerfil(bytes, fileName);
+      if (url != null) {
+        setState(() => _avatarUrl = url);
+        UiUtils.showSuccess("Foto actualizada");
+      } else {
+        UiUtils.showError("No se pudo subir la foto");
+      }
     }
   }
 
@@ -98,10 +143,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _buscarActualizacionManual() async {
     setState(() => _isCheckingUpdate = true);
-    // Simular un pequeño delay para que la ruedita sea visible y se sienta el proceso
-    await Future.delayed(const Duration(seconds: 1));
+    _radarController.repeat();
+
+    await Future.delayed(const Duration(seconds: 2));
     if (mounted) {
       await VersionService().checkForUpdates(context, manual: true);
+      _radarController.stop();
       setState(() => _isCheckingUpdate = false);
     }
   }
@@ -150,8 +197,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // --- CABECERA DE PERFIL (v2.12.0) ---
+                    _buildProfileHeader(isDark),
+                    const SizedBox(height: 30),
+
                     // --- SECCIÓN PERFIL ---
-                    _buildSectionTitle("MI PERFIL", isDark),
+                    _buildSectionTitle("DATOS PERSONALES", isDark),
                     const SizedBox(height: 15),
                     GlassBox(
                       borderRadius: 20,
@@ -242,71 +293,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const SizedBox(height: 30),
 
                     // --- SECCIÓN INFO ---
-                    _buildSectionTitle("INFORMACIÓN", isDark),
+                    _buildSectionTitle("SISTEMA ARGOS", isDark),
                     const SizedBox(height: 15),
-                    GlassBox(
-                      borderRadius: 20,
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text("Versión instalada",
-                                  style: TextStyle(
-                                      color: isDark
-                                          ? Colors.white70
-                                          : Colors.black54)),
-                              GestureDetector(
-                                onTap: _showChangelog, // v2.8.4: Novedades
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.blueAccent
-                                        .withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    _appVersion,
-                                    style: const TextStyle(
-                                        color: Colors.blueAccent,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const Divider(height: 30, color: Colors.white10),
-                          SizedBox(
-                            width: double.infinity,
-                            child: _isCheckingUpdate
-                                ? const Center(
-                                    child: Padding(
-                                      padding: EdgeInsets.all(10.0),
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2),
-                                    ),
-                                  )
-                                : TextButton.icon(
-                                    onPressed: _buscarActualizacionManual,
-                                    icon: const Icon(Icons.refresh_rounded,
-                                        size: 16),
-                                    label: const Text("Verificar sistema"),
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: Colors.blueAccent
-                                          .withValues(alpha: 0.8),
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 12),
-                                      shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(15)),
-                                    ),
-                                  ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
+                    _buildPremiumVersionCard(isDark),
+
+                    const SizedBox(height: 15),
                     GestureDetector(
                       onTap: () {
                         Navigator.push(
@@ -342,6 +333,156 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ],
                 ),
               ),
+      ),
+    );
+  }
+
+  Widget _buildProfileHeader(bool isDark) {
+    return Center(
+      child: Column(
+        children: [
+          Stack(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.blueAccent,
+                      Colors.blueAccent.withValues(alpha: 0.2)
+                    ],
+                  ),
+                ),
+                child: CircleAvatar(
+                  radius: 50,
+                  backgroundColor: isDark ? Colors.grey[900] : Colors.grey[200],
+                  backgroundImage:
+                      _avatarUrl != null ? NetworkImage(_avatarUrl!) : null,
+                  child: _avatarUrl == null
+                      ? Icon(Icons.person,
+                          size: 50,
+                          color: isDark ? Colors.white24 : Colors.grey)
+                      : null,
+                ),
+              ),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: GestureDetector(
+                  onTap: _seleccionarFoto,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: const BoxDecoration(
+                      color: Colors.blueAccent,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.camera_alt,
+                        color: Colors.white, size: 18),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _nombreController.text.isEmpty
+                ? "USUARIO ARGOS"
+                : _nombreController.text,
+            style: TextStyle(
+              color: isDark ? Colors.white : Colors.black87,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
+          const Text(
+            "ESTADO: PROTEGIDO",
+            style: TextStyle(
+                color: Colors.greenAccent, fontSize: 10, letterSpacing: 1.5),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPremiumVersionCard(bool isDark) {
+    return GlassBox(
+      borderRadius: 20,
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              RotationTransition(
+                turns: _radarController,
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: _isCheckingUpdate
+                        ? Colors.blueAccent.withValues(alpha: 0.1)
+                        : Colors.white.withValues(alpha: 0.05),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    _isCheckingUpdate ? Icons.radar : Icons.verified_user,
+                    color: _isCheckingUpdate
+                        ? Colors.blueAccent
+                        : Colors.greenAccent,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 15),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _isCheckingUpdate
+                          ? " ESCANEANDO RED..."
+                          : "SISTEMA AL DÍA",
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black87,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    Text(
+                      "VERSIÓN INSTALADA: $_appVersion",
+                      style: TextStyle(
+                        color: isDark ? Colors.white54 : Colors.black54,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (!_isCheckingUpdate)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      onPressed: _showChangelog, // v2.12.0: Restored
+                      icon: const Icon(Icons.info_outline,
+                          color: Colors.blueAccent, size: 18),
+                      tooltip: "Novedades",
+                    ),
+                    IconButton(
+                      onPressed: _buscarActualizacionManual,
+                      icon: const Icon(Icons.refresh,
+                          color: Colors.blueAccent, size: 20),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+          if (_isCheckingUpdate) ...[
+            const SizedBox(height: 15),
+            const LinearProgressIndicator(
+              backgroundColor: Colors.white12,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
+            ),
+          ],
+        ],
       ),
     );
   }

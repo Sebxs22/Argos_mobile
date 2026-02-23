@@ -11,6 +11,10 @@ import '../../features/sanctuaries/data/mock_sanctuaries_data.dart';
 import '../utils/ui_utils.dart'; // Import UiUtils
 
 class ApiService {
+  // v2.12.1: Cache global para evitar re-escaneos innecesarios al navegar
+  static List<SanctuaryModel> cacheSantuarios = [];
+  static LatLng? ultimaPosicionSantuarios;
+
   // Usamos el cliente de Supabase ya inicializado en el main.dart
   final SupabaseClient _supabase = Supabase.instance.client;
 
@@ -804,6 +808,11 @@ class ApiService {
 
         debugPrint(
             "✅ ARGOS SCAN: Se encontraron ${realSanctuaries.length} santuarios reales.");
+
+        // Actualizar Caché Global
+        cacheSantuarios = realSanctuaries;
+        ultimaPosicionSantuarios = position;
+
         return realSanctuaries;
       } else {
         debugPrint(
