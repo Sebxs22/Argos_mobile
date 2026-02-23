@@ -14,6 +14,7 @@ class VersionService {
       {bool manual = false}) async {
     try {
       final data = await _supabase.from('app_config').select().single();
+      if (!context.mounted) return;
       await _processUpdate(context, data, manual: manual);
     } catch (e) {
       debugPrint("Error checking for updates: $e");
