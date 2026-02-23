@@ -2,7 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 
 // --- MODELOS ---
-enum SanctuaryType { police, health, education, store, park, pharmacy, church }
+enum SanctuaryType {
+  police,
+  health,
+  education,
+  store,
+  park,
+  pharmacy,
+  church,
+  other
+}
 
 class SanctuaryModel {
   final String name;

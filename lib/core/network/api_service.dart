@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // Import SharedPreferences
+import 'package:shared_preferences/shared_preferences.dart'; // v2.13.1: Persistencia
 import 'package:flutter_dotenv/flutter_dotenv.dart'; // Import dotenv
 
 // --- IMPORTANTE: Asegúrate de que esta ruta sea correcta según tu proyecto ---
@@ -11,9 +11,66 @@ import '../../features/sanctuaries/data/mock_sanctuaries_data.dart';
 import '../utils/ui_utils.dart'; // Import UiUtils
 
 class ApiService {
-  // v2.12.1: Cache global para evitar re-escaneos innecesarios al navegar
+  // v2.12.1: Cache global para evitar re-escaneos innecesarios  // v2.12.1: Cache Estático (v2.13.1: Ahora Persistente)
   static List<SanctuaryModel> cacheSantuarios = [];
   static LatLng? ultimaPosicionSantuarios;
+
+  // v2.13.1: Guardar Caché en Disco
+  Future<void> guardarCacheSantuarios() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final List<Map<String, dynamic>> jsonList = cacheSantuarios.map((s) {
+        return {
+          'name': s.name,
+          'lat': s.location.latitude,
+          'lng': s.location.longitude,
+          'type': s.type.name,
+          'address': s.address,
+        };
+      }).toList();
+
+      await prefs.setString('argos_cache_santuarios', jsonEncode(jsonList));
+      if (ultimaPosicionSantuarios != null) {
+        await prefs.setDouble(
+            'argos_cache_lat', ultimaPosicionSantuarios!.latitude);
+        await prefs.setDouble(
+            'argos_cache_lng', ultimaPosicionSantuarios!.longitude);
+      }
+      debugPrint("💾 ARGOS CACHE: Guardado exitoso en disco.");
+    } catch (e) {
+      debugPrint("❌ ARGOS CACHE: Error al guardar: $e");
+    }
+  }
+
+  // v2.13.1: Cargar Caché desde Disco
+  Future<void> cargarCacheSantuarios() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? jsonStr = prefs.getString('argos_cache_santuarios');
+      if (jsonStr != null) {
+        final List<dynamic> decoded = jsonDecode(jsonStr);
+        cacheSantuarios = decoded.map((item) {
+          return SanctuaryModel(
+            item['name'],
+            LatLng(item['lat'], item['lng']),
+            SanctuaryType.values.firstWhere((e) => e.name == item['type'],
+                orElse: () => SanctuaryType.other),
+            address: item['address'],
+          );
+        }).toList();
+      }
+
+      final double? lat = prefs.getDouble('argos_cache_lat');
+      final double? lng = prefs.getDouble('argos_cache_lng');
+      if (lat != null && lng != null) {
+        ultimaPosicionSantuarios = LatLng(lat, lng);
+      }
+      debugPrint(
+          "📂 ARGOS CACHE: Cargados ${cacheSantuarios.length} puntos desde el disco.");
+    } catch (e) {
+      debugPrint("❌ ARGOS CACHE: Error al cargar: $e");
+    }
+  }
 
   // Usamos el cliente de Supabase ya inicializado en el main.dart
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -316,13 +373,13 @@ class ApiService {
           perfilOSRM = 'driving';
           break;
         case 'foot':
-          perfilOSRM = 'walking'; // v2.13.0: Standard OSRM
+          perfilOSRM = 'foot'; // v2.13.1: More explicit profile for OSRM
           break;
         case 'bicycle':
-          perfilOSRM = 'cycling';
+          perfilOSRM = 'bicycle';
           break;
         default:
-          perfilOSRM = 'walking';
+          perfilOSRM = 'foot';
       }
 
       final url = Uri.parse(
@@ -812,6 +869,9 @@ class ApiService {
         // Actualizar Caché Global
         cacheSantuarios = realSanctuaries;
         ultimaPosicionSantuarios = position;
+
+        // v2.13.1: Persistir en disco
+        guardarCacheSantuarios();
 
         return realSanctuaries;
       } else {

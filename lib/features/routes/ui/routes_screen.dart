@@ -425,9 +425,63 @@ class _RoutesScreenState extends State<RoutesScreen> {
             ElevatedButton(
               onPressed: () {
                 FlutterBackgroundService().startService();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Argos vigilando. Modo Travesía activo."),
+
+                // v2.13.1: Feedback Premium en lugar de SnackBar
+                showDialog(
+                  context: context,
+                  barrierColor: Colors.black.withValues(alpha: 0.8),
+                  builder: (context) => Center(
+                    child: GlassBox(
+                      borderRadius: 25,
+                      padding: const EdgeInsets.all(30),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(15),
+                            decoration: BoxDecoration(
+                              color: Colors.redAccent.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.security,
+                                color: Colors.redAccent, size: 40),
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            "MODO TRAVESÍA ACTIVO",
+                            style: TextStyle(
+                              color: textColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 15),
+                          Text(
+                            "Argos rastrea tu ubicación en segundo plano y alertará a tu Círculo si detecta desviaciones o riesgos en la ruta.",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: isDark ? Colors.white70 : Colors.black54,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(height: 25),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () => Navigator.pop(context),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.redAccent,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15)),
+                              ),
+                              child: const Text("ENTENDIDO"),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 );
               },

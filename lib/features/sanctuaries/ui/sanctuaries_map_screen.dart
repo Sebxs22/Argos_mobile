@@ -61,11 +61,15 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
     // Registrar observador para detectar cuando el usuario vuelve a la app
     WidgetsBinding.instance.addObserver(this);
 
-    // v2.12.1: Cargar desde Caché si existe
-    if (ApiService.cacheSantuarios.isNotEmpty) {
-      _dynamicSanctuaries = ApiService.cacheSantuarios;
-      _lastScannedPosition = ApiService.ultimaPosicionSantuarios;
-    }
+    // v2.13.1: Carga Asíncrona de caché desde disco
+    _apiService.cargarCacheSantuarios().then((_) {
+      if (mounted && ApiService.cacheSantuarios.isNotEmpty) {
+        setState(() {
+          _dynamicSanctuaries = ApiService.cacheSantuarios;
+          _lastScannedPosition = ApiService.ultimaPosicionSantuarios;
+        });
+      }
+    });
 
     _radarController = AnimationController(
       vsync: this,
@@ -883,6 +887,8 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
         return 'Parque';
       case SanctuaryType.church:
         return 'Iglesia';
+      default:
+        return 'Otros';
     }
   }
 
@@ -917,6 +923,10 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
       case SanctuaryType.church:
         icon = Icons.church;
         color = Colors.amber;
+        break;
+      default:
+        icon = Icons.place;
+        color = Colors.grey;
         break;
     }
     final isDark = Theme.of(context).brightness == Brightness.dark;
