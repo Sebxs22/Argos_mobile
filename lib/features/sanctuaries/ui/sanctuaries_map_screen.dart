@@ -327,7 +327,8 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
       backgroundColor:
           isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF8FAFC),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 90.0),
+        padding: const EdgeInsets.only(
+            bottom: 110.0), // v2.7.0: Más alto para evitar el nav bar
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

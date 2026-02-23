@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Import v2.7.0
 import 'package:flutter_background_service/flutter_background_service.dart';
 
 import '../../../core/ui/glass_box.dart';
@@ -262,39 +263,21 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
               ),
             ),
 
-            // BOTÓN MANUAL
+            // BOTÓN MANUAL (v2.7.0: Ajustado para evitar nav bar flotante)
             Padding(
-              padding: const EdgeInsets.only(bottom: 50.0),
+              padding: const EdgeInsets.only(bottom: 130.0),
               child: GestureDetector(
-                onTap: _triggerManualAlert,
+                onTap: () {
+                  HapticFeedback.heavyImpact(); // v2.7.0 Premium Haptics
+                  _triggerManualAlert();
+                },
                 child: GlassBox(
                   borderRadius: 30,
-                  opacity: isDark ? 0.1 : 0.05,
-                  blur: 10,
-                  border: Border.all(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.2)
-                        : Colors.black12,
-                  ),
+                  // v2.7.0: Usa los nuevos defaults premium
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 60,
                       vertical: 18,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.05)
-                          : Colors.white.withValues(alpha: 0.7),
-                      borderRadius: BorderRadius.circular(30),
-                      boxShadow: !isDark
-                          ? [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.05),
-                                blurRadius: 10,
-                                offset: const Offset(0, 5),
-                              )
-                            ]
-                          : [],
                     ),
                     child: Text(
                       "ACTIVACIÓN MANUAL",

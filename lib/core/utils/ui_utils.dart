@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Import v2.7.0
 import 'package:overlay_support/overlay_support.dart';
 import '../ui/glass_box.dart';
 
@@ -8,6 +9,13 @@ class UiUtils {
     required Color accentColor,
     Duration duration = const Duration(seconds: 3),
   }) {
+    // v2.7.0: Feedback háptico al mostrar notificaciones
+    if (accentColor == Colors.redAccent.shade200) {
+      HapticFeedback.heavyImpact();
+    } else {
+      HapticFeedback.mediumImpact();
+    }
+
     showOverlayNotification(
       (context) {
         final isDark = Theme.of(context).brightness == Brightness.dark;

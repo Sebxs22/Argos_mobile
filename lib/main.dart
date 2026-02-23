@@ -276,9 +276,15 @@ class _MainNavigatorState extends State<MainNavigator> {
   ];
 
   void _onItemTapped(int index) {
+    if (_selectedIndex == index) return;
+    HapticFeedback.mediumImpact(); // v2.7.0 Premium Haptics
     setState(() {
       _selectedIndex = index;
-      _pageController.jumpToPage(index);
+      _pageController.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOutCubic,
+      );
     });
   }
 
@@ -393,47 +399,6 @@ class _MainNavigatorState extends State<MainNavigator> {
         children: [
           Scaffold(
             backgroundColor: Colors.transparent,
-            extendBodyBehindAppBar: true,
-            extendBody: true,
-            appBar: isGuardianScreen
-                ? AppBar(
-                    backgroundColor: Colors.transparent,
-                    elevation: 0,
-                    actions: [
-                      Padding(
-                        padding: const EdgeInsets.only(right: 20.0, top: 10.0),
-                        child: GestureDetector(
-                          onTap: _showProfileMenu,
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Theme.of(context).brightness ==
-                                      Brightness.dark
-                                  ? Colors.white.withValues(alpha: 0.1)
-                                  : Colors.black.withValues(alpha: 0.05),
-                              border: Border.all(
-                                color: Theme.of(context).brightness ==
-                                        Brightness.dark
-                                    ? Colors.white12
-                                    : Colors.black12,
-                              ),
-                            ),
-                            child: Icon(
-                              Icons.person_outline,
-                              color: Theme.of(context).brightness ==
-                                      Brightness.dark
-                                  ? Colors.white
-                                  : Colors.black87,
-                              size: 20,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  )
-                : null,
             body: AnimatedPadding(
               duration: const Duration(milliseconds: 300),
               padding: EdgeInsets.only(top: isGuardianScreen ? 80 : 0),
@@ -444,19 +409,20 @@ class _MainNavigatorState extends State<MainNavigator> {
                 children: _pages,
               ),
             ),
-            bottomNavigationBar: Padding(
-              padding: const EdgeInsets.fromLTRB(25, 0, 25, 30),
+          ),
+
+          // --- BARRA DE NAVEGACIÓN FLOTANTE (v2.7.0 Premium) ---
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(25, 0, 25, 35),
               child: GlassBox(
                 borderRadius: 40,
-                blur: 15,
-                opacity: Theme.of(context).brightness == Brightness.dark
-                    ? 0.1
-                    : 0.05,
+                // v2.7.0: Usa los nuevos defaults de blur y borde
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     _buildNavItem(
                       0,
@@ -464,21 +430,54 @@ class _MainNavigatorState extends State<MainNavigator> {
                       Icons.remove_red_eye,
                       "Guardián",
                     ),
+                    const SizedBox(width: 8),
                     _buildNavItem(
                       1,
                       Icons.shield_outlined,
                       Icons.shield,
                       "Santuarios",
                     ),
-                    _buildNavItem(2, Icons.map_outlined, Icons.map, "Rutas"),
+                    const SizedBox(width: 8),
+                    _buildNavItem(
+                      2,
+                      Icons.map_outlined,
+                      Icons.map,
+                      "Rutas",
+                    ),
+                    const SizedBox(width: 8),
+                    // BOTÓN PERFIL INTEGRADO (v2.7.0)
+                    _buildProfileNavItem(),
                   ],
                 ),
               ),
             ),
           ),
+
           // Indicador de conectividad sutil en la parte superior
           const ConnectivityBadge(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildProfileNavItem() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact(); // v2.7.0
+        _showProfileMenu();
+      },
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          Icons.person_outline,
+          color: isDark ? Colors.white70 : Colors.black54,
+          size: 22,
+        ),
       ),
     );
   }

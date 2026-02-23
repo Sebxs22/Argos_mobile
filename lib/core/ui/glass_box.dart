@@ -13,8 +13,8 @@ class GlassBox extends StatelessWidget {
     super.key,
     required this.child,
     this.borderRadius = 25.0,
-    this.blur = 20.0, // Bajamos un poco el blur default para ganar FPS
-    this.opacity = 0.08,
+    this.blur = 25.0, // v2.7.0: Blur más profundo para look premium
+    this.opacity = 0.1, // v2.7.0: Opacidad base estandarizada
     this.padding,
     this.border,
   });
@@ -23,38 +23,36 @@ class GlassBox extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Usamos ClipRRect para recortar el efecto costoso solo al área necesaria
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(borderRadius),
-        boxShadow: !isDark
-            ? [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  spreadRadius: 1,
-                )
-              ]
-            : [],
+        boxShadow: [
+          BoxShadow(
+            color: (isDark ? Colors.black : Colors.black12)
+                .withValues(alpha: 0.05),
+            blurRadius: 15,
+            spreadRadius: 0,
+            offset: const Offset(0, 4),
+          )
+        ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(borderRadius),
         child: BackdropFilter(
-          // Optimizamos el filtro
           filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
           child: Container(
             padding: padding ?? const EdgeInsets.all(20.0),
             decoration: BoxDecoration(
               color: isDark
                   ? Colors.white.withValues(alpha: opacity)
-                  : Colors.white.withValues(alpha: opacity * 1.5),
+                  : Colors.white.withValues(alpha: 0.05), // Más sutil en light
               borderRadius: BorderRadius.circular(borderRadius),
               border: border ??
                   Border.all(
                     color: isDark
-                        ? Colors.white.withValues(alpha: 0.2)
-                        : Colors.black.withValues(alpha: 0.1),
-                    width: 1.0,
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.black.withValues(alpha: 0.05),
+                    width: 0.5, // v2.7.0: Borde ultra-fino tipo Apple
                   ),
             ),
             child: child,
