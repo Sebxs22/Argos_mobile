@@ -367,7 +367,7 @@ class _MainNavigatorState extends State<MainNavigator> {
 
   void _onItemTapped(int index) {
     if (_selectedIndex == index) return;
-    HapticFeedback.mediumImpact(); // v2.7.0 Premium Haptics
+    // v2.8.4: Navegación silenciosa (Haptic removed)
     setState(() {
       _selectedIndex = index;
       _pageController.animateToPage(

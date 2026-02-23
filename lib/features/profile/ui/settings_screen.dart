@@ -20,6 +20,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final ThemeService _themeService = ThemeService();
 
   bool _isLoading = true;
+  bool _isCheckingUpdate = false; // v2.8.4
   String _appVersion = "...";
 
   // Form controllers
@@ -48,6 +49,60 @@ class _SettingsScreenState extends State<SettingsScreen> {
         }
         _isLoading = false;
       });
+    }
+  }
+
+  // v2.8.4: Novedades de la versión (Spanish)
+  void _showChangelog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF0F172A),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text("🚀 NOVEDADES v2.8.4",
+            style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold)),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("• Navegación más fluida y silenciosa.",
+                style: TextStyle(color: Colors.white70)),
+            SizedBox(height: 8),
+            Text("• Confirmación táctica al enviar SOS (vibración al éxito).",
+                style: TextStyle(color: Colors.white70)),
+            SizedBox(height: 8),
+            Text(
+                "• Notificaciones de seguimiento al clasificar o cancelar alertas.",
+                style: TextStyle(color: Colors.white70)),
+            SizedBox(height: 8),
+            Text("• Optimizador de batería para protección 24/7.",
+                style: TextStyle(color: Colors.white70)),
+            SizedBox(height: 8),
+            Text("• Solución a duplicados en el Mapa del Círculo.",
+                style: TextStyle(color: Colors.white70)),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("ENTENDIDO",
+                style: TextStyle(color: Colors.blueAccent)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _buscarActualizacionManual() async {
+    setState(() => _isCheckingUpdate = true);
+    // Simular un pequeño delay para que la ruedita sea visible y se sienta el proceso
+    await Future.delayed(const Duration(seconds: 1));
+    if (mounted) {
+      await VersionService().checkForUpdates(context, manual: true);
+      setState(() => _isCheckingUpdate = false);
     }
   }
 
@@ -201,31 +256,51 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                       color: isDark
                                           ? Colors.white70
                                           : Colors.black54)),
-                              Text(
-                                _appVersion,
-                                style: const TextStyle(
-                                    color: Colors.blueAccent,
-                                    fontWeight: FontWeight.bold),
+                              GestureDetector(
+                                onTap: _showChangelog, // v2.8.4: Novedades
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blueAccent
+                                        .withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    _appVersion,
+                                    style: const TextStyle(
+                                        color: Colors.blueAccent,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ),
                               ),
                             ],
                           ),
                           const Divider(height: 30, color: Colors.white10),
                           SizedBox(
                             width: double.infinity,
-                            child: OutlinedButton.icon(
-                              onPressed: () => VersionService()
-                                  .checkForUpdates(context, manual: true),
-                              icon:
-                                  const Icon(Icons.system_update_alt, size: 18),
-                              label: const Text("Buscar actualización"),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.blueAccent,
-                                side:
-                                    const BorderSide(color: Colors.blueAccent),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12)),
-                              ),
-                            ),
+                            child: _isCheckingUpdate
+                                ? const Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.all(10.0),
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2),
+                                    ),
+                                  )
+                                : OutlinedButton.icon(
+                                    onPressed: _buscarActualizacionManual,
+                                    icon: const Icon(Icons.system_update_alt,
+                                        size: 18),
+                                    label: const Text("Buscar actualización"),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: Colors.blueAccent,
+                                      side: const BorderSide(
+                                          color: Colors.blueAccent),
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12)),
+                                    ),
+                                  ),
                           ),
                         ],
                       ),

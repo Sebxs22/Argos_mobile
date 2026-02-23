@@ -40,6 +40,7 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
   void _triggerManualAlert() {
     setState(() => _currentState = GuardianState.sending);
     FlutterBackgroundService().invoke('onManualAlert');
+    HapticFeedback.vibrate(); // v2.8.4 Tactile confirmation on send
 
     // El MainNavigator se encargará de mostrar la pantalla de éxito.
     // Nosotros reseteamos nuestro estado local después de un breve delay
@@ -268,7 +269,7 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
               padding: const EdgeInsets.only(bottom: 130.0),
               child: GestureDetector(
                 onTap: () {
-                  HapticFeedback.heavyImpact(); // v2.7.0 Premium Haptics
+                  // v2.8.4: No vibrate on touch, only on success
                   _triggerManualAlert();
                 },
                 child: GlassBox(
