@@ -423,11 +423,14 @@ class ApiService {
     }
   }
 
-  // 5. ENVIAR NOTIFICACIÓN PUSH A TODO EL CÍRCULO (v2.6.1)
+  // 5. ENVIAR NOTIFICACIÓN PUSH A TODO EL CÍRCULO (v2.6.2 con DEBUG)
   Future<void> enviarNotificacionEmergencia(String nombreUsuario) async {
     try {
       final user = _supabase.auth.currentUser;
-      if (user == null) return;
+      if (user == null) {
+        debugPrint("❌ API_SERVICE: No hay usuario autenticado para notificar.");
+        return;
+      }
 
       final List<String> targetIds = [];
 
@@ -455,10 +458,20 @@ class ApiService {
       }
 
       final uniqueIds = targetIds.toSet().toList();
+      debugPrint(
+          "🔍 ARGOS NOTIF: Intentando notificar a ${uniqueIds.length} IDs: $uniqueIds");
 
       if (uniqueIds.isEmpty) {
         debugPrint(
-            "⚠️ No hay miembros del círculo con OneSignal ID para notificar.");
+            "⚠️ ARGOS NOTIF: No hay miembros con onesignal_id en la DB.");
+        return;
+      }
+
+      final appId = dotenv.env['ONESIGNAL_APP_ID'];
+      final restKey = dotenv.env['ONESIGNAL_REST_API_KEY'];
+
+      if (appId == null || restKey == null) {
+        debugPrint("❌ ARGOS NOTIF: Faltan llaves en .env (APP_ID o REST_KEY)");
         return;
       }
 
@@ -467,10 +480,10 @@ class ApiService {
         Uri.parse('https://onesignal.com/api/v1/notifications'),
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
-          'Authorization': 'Basic ${dotenv.env['ONESIGNAL_REST_API_KEY']}',
+          'Authorization': 'Basic $restKey',
         },
         body: jsonEncode({
-          'app_id': dotenv.env['ONESIGNAL_APP_ID'],
+          'app_id': appId,
           'include_player_ids': uniqueIds,
           'contents': {
             'es':
@@ -484,13 +497,13 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        debugPrint(
-            "🚀 Notificaciones enviadas correctamente a ${uniqueIds.length} miembros del círculo.");
+        debugPrint("🚀 ARGOS NOTIF: ÉXITO. Respuesta: ${response.body}");
       } else {
-        debugPrint("❌ Error al enviar notificación: ${response.body}");
+        debugPrint(
+            "❌ ARGOS NOTIF: FALLO (Status ${response.statusCode}). Body: ${response.body}");
       }
     } catch (e) {
-      debugPrint("❌ Error en enviarNotificacionEmergencia: $e");
+      debugPrint("❌ ARGOS NOTIF: ERROR CRÍTICO: $e");
     }
   }
 
