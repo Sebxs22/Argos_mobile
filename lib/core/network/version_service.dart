@@ -3,6 +3,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
 import '../ui/update_progress_dialog.dart';
 import '../utils/ui_utils.dart'; // Import UiUtils (v2.6.6)
+import 'api_service.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'dart:typed_data';
 
 class VersionService {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -23,6 +26,30 @@ class VersionService {
 
       // 3. Comparar
       if (currentVersion != latestVersion) {
+        // v2.8.7: Notificación Push real vía OneSignal
+        final apiService = ApiService();
+        await apiService.notificarNuevaVersion(latestVersion);
+
+        // Notificación local de respaldo
+        final FlutterLocalNotificationsPlugin notifications =
+            FlutterLocalNotificationsPlugin();
+        await notifications.show(
+          id: 777,
+          title: '🚀 NUEVA VERSIÓN DISPONIBLE: v$latestVersion',
+          body:
+              'ARGOS se ha actualizado. Toca para ver las novedades y descargar.',
+          notificationDetails: NotificationDetails(
+            android: AndroidNotificationDetails(
+              'argos_updates',
+              'Actualizaciones ARGOS',
+              importance: Importance.max,
+              priority: Priority.high,
+              enableVibration: true,
+              vibrationPattern: Int64List.fromList([0, 200, 100, 200]),
+            ),
+          ),
+        );
+
         if (context.mounted) {
           showDialog(
             context: context,

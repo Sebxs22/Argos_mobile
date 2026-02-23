@@ -1,4 +1,4 @@
-# 🛡️ ARGOS: Manual de Arquitectura y Sistema de Seguridad (v2.8.7)
+# 🛡️ ARGOS: Manual de Arquitectura y Sistema de Seguridad (v2.8.7.1)
 
 > [!IMPORTANT]
 > Este documento es la "Fuente de Verdad" técnica de ARGOS. Explica no solo el **cómo**, sino el **por qué** detrás de cada decisión de ingeniería, desde la detección de sensores hasta el renderizado de vidrio líquido.
@@ -11,13 +11,13 @@ ARGOS no es una app monolítica. Se divide en **Silos de Responsabilidad** para 
 
 ### 📂 Estructura de Directorios Detallada
 
-| Carpeta | Rol Técnico | Componentes Clave |
-| :--- | :--- | :--- |
-| `lib/core/` | **El Núcleo Atmosférico** | Red, Temas, UI Modular (`GlassBox`), Utilidades. |
-| `lib/features/auth/` | **Identidad y Seguridad** | Registro, Login, Gestión de Permisos Críticos. |
-| `lib/features/eye_guardian/` | **El Centinela (24/7)** | Acelerómetro, Isolate de Fondo, Lógica de Alertas. |
+| Carpeta                       | Rol Técnico               | Componentes Clave                                          |
+| :---------------------------- | :------------------------ | :--------------------------------------------------------- |
+| `lib/core/`                   | **El Núcleo Atmosférico** | Red, Temas, UI Modular (`GlassBox`), Utilidades.           |
+| `lib/features/auth/`          | **Identidad y Seguridad** | Registro, Login, Gestión de Permisos Críticos.             |
+| `lib/features/eye_guardian/`  | **El Centinela (24/7)**   | Acelerómetro, Isolate de Fondo, Lógica de Alertas.         |
 | `lib/features/family_circle/` | **Red Social de Auxilio** | Gestión de Guardianes, Mapas de Miembros, API del Círculo. |
-| `lib/features/sanctuaries/` | **Navegación Táctica** | Motor OSRM, Zonas de Peligro, Búsqueda OSM. |
+| `lib/features/sanctuaries/`   | **Navegación Táctica**    | Motor OSRM, Zonas de Peligro, Búsqueda OSM.                |
 
 ---
 
@@ -107,7 +107,10 @@ Nuestra UI no es solo estética; es **funcionalidad emocional**. El uso de `Glas
 
 ---
 
-## 🚀 6. Checklist de Despliegue (Release Ready)
+### 4. Notificaciones OTA (Over-The-Air)
+- **Detección Automática**: El sistema compara la versión local contra la tabla `app_config` de Supabase.
+- **Push Broadcast**: Al detectar una nueva versión, ARGOS dispara una notificación Push global vía OneSignal para alertar a todos los dispositivos.
+- **Descarga Silenciosa**: Se integra con `ota_update` para facilitar la instalación del nuevo APK sin fricciones.
 
 > [!CAUTION]
 > Nunca hagas un deploy con `debugPrint` habilitado en los Isolates, ya que esto consume recursos innecesarios durante el SOS.

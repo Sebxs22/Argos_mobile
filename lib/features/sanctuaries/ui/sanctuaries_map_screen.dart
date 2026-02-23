@@ -159,7 +159,8 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
       _currentCenter = LatLng(position.latitude, position.longitude);
     });
     try {
-      _mapController.move(_currentCenter, 15.0);
+      // v2.8.7: Zoom más agresivo (17.0) para "acercar a mi ubicación"
+      _mapController.move(_currentCenter, 17.0);
     } catch (_) {}
   }
 

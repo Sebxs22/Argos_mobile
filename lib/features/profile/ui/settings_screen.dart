@@ -52,14 +52,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  // v2.8.4: Novedades de la versión (Spanish)
+  // v2.8.7: Novedades de la versión (Spanish)
   void _showChangelog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF0F172A),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text("🚀 NOVEDADES v2.8.4",
+        title: const Text("🚀 NOVEDADES v2.8.7",
             style: TextStyle(
                 color: Colors.white,
                 fontSize: 18,
@@ -68,27 +68,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("• Navegación más fluida y silenciosa.",
+            Text("• Diseño Premium 'Liquid Glass v2' (Bordes dinámicos).",
                 style: TextStyle(color: Colors.white70)),
             SizedBox(height: 8),
-            Text("• Confirmación táctica al enviar SOS (vibración al éxito).",
+            Text("• Navegación táctica y botones con mayor accesibilidad.",
+                style: TextStyle(color: Colors.white70)),
+            SizedBox(height: 8),
+            Text("• Respuesta SOS optimizada (Reacción inmediata).",
                 style: TextStyle(color: Colors.white70)),
             SizedBox(height: 8),
             Text(
-                "• Notificaciones de seguimiento al clasificar o cancelar alertas.",
+                "• Botón rojo de centrado inteligente en el mapa de Santuarios.",
                 style: TextStyle(color: Colors.white70)),
             SizedBox(height: 8),
-            Text("• Optimizador de batería para protección 24/7.",
-                style: TextStyle(color: Colors.white70)),
-            SizedBox(height: 8),
-            Text("• Solución a duplicados en el Mapa del Círculo.",
+            Text("• Alertas OTA proactivas integradas en el sistema.",
                 style: TextStyle(color: Colors.white70)),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("ENTENDIDO",
+            child: const Text("EXCELENTE",
                 style: TextStyle(color: Colors.blueAccent)),
           ),
         ],
@@ -287,18 +287,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                           strokeWidth: 2),
                                     ),
                                   )
-                                : OutlinedButton.icon(
+                                : TextButton.icon(
                                     onPressed: _buscarActualizacionManual,
-                                    icon: const Icon(Icons.system_update_alt,
-                                        size: 18),
-                                    label: const Text("Buscar actualización"),
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: Colors.blueAccent,
-                                      side: const BorderSide(
-                                          color: Colors.blueAccent),
+                                    icon: const Icon(Icons.refresh_rounded,
+                                        size: 16),
+                                    label: const Text("Verificar sistema"),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: Colors.blueAccent
+                                          .withValues(alpha: 0.8),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 12),
                                       shape: RoundedRectangleBorder(
                                           borderRadius:
-                                              BorderRadius.circular(12)),
+                                              BorderRadius.circular(15)),
                                     ),
                                   ),
                           ),

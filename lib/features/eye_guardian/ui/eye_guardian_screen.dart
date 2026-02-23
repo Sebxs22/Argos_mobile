@@ -295,16 +295,16 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
                           )
                         : null,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 50,
-                      vertical: 12, // v2.8.2: Más delgado (era 18)
+                      horizontal: 45,
+                      vertical: 10, // v2.8.7: Más estilizado y delgado
                     ),
                     child: Text(
                       "ACTIVACIÓN MANUAL",
                       style: TextStyle(
                         color: textColor,
                         fontWeight: FontWeight.bold,
-                        fontSize: 12, // v2.8.2: Más pequeño (era 14)
-                        letterSpacing: 1.5, // v2.8.2: Ajustado (era 2.0)
+                        fontSize: 11, // v2.8.7: Tipografía más fina
+                        letterSpacing: 1.2, // v2.8.7: Glifos más juntos
                         shadows: isDark
                             ? [
                                 const Shadow(
