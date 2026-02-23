@@ -121,12 +121,27 @@ class _CircleMapScreenState extends State<CircleMapScreen>
         stream: _membersStream,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
-            _currentMembers = snapshot.data!;
+            // v2.5.2: Lógica de Mezcla Estable (Merge)
+            // No reemplazamos toda la lista, actualizamos solo lo que cambia
+            final List<Map<String, dynamic>> updatedData = snapshot.data!;
+            for (var update in updatedData) {
+              final index =
+                  _currentMembers.indexWhere((m) => m['id'] == update['id']);
+              if (index != -1) {
+                // Preservamos los datos estáticos (nombres, etc) y actualizamos los dinámicos
+                _currentMembers[index] = {
+                  ..._currentMembers[index],
+                  ...update,
+                };
+              }
+            }
 
             // LÓGICA DE SEGUIMIENTO (SNAP MAPS STYLE v2.5.0)
             if (_focusedMemberId != null) {
               final focused = _currentMembers.firstWhere(
-                (m) => m['id'] == _focusedMemberId && m['latitud'] != null,
+                (m) =>
+                    (m['id'] ?? m['usuario_id']) == _focusedMemberId &&
+                    m['latitud'] != null,
                 orElse: () => {},
               );
               if (focused.isNotEmpty) {

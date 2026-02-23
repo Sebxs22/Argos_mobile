@@ -36,18 +36,23 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
     setState(() => _isLoading = true);
 
     try {
-      // 1. CARGA EN PARALELO (v2.5.0)
+      // 1. CARGA EN PARALELO (v2.5.2: Carga inmediata sin esperar GPS)
       final results = await Future.wait([
         _authService.obtenerMiPerfil(),
         _authService.obtenerMisGuardianes(),
         _authService.obtenerAQuienesProtejo(),
-        // Reporte proactivo al entrar
-        Geolocator.getCurrentPosition(
-          locationSettings:
-              const LocationSettings(accuracy: LocationAccuracy.medium),
-        ).then((pos) =>
-            ApiService().actualizarUbicacion(pos.latitude, pos.longitude)),
       ]);
+
+      // 2. REPORTE EN SEGUNDO PLANO (v2.5.2: No bloquea la UI)
+      Geolocator.getCurrentPosition(
+        locationSettings:
+            const LocationSettings(accuracy: LocationAccuracy.medium),
+      ).then((pos) {
+        ApiService().actualizarUbicacion(pos.latitude, pos.longitude);
+      }).catchError((e) {
+        debugPrint("Error GPS fondo: $e");
+        return null;
+      });
 
       if (mounted) {
         setState(() {
