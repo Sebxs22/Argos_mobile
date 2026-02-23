@@ -37,7 +37,6 @@ class ArgosNotifications {
         color = Colors.redAccent;
         break;
       case ArgosNotificationType.info:
-      default:
         icon = Icons.info_outline_rounded;
         color = Colors.blueAccent;
     }
