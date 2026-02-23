@@ -5,6 +5,7 @@ import '../ui/update_progress_dialog.dart';
 import '../utils/ui_utils.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'dart:typed_data';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class VersionService {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -12,7 +13,6 @@ class VersionService {
   Future<void> checkForUpdates(BuildContext context,
       {bool manual = false}) async {
     try {
-      // Usamos maybeSingle() para evitar excepciones si la tabla está vacía
       final response =
           await _supabase.from('app_config').select().maybeSingle();
 
@@ -34,13 +34,10 @@ class VersionService {
     }
   }
 
-  // v2.9.1: Mantenemos el listener pero con manejo de errores robusto
   void listenForUpdates(BuildContext context) {
     try {
-      _supabase
-          .from('app_config')
-          .stream(primaryKey: ['id']) // Asegúrate que 'id' exista
-          .listen((List<Map<String, dynamic>> data) {
+      _supabase.from('app_config').stream(primaryKey: ['id']).listen(
+          (List<Map<String, dynamic>> data) {
         if (data.isNotEmpty && context.mounted) {
           _processUpdate(context, data.first, manual: false);
         }
@@ -64,16 +61,24 @@ class VersionService {
 
     if (latestVersion.isEmpty) return;
 
-    // 3. Comparar (Lógica v2.9.1: Solo si la remota es distinta)
-    if (currentVersion != latestVersion) {
-      // IMPORTANTE: Hemos quitado 'notificarNuevaVersion' de aquí.
-      // El broadcast global NO debe hacerlo el cliente para evitar bucles.
+    // 2. Lógica Anti-Spam (v2.9.2)
+    final prefs = await SharedPreferences.getInstance();
+    final String lastNotified =
+        prefs.getString('last_notified_ota_version') ?? "";
 
+    // Si ya notificamos esta versión y no es un chequeo manual, salimos
+    if (latestVersion == lastNotified && !manual) {
+      debugPrint(
+          "ℹ️ ARGOS OTA: Versión $latestVersion ya notificada previamente.");
+      return;
+    }
+
+    // 3. Comparar
+    if (currentVersion != latestVersion) {
       // Notificación local de respaldo
       final FlutterLocalNotificationsPlugin notifications =
           FlutterLocalNotificationsPlugin();
 
-      // Evitar spam de notificaciones locales si ya se mostró el diálogo
       await notifications.show(
         id: 777,
         title: '🚀 NUEVA VERSIÓN: v$latestVersion',
@@ -89,6 +94,9 @@ class VersionService {
           ),
         ),
       );
+
+      // Guardar que ya notificamos para no repetir (Anti-Spam)
+      await prefs.setString('last_notified_ota_version', latestVersion);
 
       if (context.mounted) {
         showDialog(
