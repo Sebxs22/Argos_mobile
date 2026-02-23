@@ -15,7 +15,8 @@ class CircleMapScreen extends StatefulWidget {
   State<CircleMapScreen> createState() => _CircleMapScreenState();
 }
 
-class _CircleMapScreenState extends State<CircleMapScreen> {
+class _CircleMapScreenState extends State<CircleMapScreen>
+    with TickerProviderStateMixin {
   final ApiService _apiService = ApiService();
   final MapController _mapController = MapController();
 
