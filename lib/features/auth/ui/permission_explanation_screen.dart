@@ -133,7 +133,7 @@ class _PermissionExplanationScreenState
                   isDark: isDark,
                 ),
 
-                const Spacer(),
+                const SizedBox(height: 50), // v2.14.1: Más aire antes del botón
 
                 // Botón Acción
                 SizedBox(

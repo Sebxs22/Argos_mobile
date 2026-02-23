@@ -5,6 +5,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../core/network/api_service.dart';
 import '../../../core/ui/glass_box.dart';
+import '../../../core/ui/argos_notifications.dart'; // v2.14.1
 
 class CircleMapScreen extends StatefulWidget {
   final List<Map<String, dynamic>> initialMembers;
@@ -371,10 +372,11 @@ class _CircleMapScreenState extends State<CircleMapScreen>
                                           17.0,
                                         );
                                       } else {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(SnackBar(
-                                                content: Text(
-                                                    "${m['nombre_completo']} no está compartiendo ubicación")));
+                                        ArgosNotifications.show(
+                                          context,
+                                          "${m['nombre_completo']} no está compartiendo ubicación",
+                                          type: ArgosNotificationType.warning,
+                                        );
                                       }
                                     },
                                     child: Padding(

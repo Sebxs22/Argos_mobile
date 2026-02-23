@@ -4,6 +4,7 @@ import 'package:ota_update/ota_update.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'glass_box.dart';
+import 'argos_notifications.dart'; // v2.14.1
 
 class UpdateProgressDialog extends StatefulWidget {
   final String downloadUrl;
@@ -43,13 +44,10 @@ class _UpdateProgressDialogState extends State<UpdateProgressDialog> {
       final result = await Permission.requestInstallPackages.request();
       if (!result.isGranted) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                  "Debes permitir a ARGOS instalar aplicaciones para actualizar."),
-              action:
-                  SnackBarAction(label: "AJUSTES", onPressed: openAppSettings),
-            ),
+          ArgosNotifications.show(
+            context,
+            "Debes permitir a ARGOS instalar aplicaciones para actualizar.",
+            type: ArgosNotificationType.warning,
           );
         }
         return;

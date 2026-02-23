@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 // --- UI Y LOGICA PROPIA ---
 import '../../../core/ui/glass_box.dart';
 import '../../../core/network/api_service.dart';
+import '../../../core/ui/argos_notifications.dart'; // v2.14.1
 import '../../sanctuaries/data/mock_sanctuaries_data.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 
@@ -117,10 +118,10 @@ class _RoutesScreenState extends State<RoutesScreen> {
           _animatedMapMoveToRoute();
         } else if (result.containsKey('error')) {
           debugPrint("Error en ruta: ${result['error']}");
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("Error al calcular ruta: ${result['error']}"),
-            ),
+          ArgosNotifications.show(
+            context,
+            "Error al calcular ruta: ${result['error']}",
+            type: ArgosNotificationType.error,
           );
         }
       });

@@ -8,6 +8,7 @@ import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:intl_phone_field/country_picker_dialog.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/utils/ui_utils.dart'; // Import UiUtils
+import '../../../core/ui/argos_notifications.dart'; // v2.14.1
 import '../../profile/ui/agreements_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -89,8 +90,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (mounted) {
       setState(() => _isLoading = false);
       if (error == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Bienvenido a la Red ARGOS")),
+        ArgosNotifications.show(
+          context,
+          "¡Bienvenido a la Red ARGOS!",
+          type: ArgosNotificationType.success,
         );
         // Al registrarse, lo mandamos directo al Navigator principal
         Navigator.pushAndRemoveUntil(
