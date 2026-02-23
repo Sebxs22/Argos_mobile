@@ -72,9 +72,9 @@ Future<void> _handlePanicAlert(
   FlutterLocalNotificationsPlugin notifications,
 ) async {
   final now = DateTime.now();
-  // Throttle reducido a 12s para mejor experiencia de prueba (v2.4.8)
+  // Throttle reforzado a 30s para evitar spam (v2.8.2)
   if (_lastAlertTime != null &&
-      now.difference(_lastAlertTime!) < const Duration(seconds: 12)) {
+      now.difference(_lastAlertTime!) < const Duration(seconds: 30)) {
     return;
   }
 

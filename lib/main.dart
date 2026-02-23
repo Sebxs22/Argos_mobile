@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:optimization_battery/optimization_battery.dart'; // v2.8.2
+import 'dart:io'; // v2.8.2
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart'; // Import OneSignal
 import 'package:flutter_dotenv/flutter_dotenv.dart'; // Import dotenv
@@ -137,7 +139,43 @@ class _InitialCheckWrapperState extends State<InitialCheckWrapper> {
       VersionService().checkForUpdates(context);
     });
 
-    // 2. Verificar Permisos Críticos (v2.6.5)
+    // 2. Optimización de Batería (v2.8.2)
+    if (Platform.isAndroid) {
+      final isOptimizing =
+          await OptimizationBattery.isIgnoringBatteryOptimizations();
+      if (!isOptimizing) {
+        if (mounted) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              backgroundColor: const Color(0xFF0F172A),
+              title: const Text("🛡️ PROTECCIÓN ACTIVA",
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold)),
+              content: const Text(
+                "Para que ARGOS pueda protegerte 24/7 sin que el sistema lo detenga, por favor selecciona 'SIN RESTRICCIÓN' en la siguiente pantalla.",
+                style: TextStyle(color: Colors.white70),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    OptimizationBattery.openBatteryOptimizationSettings();
+                  },
+                  child: const Text("CONFIGURAR AHORA",
+                      style: TextStyle(color: Colors.blueAccent)),
+                ),
+              ],
+            ),
+          );
+        }
+      }
+    }
+
+    // 3. Verificar Permisos Críticos (v2.6.5)
     await _checkPermissionsStatus();
   }
 

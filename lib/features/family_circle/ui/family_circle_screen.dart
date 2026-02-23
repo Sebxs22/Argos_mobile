@@ -327,7 +327,8 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
                 ],
               ),
         floatingActionButton: Padding(
-          padding: const EdgeInsets.only(bottom: 100.0), // v2.8.0 avoid nav bar
+          padding:
+              const EdgeInsets.only(bottom: 85.0), // v2.8.2 better alignment
           child: FloatingActionButton.extended(
             onPressed: _agregarGuardian,
             backgroundColor: Colors.blueAccent,
