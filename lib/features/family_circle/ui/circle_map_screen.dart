@@ -121,9 +121,12 @@ class _CircleMapScreenState extends State<CircleMapScreen>
         stream: _membersStream,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
+            final List<Map<String, dynamic>> updatedData = snapshot.data!;
+            debugPrint(
+                "Stream Círculo: Recibidos ${updatedData.length} perfiles");
+
             // v2.5.2: Lógica de Mezcla Estable (Merge)
             // No reemplazamos toda la lista, actualizamos solo lo que cambia
-            final List<Map<String, dynamic>> updatedData = snapshot.data!;
             for (var update in updatedData) {
               final index =
                   _currentMembers.indexWhere((m) => m['id'] == update['id']);
