@@ -29,7 +29,7 @@ class VersionService {
     } catch (e) {
       debugPrint("❌ ARGOS OTA Error: $e");
       if (manual && context.mounted) {
-        UiUtils.showError("Error al verificar versión");
+        UiUtils.showError("Error al verificar versión: $e");
       }
     }
   }
