@@ -448,22 +448,24 @@ class ApiService {
 
       for (var row in (resG as List)) {
         final id = row['perfiles']?['onesignal_id'];
-        if (id != null && id.toString().isNotEmpty)
+        if (id != null && id.toString().length > 5) {
           targetIds.add(id.toString());
+        }
       }
       for (var row in (resP as List)) {
         final id = row['perfiles']?['onesignal_id'];
-        if (id != null && id.toString().isNotEmpty)
+        if (id != null && id.toString().length > 5) {
           targetIds.add(id.toString());
+        }
       }
 
       final uniqueIds = targetIds.toSet().toList();
       debugPrint(
-          "🔍 ARGOS NOTIF: Intentando notificar a ${uniqueIds.length} IDs: $uniqueIds");
+          "🔍 ARGOS NOTIF: Destinatarios finales (${uniqueIds.length}): $uniqueIds");
 
       if (uniqueIds.isEmpty) {
         debugPrint(
-            "⚠️ ARGOS NOTIF: No hay miembros con onesignal_id en la DB.");
+            "⚠️ ARGOS NOTIF: Lista de destinatarios vacía. Nadie tiene onesignal_id.");
         return;
       }
 

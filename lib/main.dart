@@ -14,6 +14,7 @@ import 'features/eye_guardian/ui/eye_guardian_screen.dart';
 import 'features/routes/ui/routes_screen.dart';
 import 'features/sanctuaries/ui/sanctuaries_map_screen.dart';
 import 'features/auth/ui/login_screen.dart';
+import 'features/auth/ui/permission_explanation_screen.dart'; // Import v2.6.5
 import 'features/eye_guardian/ui/alert_confirmation_screen.dart'; // AlertConfirmation
 import 'core/network/auth_service.dart';
 import 'core/ui/glass_box.dart';
@@ -120,6 +121,9 @@ class InitialCheckWrapper extends StatefulWidget {
 }
 
 class _InitialCheckWrapperState extends State<InitialCheckWrapper> {
+  bool _needsPermissions = false;
+  bool _isLoading = true;
+
   @override
   void initState() {
     super.initState();
@@ -132,34 +136,38 @@ class _InitialCheckWrapperState extends State<InitialCheckWrapper> {
       VersionService().checkForUpdates(context);
     });
 
-    // 2. Pedir Permisos Críticos (Efecto Life360)
-    await _requestPermissions();
+    // 2. Verificar Permisos Críticos (v2.6.5)
+    await _checkPermissionsStatus();
   }
 
-  Future<void> _requestPermissions() async {
-    // Solicitar Ubicación (Precisa + Siempre) + Notificaciones
-    Map<Permission, PermissionStatus> statuses = await [
-      Permission.location, // Pedir primero el permiso base
-      Permission.locationAlways,
-      Permission.notification,
-    ].request();
+  Future<void> _checkPermissionsStatus() async {
+    final locationStatus = await Permission.locationAlways.status;
+    final notificationStatus = await Permission.notification.status;
 
-    // Si nos niegan el "Always", nos aseguramos de tener al menos el normal
-    if (statuses[Permission.locationAlways]?.isDenied ?? true) {
-      final status = await Permission.location.request();
-      if (status.isPermanentlyDenied) {
-        openAppSettings();
-      }
+    if (!locationStatus.isGranted || !notificationStatus.isGranted) {
+      if (mounted) setState(() => _needsPermissions = true);
     }
 
-    // IGNORAR OPTIMIZACIONES DE BATERÍA (Android Crítico)
-    if (await Permission.ignoreBatteryOptimizations.isDenied) {
-      await Permission.ignoreBatteryOptimizations.request();
-    }
+    if (mounted) setState(() => _isLoading = false);
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_needsPermissions) {
+      return PermissionExplanationScreen(
+        onPermissionsGranted: () {
+          setState(() => _needsPermissions = false);
+        },
+      );
+    }
+
     return widget.child;
   }
 }
