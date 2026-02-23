@@ -36,6 +36,10 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
   // Lista de zonas de peligro de Supabase (Refrescada por el Stream)
   List<DangerZoneModel> _activeDangerZones = [];
 
+  // Lista dinámica de Santuarios (v2.8.8)
+  List<SanctuaryModel> _dynamicSanctuaries = [];
+  bool _isScanningSanctuaries = false;
+
   StreamSubscription? _alertsSubscription;
   Timer? _refreshTimer;
 
@@ -145,12 +149,32 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
 
       if (mounted) {
         _updateMapPosition(position);
+        // v2.8.8: Disparar escaneo de santuarios reales
+        _scanRealSanctuaries(LatLng(position.latitude, position.longitude));
       }
     } catch (e) {
       debugPrint("Error GPS (Optimizado): $e");
     } finally {
       // Siempre nos aseguramos de quitar el splash de carga
       _finishLoading();
+    }
+  }
+
+  Future<void> _scanRealSanctuaries(LatLng pos) async {
+    if (_isScanningSanctuaries) return;
+    setState(() => _isScanningSanctuaries = true);
+
+    try {
+      final results = await _apiService.obtenerSantuariosReales(pos);
+      if (mounted) {
+        setState(() {
+          _dynamicSanctuaries = results;
+          _isScanningSanctuaries = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error escaneando santuarios: $e");
+      if (mounted) setState(() => _isScanningSanctuaries = false);
     }
   }
 
@@ -358,6 +382,14 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
         children: [
           if (_isLoadingLocation) _buildLoadingRadar() else _buildMap(),
           _buildFilterBar(),
+
+          // Indicador de escaneo dinámico (v2.8.8)
+          if (_isScanningSanctuaries)
+            Positioned(
+              top: 115,
+              right: 20,
+              child: _buildScanningIndicator(),
+            ),
         ],
       ),
     );
@@ -458,8 +490,22 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
             padding: const EdgeInsets.all(50),
             maxZoom: 15,
             markers: [
-              // Santuarios filtrables
+              // Santuarios dinámicos filtrables (v2.8.8)
+              ..._dynamicSanctuaries
+                  .where((s) => _activeFilters.contains(_getFilterName(s.type)))
+                  .map(
+                    (site) => Marker(
+                      point: site.location,
+                      width: 50,
+                      height: 50,
+                      child: _buildDynamicMarkerIcon(site),
+                    ),
+                  ),
+
+              // Santuarios Legacy (Opcional: Si quieres mantener los fijos de Riobamba como respaldo)
               ...kSanctuariesDB
+                  .where((s) => !_dynamicSanctuaries
+                      .any((ds) => ds.name == s.name)) // Evitar duplicados
                   .where((s) => _activeFilters.contains(_getFilterName(s.type)))
                   .map(
                     (site) => Marker(
@@ -622,6 +668,45 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildScanningIndicator() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.blueAccent.withValues(alpha: 0.8),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.blueAccent.withValues(alpha: 0.3),
+            blurRadius: 10,
+          )
+        ],
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 12,
+            height: 12,
+            child: CircularProgressIndicator(
+              color: Colors.white,
+              strokeWidth: 2,
+            ),
+          ),
+          SizedBox(width: 8),
+          Text(
+            "ESCANEANDO...",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 9,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+            ),
+          ),
+        ],
       ),
     );
   }

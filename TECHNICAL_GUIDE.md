@@ -1,4 +1,4 @@
-# 🛡️ ARGOS: Manual de Arquitectura y Sistema de Seguridad (v2.8.7.2)
+# 🛡️ ARGOS: Manual de Arquitectura y Sistema de Seguridad (v2.8.9)
 
 > [!IMPORTANT]
 > Este documento es la "Fuente de Verdad" técnica de ARGOS. Explica no solo el **cómo**, sino el **por qué** detrás de cada decisión de ingeniería, desde la detección de sensores hasta el renderizado de vidrio líquido.
@@ -116,7 +116,7 @@ Nuestra UI no es solo estética; es **funcionalidad emocional**. El uso de `Glas
 > Nunca hagas un deploy con `debugPrint` habilitado en los Isolates, ya que esto consume recursos innecesarios durante el SOS.
 
 ```bash
-# Versión Actual: 2.8.7+80
+# Versión Actual: 2.8.9+83
 # 1. Limpieza
 flutter clean
 # 2. Obtener dependencias

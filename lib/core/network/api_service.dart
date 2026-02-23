@@ -734,6 +734,108 @@ class ApiService {
     }
   }
 
+  // 8. OBTENER SANTUARIOS REALES (OVERPASS API - OSM)
+  // Busca Police, Hospital, Pharmacy, etc., en un radio alrededor de la posición.
+  Future<List<SanctuaryModel>> obtenerSantuariosReales(LatLng position) async {
+    try {
+      final double lat = position.latitude;
+      final double lng = position.longitude;
+      const double radius = 3000; // 3km de búsqueda
+
+      // Query Overpass: Buscamos amenities de seguridad, salud y conveniencia
+      final String query = """
+      [out:json][timeout:25];
+      (
+        node["amenity"~"police|hospital|doctors|pharmacy|clinic|school|university|college|place_of_worship"](around:$radius,$lat,$lng);
+        way["amenity"~"police|hospital|doctors|pharmacy|clinic|school|university|college|place_of_worship"](around:$radius,$lat,$lng);
+        node["shop"~"supermarket|convenience"](around:$radius,$lat,$lng);
+        way["shop"~"supermarket|convenience"](around:$radius,$lat,$lng);
+        node["leisure"~"park"](around:$radius,$lat,$lng);
+        way["leisure"~"park"](around:$radius,$lat,$lng);
+      );
+      out center;
+      """;
+
+      final url = Uri.parse('https://overpass-api.de/api/interpreter');
+      debugPrint("📡 ARGOS SCAN: Solicitando Santuarios Reales a Overpass...");
+
+      final response = await http.post(
+        url,
+        body: {'data': query},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final List<dynamic> elements = data['elements'] ?? [];
+        List<SanctuaryModel> realSanctuaries = [];
+
+        for (var e in elements) {
+          final tags = e['tags'] ?? {};
+          final String name =
+              tags['name'] ?? tags['operator'] ?? "Lugar de Refugio";
+
+          double? eLat =
+              e['lat']?.toDouble() ?? e['center']?['lat']?.toDouble();
+          double? eLng =
+              e['lon']?.toDouble() ?? e['center']?['lon']?.toDouble();
+
+          if (eLat == null || eLng == null) continue;
+
+          // Mapeo dinámico a iconos de ARGOS
+          final SanctuaryType type = _mapOsmToArgosType(tags);
+
+          realSanctuaries.add(SanctuaryModel(
+            name,
+            LatLng(eLat, eLng),
+            type,
+          ));
+        }
+
+        debugPrint(
+            "✅ ARGOS SCAN: Se encontraron ${realSanctuaries.length} santuarios reales.");
+        return realSanctuaries;
+      } else {
+        debugPrint(
+            "❌ ARGOS SCAN: Error en Overpass (Status ${response.statusCode})");
+      }
+    } catch (e) {
+      debugPrint("❌ ARGOS SCAN: Excepción: $e");
+    }
+    return [];
+  }
+
+  SanctuaryType _mapOsmToArgosType(Map<String, dynamic> tags) {
+    final amenity = tags['amenity']?.toString();
+    final shop = tags['shop']?.toString();
+    final leisure = tags['leisure']?.toString();
+
+    if (amenity == 'police') {
+      return SanctuaryType.police;
+    }
+    if (amenity == 'hospital' || amenity == 'doctors' || amenity == 'clinic') {
+      return SanctuaryType.health;
+    }
+    if (amenity == 'pharmacy') {
+      return SanctuaryType.pharmacy;
+    }
+    if (amenity == 'school' ||
+        amenity == 'university' ||
+        amenity == 'college') {
+      return SanctuaryType.education;
+    }
+    if (shop == 'supermarket' || shop == 'convenience') {
+      return SanctuaryType.store;
+    }
+    if (leisure == 'park') {
+      return SanctuaryType.park;
+    }
+    if (amenity == 'place_of_worship') {
+      return SanctuaryType.church;
+    }
+
+    return SanctuaryType.store; // Default
+  }
+
   // 8. STREAM DE ALERTAS RECIENTES DEL CÍRCULO (v2.6.0)
   // Escucha alertas de miembros específicos ocurridas en la última hora
   Stream<List<Map<String, dynamic>>> streamAlertasRecientesCirculo(

@@ -13,63 +13,77 @@ class VersionService {
   Future<void> checkForUpdates(BuildContext context,
       {bool manual = false}) async {
     try {
-      // 1. Obtener versión local
-      PackageInfo packageInfo = await PackageInfo.fromPlatform();
-      String currentVersion = packageInfo.version;
-
-      // 2. Obtener versión remota de Supabase
       final data = await _supabase.from('app_config').select().single();
-
-      String latestVersion = data['version_actual'];
-      String downloadUrl = data['link_descarga'];
-      bool isRequired = data['es_obligatoria'] ?? false;
-
-      // 3. Comparar
-      if (currentVersion != latestVersion) {
-        // v2.8.7: Notificación Push real vía OneSignal
-        final apiService = ApiService();
-        await apiService.notificarNuevaVersion(latestVersion);
-
-        // Notificación local de respaldo
-        final FlutterLocalNotificationsPlugin notifications =
-            FlutterLocalNotificationsPlugin();
-        await notifications.show(
-          id: 777,
-          title: '🚀 NUEVA VERSIÓN DISPONIBLE: v$latestVersion',
-          body:
-              'ARGOS se ha actualizado. Toca para ver las novedades y descargar.',
-          notificationDetails: NotificationDetails(
-            android: AndroidNotificationDetails(
-              'argos_updates',
-              'Actualizaciones ARGOS',
-              importance: Importance.max,
-              priority: Priority.high,
-              enableVibration: true,
-              vibrationPattern: Int64List.fromList([0, 200, 100, 200]),
-            ),
-          ),
-        );
-
-        if (context.mounted) {
-          showDialog(
-            context: context,
-            barrierDismissible: !isRequired,
-            builder: (context) => UpdateProgressDialog(
-              downloadUrl: downloadUrl,
-              version: latestVersion,
-              isRequired: isRequired,
-            ),
-          );
-        }
-      } else if (manual && context.mounted) {
-        // Mejorado con UiUtils v2.6.6
-        UiUtils.showSuccess("Argos está al día (v$currentVersion)");
-      }
+      await _processUpdate(context, data, manual: manual);
     } catch (e) {
       debugPrint("Error checking for updates: $e");
       if (manual && context.mounted) {
         UiUtils.showError("No se pudo verificar la versión");
       }
+    }
+  }
+
+  // v2.8.9: Escucha en tiempo real cambios en Supabase para broadcast automático
+  void listenForUpdates(BuildContext context) {
+    _supabase
+        .from('app_config')
+        .stream(primaryKey: ['id']).listen((List<Map<String, dynamic>> data) {
+      if (data.isNotEmpty && context.mounted) {
+        _processUpdate(context, data.first, manual: false);
+      }
+    });
+  }
+
+  Future<void> _processUpdate(BuildContext context, Map<String, dynamic> data,
+      {bool manual = false}) async {
+    // 1. Obtener versión local
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    String currentVersion = packageInfo.version;
+
+    String latestVersion = data['version_actual'];
+    String downloadUrl = data['link_descarga'];
+    bool isRequired = data['es_obligatoria'] ?? false;
+
+    // 3. Comparar
+    if (currentVersion != latestVersion) {
+      // v2.8.7: Notificación Push real vía OneSignal (BROADCAST)
+      // v2.8.9: Se dispara automáticamente al detectar cambio en Supabase
+      final apiService = ApiService();
+      await apiService.notificarNuevaVersion(latestVersion);
+
+      // Notificación local de respaldo
+      final FlutterLocalNotificationsPlugin notifications =
+          FlutterLocalNotificationsPlugin();
+      await notifications.show(
+        id: 777,
+        title: '🚀 NUEVA VERSIÓN DISPONIBLE: v$latestVersion',
+        body:
+            'ARGOS se ha actualizado. Toca para ver las novedades y descargar.',
+        notificationDetails: NotificationDetails(
+          android: AndroidNotificationDetails(
+            'argos_updates',
+            'Actualizaciones ARGOS',
+            importance: Importance.max,
+            priority: Priority.high,
+            enableVibration: true,
+            vibrationPattern: Int64List.fromList([0, 200, 100, 200]),
+          ),
+        ),
+      );
+
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: !isRequired,
+          builder: (context) => UpdateProgressDialog(
+            downloadUrl: downloadUrl,
+            version: latestVersion,
+            isRequired: isRequired,
+          ),
+        );
+      }
+    } else if (manual && context.mounted) {
+      UiUtils.showSuccess("Argos está al día (v$currentVersion)");
     }
   }
 }
