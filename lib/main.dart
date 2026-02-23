@@ -132,11 +132,10 @@ class _InitialCheckWrapperState extends State<InitialCheckWrapper> {
   }
 
   Future<void> _initializeApp() async {
-    // 1. Verificar Versión
+    // 1. Verificar Versión (v2.9.1)
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final versionService = VersionService();
-      versionService.checkForUpdates(context);
-      versionService.listenForUpdates(context); // v2.8.9: Escucha persistente
+      VersionService().checkForUpdates(context);
+      VersionService().listenForUpdates(context);
     });
 
     // 2. Otros Checks (v2.8.2)

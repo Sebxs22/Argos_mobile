@@ -2,8 +2,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
 import '../ui/update_progress_dialog.dart';
-import '../utils/ui_utils.dart'; // Import UiUtils (v2.6.6)
-import 'api_service.dart';
+import '../utils/ui_utils.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'dart:typed_data';
 
@@ -13,26 +12,44 @@ class VersionService {
   Future<void> checkForUpdates(BuildContext context,
       {bool manual = false}) async {
     try {
-      final data = await _supabase.from('app_config').select().single();
+      // Usamos maybeSingle() para evitar excepciones si la tabla está vacía
+      final response =
+          await _supabase.from('app_config').select().maybeSingle();
+
+      if (response == null) {
+        debugPrint("⚠️ ARGOS OTA: No se encontró configuración en app_config.");
+        if (manual && context.mounted) {
+          UiUtils.showError("Servicio de actualización no disponible");
+        }
+        return;
+      }
+
       if (!context.mounted) return;
-      await _processUpdate(context, data, manual: manual);
+      await _processUpdate(context, response, manual: manual);
     } catch (e) {
-      debugPrint("Error checking for updates: $e");
+      debugPrint("❌ ARGOS OTA Error: $e");
       if (manual && context.mounted) {
-        UiUtils.showError("No se pudo verificar la versión");
+        UiUtils.showError("Error al verificar versión");
       }
     }
   }
 
-  // v2.8.9: Escucha en tiempo real cambios en Supabase para broadcast automático
+  // v2.9.1: Mantenemos el listener pero con manejo de errores robusto
   void listenForUpdates(BuildContext context) {
-    _supabase
-        .from('app_config')
-        .stream(primaryKey: ['id']).listen((List<Map<String, dynamic>> data) {
-      if (data.isNotEmpty && context.mounted) {
-        _processUpdate(context, data.first, manual: false);
-      }
-    });
+    try {
+      _supabase
+          .from('app_config')
+          .stream(primaryKey: ['id']) // Asegúrate que 'id' exista
+          .listen((List<Map<String, dynamic>> data) {
+        if (data.isNotEmpty && context.mounted) {
+          _processUpdate(context, data.first, manual: false);
+        }
+      }, onError: (e) {
+        debugPrint("❌ ARGOS OTA Stream Error: $e");
+      });
+    } catch (e) {
+      debugPrint("❌ ARGOS OTA Stream Initial Exception: $e");
+    }
   }
 
   Future<void> _processUpdate(BuildContext context, Map<String, dynamic> data,
@@ -41,29 +58,30 @@ class VersionService {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
     String currentVersion = packageInfo.version;
 
-    String latestVersion = data['version_actual'];
-    String downloadUrl = data['link_descarga'];
+    String latestVersion = data['version_actual'] ?? "";
+    String downloadUrl = data['link_descarga'] ?? "";
     bool isRequired = data['es_obligatoria'] ?? false;
 
-    // 3. Comparar
+    if (latestVersion.isEmpty) return;
+
+    // 3. Comparar (Lógica v2.9.1: Solo si la remota es distinta)
     if (currentVersion != latestVersion) {
-      // v2.8.7: Notificación Push real vía OneSignal (BROADCAST)
-      // v2.8.9: Se dispara automáticamente al detectar cambio en Supabase
-      final apiService = ApiService();
-      await apiService.notificarNuevaVersion(latestVersion);
+      // IMPORTANTE: Hemos quitado 'notificarNuevaVersion' de aquí.
+      // El broadcast global NO debe hacerlo el cliente para evitar bucles.
 
       // Notificación local de respaldo
       final FlutterLocalNotificationsPlugin notifications =
           FlutterLocalNotificationsPlugin();
+
+      // Evitar spam de notificaciones locales si ya se mostró el diálogo
       await notifications.show(
         id: 777,
-        title: '🚀 NUEVA VERSIÓN DISPONIBLE: v$latestVersion',
-        body:
-            'ARGOS se ha actualizado. Toca para ver las novedades y descargar.',
+        title: '🚀 NUEVA VERSIÓN: v$latestVersion',
+        body: 'Mejoras de seguridad disponibles. Toca para descargar.',
         notificationDetails: NotificationDetails(
           android: AndroidNotificationDetails(
             'argos_updates',
-            'Actualizaciones ARGOS',
+            'Actualizaciones',
             importance: Importance.max,
             priority: Priority.high,
             enableVibration: true,
