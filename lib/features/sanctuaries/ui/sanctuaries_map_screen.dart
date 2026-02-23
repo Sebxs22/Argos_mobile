@@ -38,10 +38,10 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
 
   // Lista dinámica de Santuarios (v2.8.8)
   List<SanctuaryModel> _dynamicSanctuaries = [];
-  bool _isScanningSanctuaries = false;
-
   StreamSubscription? _alertsSubscription;
   StreamSubscription<Position>? _positionStream; // v2.9.3: Escaneo inteligente
+  bool _isScanningSanctuaries = false;
+  LatLng? _lastScannedPosition; // v2.10.0: Evitar re-escaneos innecesarios
   Timer? _refreshTimer;
 
   final Set<String> _activeFilters = {
@@ -179,8 +179,25 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
   }
 
   Future<void> _scanRealSanctuaries(LatLng pos) async {
+    // 1. Evitar escaneos simultáneos
     if (_isScanningSanctuaries) return;
+
+    // 2. Lógica de Redundancia (v2.10.0)
+    // Si ya escaneamos en esta posición (o muy cerca, < 100m manual, < 500m auto), ignoramos.
+    if (_lastScannedPosition != null) {
+      const Distance distance = Distance();
+      final double meters =
+          distance.as(LengthUnit.Meter, pos, _lastScannedPosition!);
+      // Si la distancia es mínima, no gastamos recursos
+      if (meters < 100) {
+        debugPrint(
+            "ℹ️ ARGOS SCAN: Posición similar detectada (${meters.toStringAsFixed(0)}m), saltando escaneo.");
+        return;
+      }
+    }
+
     setState(() => _isScanningSanctuaries = true);
+    // NOTA: v2.10.0 - Ya NO limpiamos _dynamicSanctuaries aquí para que los puntos no desaparezcan
 
     try {
       final results = await _apiService.obtenerSantuariosReales(pos);
@@ -188,6 +205,7 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
         setState(() {
           _dynamicSanctuaries = results;
           _isScanningSanctuaries = false;
+          _lastScannedPosition = pos; // Guardar última posición exitosa
         });
       }
     } catch (e) {
@@ -217,15 +235,107 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
 
   // --- LOGICA DE CLICKS EN EL MAPA ---
   void _handleMapTap(TapPosition tapPosition, LatLng point) {
-    if (!_activeFilters.contains('Peligro')) return;
+    // 1. Prioridad a Zonas de Peligro
+    if (_activeFilters.contains('Peligro')) {
+      const Distance distance = Distance();
+      for (var zone in _activeDangerZones) {
+        if (distance.as(LengthUnit.Meter, point, zone.center) <= zone.radius) {
+          _showZoneDetails(zone);
+          return;
+        }
+      }
+    }
 
+    // 2. Si no tocó peligro, verificar Santuarios (Cercanía de 30m)
     const Distance distance = Distance();
-    for (var zone in _activeDangerZones) {
-      if (distance.as(LengthUnit.Meter, point, zone.center) <= zone.radius) {
-        _showZoneDetails(zone);
+    for (var site in _dynamicSanctuaries) {
+      if (distance.as(LengthUnit.Meter, point, site.location) <= 30) {
+        _showSanctuaryDetails(site);
         return;
       }
     }
+  }
+
+  void _showSanctuaryDetails(SanctuaryModel site) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final panelColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return GlassBox(
+          borderRadius: 25,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: panelColor.withOpacity(0.9),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(25)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    _buildDynamicMarkerIcon(site),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            site.name.toUpperCase(),
+                            style: TextStyle(
+                              color: isDark ? Colors.white : Colors.black87,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          Text(
+                            "SANTUARIO: ${_getFilterName(site.type)}",
+                            style: TextStyle(
+                              color: Colors.blueAccent,
+                              fontSize: 12,
+                              letterSpacing: 1.1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15)),
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.check_circle_outline),
+                    label: const Text("ENTENDIDO"),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _showZoneDetails(DangerZoneModel zone) {
