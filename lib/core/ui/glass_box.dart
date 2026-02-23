@@ -51,7 +51,8 @@ class GlassBox extends StatelessWidget {
                   Border.all(
                     color: isDark
                         ? Colors.white.withValues(alpha: 0.1)
-                        : Colors.black.withValues(alpha: 0.05),
+                        : Colors.black
+                            .withValues(alpha: 0.15), // v2.8.0: Más visible
                     width: 0.5, // v2.7.0: Borde ultra-fino tipo Apple
                   ),
             ),

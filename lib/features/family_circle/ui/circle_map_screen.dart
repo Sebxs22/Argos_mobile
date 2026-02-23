@@ -283,10 +283,10 @@ class _CircleMapScreenState extends State<CircleMapScreen>
                     ],
                   ),
 
-                  // BOTÓN CENTRAR
+                  // BOTÓN CENTRAR (v2.8.0: Más alto para evitar el panel de miembros)
                   Positioned(
                     right: 20,
-                    bottom: 160,
+                    bottom: 220,
                     child: FloatingActionButton(
                       mini: true,
                       onPressed: () {

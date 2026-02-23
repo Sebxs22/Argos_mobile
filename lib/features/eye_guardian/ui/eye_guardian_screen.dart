@@ -273,8 +273,26 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
                 },
                 child: GlassBox(
                   borderRadius: 30,
-                  // v2.7.0: Usa los nuevos defaults premium
+                  // v2.8.0: Refinamiento premium solicitado
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.2)
+                        : Colors.black.withValues(alpha: 0.2), // Más contraste
+                    width: 0.8,
+                  ),
                   child: Container(
+                    decoration: isDark
+                        ? BoxDecoration(
+                            borderRadius: BorderRadius.circular(30),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.white.withValues(alpha: 0.05),
+                                blurRadius: 20,
+                                spreadRadius: 2,
+                              )
+                            ],
+                          )
+                        : null,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 60,
                       vertical: 18,
@@ -286,6 +304,14 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                         letterSpacing: 2.0,
+                        shadows: isDark
+                            ? [
+                                const Shadow(
+                                  color: Colors.white24,
+                                  blurRadius: 10,
+                                )
+                              ]
+                            : null,
                       ),
                     ),
                   ),

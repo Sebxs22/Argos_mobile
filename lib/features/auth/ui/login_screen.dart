@@ -100,9 +100,7 @@ class _LoginScreenState extends State<LoginScreen> {
               // Caja de Login (Glass)
               GlassBox(
                 borderRadius: 30,
-                opacity: isDark ? 0.08 : 0.05,
-                blur: 25,
-                padding: const EdgeInsets.all(30),
+                // v2.8.0: Usa defaults premium
                 child: Column(
                   children: [
                     _buildInputField(
@@ -192,10 +190,12 @@ class _LoginScreenState extends State<LoginScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark
-            ? Colors.white.withValues(alpha: 0.05)
-            : Colors.black.withValues(alpha: 0.05),
+        color: isDark ? Colors.black26 : Colors.white.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(15),
+        border: Border.all(
+          color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.1),
+          width: 0.5,
+        ),
       ),
       child: TextField(
         controller: controller,

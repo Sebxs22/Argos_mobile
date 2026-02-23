@@ -100,8 +100,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const SizedBox(height: 15),
                     GlassBox(
                       borderRadius: 20,
-                      opacity: isDark ? 0.05 : 0.03,
-                      padding: const EdgeInsets.all(20),
+                      // v2.8.0: Usa defaults premium
                       child: Column(
                         children: [
                           _buildInputField(
@@ -134,6 +133,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.blueAccent,
                                 foregroundColor: Colors.white,
+                                elevation: 0,
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12)),
                               ),
@@ -154,7 +154,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         builder: (context, currentMode, _) {
                           return GlassBox(
                             borderRadius: 20,
-                            opacity: isDark ? 0.05 : 0.03,
                             padding: const EdgeInsets.all(10),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -192,8 +191,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const SizedBox(height: 15),
                     GlassBox(
                       borderRadius: 20,
-                      opacity: isDark ? 0.05 : 0.03,
-                      padding: const EdgeInsets.all(20),
                       child: Column(
                         children: [
                           Row(
@@ -244,7 +241,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       },
                       child: GlassBox(
                         borderRadius: 20,
-                        opacity: isDark ? 0.05 : 0.03,
                         padding: const EdgeInsets.all(18),
                         child: Row(
                           children: [
@@ -317,8 +313,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     size: 16, color: Colors.blueGrey)
                 : null,
             filled: true,
-            fillColor:
-                isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.05),
+            fillColor: isDark
+                ? Colors.black12
+                : Colors.white.withValues(alpha: 0.2), // v2.8.0
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide.none),

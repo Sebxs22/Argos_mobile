@@ -136,8 +136,7 @@ class AgreementsScreen extends StatelessWidget {
       Color secondaryTextColor, bool isDark) {
     return GlassBox(
       borderRadius: 20,
-      opacity: isDark ? 0.08 : 0.05,
-      padding: const EdgeInsets.all(20),
+      // v2.8.0: Usa defaults premium
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -174,9 +173,15 @@ class AgreementsScreen extends StatelessWidget {
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: isDark
-                  ? Colors.white.withValues(alpha: 0.05)
-                  : Colors.black.withValues(alpha: 0.03),
+                  ? Colors.white.withValues(alpha: 0.1) // v2.8.0
+                  : Colors.black.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : Colors.black.withValues(alpha: 0.1),
+                width: 0.5,
+              ),
             ),
             child: Icon(icon, color: const Color(0xFFE53935), size: 24),
           ),

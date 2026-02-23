@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import '../../../core/network/api_service.dart';
 import '../../../core/network/auth_service.dart';
 import '../../../core/ui/glass_box.dart';
+import '../../../core/ui/argos_background.dart'; // Import v2.8.0
 import '../../../core/utils/ui_utils.dart';
 import 'circle_map_screen.dart';
 
@@ -182,9 +183,9 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
     final textColor = isDark ? Colors.white : Colors.black87;
     final secondaryTextColor = isDark ? Colors.white70 : Colors.black54;
 
-    return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+    return ArgosBackground(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -212,9 +213,7 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
                 Container(
                   margin: const EdgeInsets.all(20),
                   child: GlassBox(
-                    opacity: isDark ? 0.05 : 0.1,
                     borderRadius: 20,
-                    padding: const EdgeInsets.all(20),
                     child: Column(
                       children: [
                         const Text(
@@ -326,14 +325,20 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
                 ),
               ],
             ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _agregarGuardian,
-        backgroundColor: Colors.blueAccent,
-        icon: const Icon(Icons.person_add, color: Colors.white),
-        label: const Text("Invitar", style: TextStyle(color: Colors.white)),
       ),
-    );
-  }
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 100.0), // v2.8.0 avoid nav bar
+        child: FloatingActionButton.extended(
+          onPressed: _agregarGuardian,
+          backgroundColor: Colors.blueAccent,
+          icon: const Icon(Icons.person_add, color: Colors.white),
+          label: const Text("AGREGAR AL CÍRCULO",
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        ),
+      ),
+    ),
+  );
+}
 
   Widget _buildGuardiansList(bool isDark) {
     if (_misGuardianes.isEmpty) {
