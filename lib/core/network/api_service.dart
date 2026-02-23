@@ -423,7 +423,7 @@ class ApiService {
     }
   }
 
-  // 5. ENVIAR NOTIFICACIÓN PUSH A TODO EL CÍRCULO (v2.6.2 con DEBUG)
+  // 5. EnvIar Notificacion
   Future<void> enviarNotificacionEmergencia(String nombreUsuario) async {
     try {
       final user = _supabase.auth.currentUser;

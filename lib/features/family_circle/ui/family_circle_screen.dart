@@ -186,159 +186,160 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
     return ArgosBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          "Círculo de Confianza",
-          style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: Text(
+            "Círculo de Confianza",
+            style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
+          ),
+          centerTitle: true,
+          bottom: TabBar(
+            controller: _tabController,
+            indicatorColor: Colors.blueAccent,
+            labelColor: Colors.blueAccent,
+            unselectedLabelColor: secondaryTextColor,
+            tabs: const [
+              Tab(text: "MIS GUARDIANES"),
+              Tab(text: "A QUIENES PROTEJO"),
+            ],
+          ),
         ),
-        centerTitle: true,
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.blueAccent,
-          labelColor: Colors.blueAccent,
-          unselectedLabelColor: secondaryTextColor,
-          tabs: const [
-            Tab(text: "MIS GUARDIANES"),
-            Tab(text: "A QUIENES PROTEJO"),
-          ],
-        ),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                // --- MI CODIGO ---
-                Container(
-                  margin: const EdgeInsets.all(20),
-                  child: GlassBox(
-                    borderRadius: 20,
-                    child: Column(
-                      children: [
-                        const Text(
-                          "TU CÓDIGO DE FAMILIA",
-                          style: TextStyle(
-                            color: Colors.blueAccent,
-                            fontSize: 10,
-                            letterSpacing: 1.5,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        GestureDetector(
-                          onTap: _copiarCodigo,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                _miPerfil?['codigo_familia'] ?? "...",
-                                style: TextStyle(
-                                  color: textColor,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 2,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Icon(
-                                Icons.copy,
-                                color: isDark ? Colors.white30 : Colors.black26,
-                                size: 18,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 15),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: _compartirCodigo,
-                            icon: const Icon(Icons.share, size: 16),
-                            label: const Text("Compartir Código"),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF2563EB),
-                              foregroundColor: Colors.white,
+        body: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
+                children: [
+                  // --- MI CODIGO ---
+                  Container(
+                    margin: const EdgeInsets.all(20),
+                    child: GlassBox(
+                      borderRadius: 20,
+                      child: Column(
+                        children: [
+                          const Text(
+                            "TU CÓDIGO DE FAMILIA",
+                            style: TextStyle(
+                              color: Colors.blueAccent,
+                              fontSize: 10,
+                              letterSpacing: 1.5,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 10),
-                        if (_misProtegidos.isNotEmpty ||
-                            _misGuardianes.isNotEmpty)
+                          const SizedBox(height: 10),
+                          GestureDetector(
+                            onTap: _copiarCodigo,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  _miPerfil?['codigo_familia'] ?? "...",
+                                  style: TextStyle(
+                                    color: textColor,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 2,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Icon(
+                                  Icons.copy,
+                                  color:
+                                      isDark ? Colors.white30 : Colors.black26,
+                                  size: 18,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 15),
                           SizedBox(
                             width: double.infinity,
-                            child: OutlinedButton.icon(
-                              onPressed: () {
-                                // v2.5.3: Deduplicación proactiva (Evita dobles en mapa)
-                                final Map<String, Map<String, dynamic>> dedup =
-                                    {};
-
-                                for (var m in _misGuardianes) {
-                                  final id = (m['id'] ??
-                                      m['usuario_id'] ??
-                                      m['guardian_id']) as String;
-                                  dedup[id] = m;
-                                }
-                                for (var m in _misProtegidos) {
-                                  final id = (m['id'] ??
-                                      m['usuario_id'] ??
-                                      m['guardian_id']) as String;
-                                  dedup[id] = {
-                                    ...(dedup[id] ?? {}),
-                                    ...m,
-                                  };
-                                }
-
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => CircleMapScreen(
-                                      initialMembers: dedup.values.toList(),
-                                    ),
-                                  ),
-                                );
-                              },
-                              icon: const Icon(Icons.map_rounded, size: 16),
-                              label: const Text("Ver Mapa en Tiempo Real"),
-                              style: OutlinedButton.styleFrom(
-                                side: BorderSide(
-                                    color: Colors.blueAccent
-                                        .withValues(alpha: 0.5)),
-                                foregroundColor: Colors.blueAccent,
+                            child: ElevatedButton.icon(
+                              onPressed: _compartirCodigo,
+                              icon: const Icon(Icons.share, size: 16),
+                              label: const Text("Compartir Código"),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF2563EB),
+                                foregroundColor: Colors.white,
                               ),
                             ),
                           ),
+                          const SizedBox(height: 10),
+                          if (_misProtegidos.isNotEmpty ||
+                              _misGuardianes.isNotEmpty)
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  // v2.5.3: Deduplicación proactiva (Evita dobles en mapa)
+                                  final Map<String, Map<String, dynamic>>
+                                      dedup = {};
+
+                                  for (var m in _misGuardianes) {
+                                    final id = (m['id'] ??
+                                        m['usuario_id'] ??
+                                        m['guardian_id']) as String;
+                                    dedup[id] = m;
+                                  }
+                                  for (var m in _misProtegidos) {
+                                    final id = (m['id'] ??
+                                        m['usuario_id'] ??
+                                        m['guardian_id']) as String;
+                                    dedup[id] = {
+                                      ...(dedup[id] ?? {}),
+                                      ...m,
+                                    };
+                                  }
+
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => CircleMapScreen(
+                                        initialMembers: dedup.values.toList(),
+                                      ),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.map_rounded, size: 16),
+                                label: const Text("Ver Mapa en Tiempo Real"),
+                                style: OutlinedButton.styleFrom(
+                                  side: BorderSide(
+                                      color: Colors.blueAccent
+                                          .withValues(alpha: 0.5)),
+                                  foregroundColor: Colors.blueAccent,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // --- LISTAS ---
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _buildGuardiansList(isDark),
+                        _buildProtegesList(isDark)
                       ],
                     ),
                   ),
-                ),
-
-                // --- LISTAS ---
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildGuardiansList(isDark),
-                      _buildProtegesList(isDark)
-                    ],
-                  ),
-                ),
-              ],
-            ),
-      ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 100.0), // v2.8.0 avoid nav bar
-        child: FloatingActionButton.extended(
-          onPressed: _agregarGuardian,
-          backgroundColor: Colors.blueAccent,
-          icon: const Icon(Icons.person_add, color: Colors.white),
-          label: const Text("AGREGAR AL CÍRCULO",
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ],
+              ),
+        floatingActionButton: Padding(
+          padding: const EdgeInsets.only(bottom: 100.0), // v2.8.0 avoid nav bar
+          child: FloatingActionButton.extended(
+            onPressed: _agregarGuardian,
+            backgroundColor: Colors.blueAccent,
+            icon: const Icon(Icons.person_add, color: Colors.white),
+            label: const Text("AGREGAR AL CÍRCULO",
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildGuardiansList(bool isDark) {
     if (_misGuardianes.isEmpty) {
