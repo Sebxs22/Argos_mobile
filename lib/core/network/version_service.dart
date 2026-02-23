@@ -3,8 +3,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
 import '../ui/update_progress_dialog.dart';
 import '../utils/ui_utils.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'dart:typed_data';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class VersionService {
@@ -15,25 +13,21 @@ class VersionService {
     try {
       debugPrint("📡 ARGOS OTA: Iniciando chequeo manual=$manual");
 
-      // Consultamos específicamente el ID 1 (el que usa el GitHub Action)
       final response =
           await _supabase.from('app_config').select().eq('id', 1).maybeSingle();
 
       if (response == null) {
-        debugPrint("⚠️ ARGOS OTA: Fila id=1 no encontrada en app_config.");
+        debugPrint("⚠️ ARGOS OTA: Fila id=1 no encontrada.");
         if (manual && context.mounted) {
-          UiUtils.showError(
-              "Servicio de actualización no disponible (Fila 1 vacía)");
+          UiUtils.showError("Servicio de actualización no disponible");
         }
         return;
       }
 
-      debugPrint("✅ ARGOS OTA: Datos recibidos: $response");
-
       if (!context.mounted) return;
       await _processUpdate(context, response, manual: manual);
     } catch (e) {
-      debugPrint("❌ ARGOS OTA Error Crítico: $e");
+      debugPrint("❌ ARGOS OTA Error: $e");
       if (manual && context.mounted) {
         UiUtils.showError("Error al verificar versión: $e");
       }
@@ -42,15 +36,12 @@ class VersionService {
 
   void listenForUpdates(BuildContext context) {
     try {
-      debugPrint("📡 ARGOS OTA: Iniciando Stream Listener...");
       _supabase
           .from('app_config')
           .stream(primaryKey: ['id'])
-          .eq('id', 1) // Escuchar solo la fila principal
+          .eq('id', 1)
           .listen((List<Map<String, dynamic>> data) {
             if (data.isNotEmpty && context.mounted) {
-              debugPrint(
-                  "🚀 ARGOS OTA Stream: Cambio detectado! Procesando...");
               _processUpdate(context, data.first, manual: false);
             }
           }, onError: (e) {
@@ -64,7 +55,6 @@ class VersionService {
   Future<void> _processUpdate(BuildContext context, Map<String, dynamic> data,
       {bool manual = false}) async {
     try {
-      // 1. Obtener versión local
       PackageInfo packageInfo = await PackageInfo.fromPlatform();
       String currentVersion = packageInfo.version;
 
@@ -72,51 +62,23 @@ class VersionService {
       String downloadUrl = data['link_descarga'] ?? "";
       bool isRequired = data['es_obligatoria'] ?? false;
 
-      debugPrint("📊 ARGOS OTA: Local=$currentVersion, Remota=$latestVersion");
+      if (latestVersion.isEmpty) return;
 
-      if (latestVersion.isEmpty) {
-        debugPrint("⚠️ ARGOS OTA: La versión remota está vacía.");
-        return;
-      }
-
-      // 2. Lógica Anti-Spam
+      // Lógica Anti-Spam para el diálogo automático
       final prefs = await SharedPreferences.getInstance();
       final String lastNotified =
           prefs.getString('last_notified_ota_version') ?? "";
 
       if (latestVersion == lastNotified && !manual) {
-        debugPrint(
-            "ℹ️ ARGOS OTA: Ya notificamos la v$latestVersion, ignorando.");
+        debugPrint("ℹ️ ARGOS OTA: Versión $latestVersion ya procesada.");
         return;
       }
 
-      // 3. Comparación de versiones (Lógica simple: si es diferente y Supabase > Local)
-      // Nota: En el futuro podrías usar Version.parse(v1) > Version.parse(v2)
+      // Comparación
       if (currentVersion != latestVersion) {
-        debugPrint(
-            "🔔 ARGOS OTA: ¡Nueva versión disponible! Mostrando diálogo...");
+        debugPrint("🔔 ARGOS OTA: Nueva versión detectada: $latestVersion");
 
-        // Notificación local de respaldo
-        final FlutterLocalNotificationsPlugin notifications =
-            FlutterLocalNotificationsPlugin();
-
-        await notifications.show(
-          id: 777,
-          title: '🚀 ACTUALIZACIÓN DISPONIBLE (v$latestVersion)',
-          body: 'Nuevas funciones de seguridad listas para instalar.',
-          notificationDetails: NotificationDetails(
-            android: AndroidNotificationDetails(
-              'argos_updates',
-              'Actualizaciones',
-              importance: Importance.max,
-              priority: Priority.high,
-              enableVibration: true,
-              vibrationPattern: Int64List.fromList([0, 200, 100, 200]),
-            ),
-          ),
-        );
-
-        // Guardar que ya notificamos
+        // Guardar que ya notificamos para este diálogo
         await prefs.setString('last_notified_ota_version', latestVersion);
 
         if (context.mounted) {
@@ -131,14 +93,10 @@ class VersionService {
           );
         }
       } else if (manual && context.mounted) {
-        debugPrint("✅ ARGOS OTA: La app está actualizada.");
         UiUtils.showSuccess("Argos está al día (v$currentVersion)");
       }
     } catch (e) {
       debugPrint("❌ ARGOS OTA Error en _processUpdate: $e");
-      if (manual && context.mounted) {
-        UiUtils.showError("Error al procesar actualización: $e");
-      }
     }
   }
 }
