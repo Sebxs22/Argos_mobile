@@ -57,6 +57,10 @@ class _IncidentClassificationScreenState
     setState(() => _isSaving = true);
     try {
       await _apiService.clasificarIncidente(widget.alertaId, _selectedType!);
+
+      // v2.8.3: Notificar al círculo sobre la clasificación
+      await _apiService.enviarNotificacionClasificacion(_selectedType!);
+
       if (mounted) {
         UiUtils.showSuccess(
             "Gracias por tu reporte. Ayudas a proteger la comunidad.");

@@ -253,7 +253,18 @@ class _MainNavigatorState extends State<MainNavigator> {
         try {
           final resG = await _auth.obtenerMisGuardianes();
           final resP = await _auth.obtenerAQuienesProtejo();
-          final List<Map<String, dynamic>> members = [...resG, ...resP];
+          final List<Map<String, dynamic>> rawMembers = [...resG, ...resP];
+
+          // v2.8.3: Limpiar duplicados por ID (usuario_id o guardian_id)
+          final Map<String, Map<String, dynamic>> uniqueMap = {};
+          for (var m in rawMembers) {
+            final id =
+                (m['id'] ?? m['usuario_id'] ?? m['guardian_id'])?.toString();
+            if (id != null) {
+              uniqueMap[id] = m;
+            }
+          }
+          final List<Map<String, dynamic>> members = uniqueMap.values.toList();
 
           if (members.isEmpty) {
             debugPrint("⚠️ ARGOS DEEP-LINK: No se encontraron miembros.");

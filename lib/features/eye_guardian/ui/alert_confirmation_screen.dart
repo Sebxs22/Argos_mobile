@@ -19,6 +19,9 @@ class _AlertConfirmationScreenState extends State<AlertConfirmationScreen> {
   Future<void> _cancelAlert() async {
     if (widget.alertaId != null) {
       await _apiService.cancelarAlerta(widget.alertaId!);
+      // v2.8.3: Notificar cancelación
+      await _apiService.enviarNotificacionClasificacion("Falsa Alarma",
+          isCancelacion: true);
       if (mounted) Navigator.pop(context);
     } else {
       Navigator.pop(context);

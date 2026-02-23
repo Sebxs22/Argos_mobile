@@ -513,7 +513,75 @@ class ApiService {
     }
   }
 
-  // 6. ACTUALIZAR MI UBICACIÓN EN TIEMPO REAL
+  // 6. Notificar Clasificación (v2.8.3)
+  Future<void> enviarNotificacionClasificacion(String tipo,
+      {bool isCancelacion = false}) async {
+    try {
+      final user = _supabase.auth.currentUser;
+      if (user == null) return;
+
+      // Obtener mi nombre
+      final myProfile = await _supabase
+          .from('perfiles')
+          .select('nombre_completo')
+          .eq('id', user.id)
+          .single();
+      final nombreUsuario = myProfile['nombre_completo'] ?? "Un usuario";
+
+      final List<String> targetIds = [];
+      final resG = await _supabase
+          .from('circulo_confianza')
+          .select('perfiles!guardian_id(onesignal_id)')
+          .eq('usuario_id', user.id);
+      final resP = await _supabase
+          .from('circulo_confianza')
+          .select('perfiles!usuario_id(onesignal_id)')
+          .eq('guardian_id', user.id);
+
+      for (var row in [...(resG as List), ...(resP as List)]) {
+        final id = row['perfiles']?['onesignal_id'];
+        if (id != null && id.toString().length > 5) {
+          targetIds.add(id.toString());
+        }
+      }
+
+      final uniqueIds = targetIds.toSet().toList();
+      if (uniqueIds.isEmpty) return;
+
+      final appId = dotenv.env['ONESIGNAL_APP_ID'];
+      final restKey = dotenv.env['ONESIGNAL_REST_API_KEY'];
+      if (appId == null || restKey == null) return;
+
+      String message;
+      if (isCancelacion) {
+        message = "✅ $nombreUsuario: Alerta cancelada (Falsa Alarma).";
+      } else {
+        message =
+            "🛡️ $nombreUsuario clasificó el incidente como: ${tipo.toUpperCase()}.";
+      }
+
+      await http.post(
+        Uri.parse('https://onesignal.com/api/v1/notifications'),
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Authorization': 'Basic $restKey',
+        },
+        body: jsonEncode({
+          'app_id': appId,
+          'include_player_ids': uniqueIds,
+          'contents': {'es': message, 'en': message},
+          'headings': {'es': 'RESOLUCIÓN ARGOS', 'en': 'ARGOS RESOLUTION'},
+          'priority': 10,
+          'android_group': 'argos_closure',
+        }),
+      );
+      debugPrint("🚀 ARGOS NOTIF CLASIFICA: ENVIADA ($message)");
+    } catch (e) {
+      debugPrint("❌ Error enviando notif clasificación: $e");
+    }
+  }
+
+  // 7. ACTUALIZAR MI UBICACIÓN EN TIEMPO REAL
   Future<void> actualizarUbicacion(double lat, double lng) async {
     try {
       final user = _supabase.auth.currentUser;

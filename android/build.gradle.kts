@@ -37,6 +37,11 @@ subprojects {
                 defaultConfig {
                     targetSdkVersion(34)
                 }
+                
+                // v2.8.3: Fix for packages missing namespace in Gradle 8+
+                if (project.name == "optimization_battery") {
+                    namespace = "com.example.optimization_battery"
+                }
             }
 
             if (!project.hasProperty("flutter")) {
