@@ -423,26 +423,42 @@ class ApiService {
     }
   }
 
-  // 5. ENVIAR NOTIFICACIÓN PUSH A GUARDIANES
+  // 5. ENVIAR NOTIFICACIÓN PUSH A TODO EL CÍRCULO (v2.6.1)
   Future<void> enviarNotificacionEmergencia(String nombreUsuario) async {
     try {
-      final user = Supabase.instance.client.auth.currentUser;
+      final user = _supabase.auth.currentUser;
       if (user == null) return;
 
-      // 1. Obtener IDs de OneSignal de mis guardianes
-      final res = await Supabase.instance.client
+      final List<String> targetIds = [];
+
+      // A. Obtener IDs de OneSignal de mis guardianes
+      final resG = await _supabase
           .from('circulo_confianza')
           .select('perfiles!guardian_id(onesignal_id)')
           .eq('usuario_id', user.id);
 
-      final List<String> targetIds = (res as List)
-          .map((e) => e['perfiles']['onesignal_id'] as String?)
-          .where((id) => id != null && id.isNotEmpty)
-          .cast<String>()
-          .toList();
+      // B. Obtener IDs de OneSignal de mis protegidos
+      final resP = await _supabase
+          .from('circulo_confianza')
+          .select('perfiles!usuario_id(onesignal_id)')
+          .eq('guardian_id', user.id);
 
-      if (targetIds.isEmpty) {
-        debugPrint("⚠️ No hay guardianes con OneSignal ID para notificar.");
+      for (var row in (resG as List)) {
+        final id = row['perfiles']?['onesignal_id'];
+        if (id != null && id.toString().isNotEmpty)
+          targetIds.add(id.toString());
+      }
+      for (var row in (resP as List)) {
+        final id = row['perfiles']?['onesignal_id'];
+        if (id != null && id.toString().isNotEmpty)
+          targetIds.add(id.toString());
+      }
+
+      final uniqueIds = targetIds.toSet().toList();
+
+      if (uniqueIds.isEmpty) {
+        debugPrint(
+            "⚠️ No hay miembros del círculo con OneSignal ID para notificar.");
         return;
       }
 
@@ -455,21 +471,21 @@ class ApiService {
         },
         body: jsonEncode({
           'app_id': dotenv.env['ONESIGNAL_APP_ID'],
-          'include_player_ids': targetIds,
+          'include_player_ids': uniqueIds,
           'contents': {
             'es':
                 '🆘 ¡$nombreUsuario está en una EMERGENCIA! Abre la app para ver su ubicación.',
             'en': '🆘 $nombreUsuario is in an EMERGENCY! Check the app.',
           },
           'headings': {'es': 'ALERTA ARGOS', 'en': 'ARGOS EMERGENCY'},
-          'priority': 10, // Alta prioridad
+          'priority': 10,
+          'android_group': 'argos_emergency',
         }),
       );
 
       if (response.statusCode == 200) {
         debugPrint(
-          "🚀 Notificaciones enviadas correctamente a ${targetIds.length} guardianes.",
-        );
+            "🚀 Notificaciones enviadas correctamente a ${uniqueIds.length} miembros del círculo.");
       } else {
         debugPrint("❌ Error al enviar notificación: ${response.body}");
       }

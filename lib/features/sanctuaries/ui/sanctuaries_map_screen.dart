@@ -36,18 +36,13 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
   // Lista de zonas de peligro de Supabase (Refrescada por el Stream)
   List<DangerZoneModel> _activeDangerZones = [];
 
-  // Miembros del círculo familiar y Alertas Real-time
-  List<Map<String, dynamic>> _circleMembers = [];
-  StreamSubscription? _circleSubscription;
   StreamSubscription? _alertsSubscription;
   Timer? _refreshTimer;
 
-  // Filtros activos (Todos por defecto)
   final Set<String> _activeFilters = {
     'Peligro',
     'Policía',
     'Salud',
-    'Círculo', // Añadimos Círculo por defecto o según prefieras
     'Farmacia',
     'Educación',
     'Tienda',
@@ -67,7 +62,6 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
     )..repeat();
 
     // 4. Suscribirse a datos en Tiempo Real (v2.4.5)
-    _subscribeToCircle();
     _subscribeToAlerts();
 
     // 5. CARGA INICIAL (v2.4.6 Fix): Disparar localización al entrar
@@ -89,25 +83,10 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
     });
   }
 
-  Future<void> _subscribeToCircle() async {
-    final ids = await _apiService.obtenerTodosLosIdsDelCirculo();
-    if (ids.isEmpty) return;
-
-    _circleSubscription =
-        _apiService.streamUbicacionesCirculo(ids).listen((members) {
-      if (mounted) {
-        setState(() {
-          _circleMembers = members;
-        });
-      }
-    });
-  }
-
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _radarController.dispose();
-    _circleSubscription?.cancel();
     _alertsSubscription?.cancel();
     _refreshTimer?.cancel();
     super.dispose();
@@ -502,14 +481,6 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
                       ),
                     )),
 
-              // Mi Posición (No se agrupa o se agrupa con otros, depende de preferencia. Aquí lo incluimos)
-              Marker(
-                point: _currentCenter,
-                width: 60,
-                height: 60,
-                child: _buildMyPositionMarker(),
-              ),
-
               // Santuarios filtrables
               ...kSanctuariesDB
                   .where((s) => _activeFilters.contains(_getFilterName(s.type)))
@@ -521,20 +492,6 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
                       child: _buildDynamicMarkerIcon(site),
                     ),
                   ),
-
-              // MIEMBROS DEL CÍRCULO
-              if (_activeFilters.contains('Círculo'))
-                ..._circleMembers
-                    .where((m) => m['latitud'] != null && m['longitud'] != null)
-                    .map((m) => Marker(
-                          point: LatLng(
-                            (m['latitud'] as num).toDouble(),
-                            (m['longitud'] as num).toDouble(),
-                          ),
-                          width: 45,
-                          height: 45,
-                          child: _buildMemberMarker(m),
-                        )),
             ],
             builder: (context, markers) {
               return Container(
@@ -552,6 +509,18 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
             },
           ),
         ),
+
+        // 🟢 MI POSICIÓN (Fuera del cluster v2.6.1)
+        MarkerLayer(
+          markers: [
+            Marker(
+              point: _currentCenter,
+              width: 60,
+              height: 60,
+              child: _buildMyPositionMarker(),
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -567,11 +536,10 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
         'color': Colors.greenAccent,
       },
       {
-        'id': 'Círculo',
-        'icon': Icons.group_outlined,
-        'color': Colors.blueAccent,
+        'id': 'Salud',
+        'icon': Icons.local_hospital,
+        'color': Colors.blue,
       },
-      {'id': 'Salud', 'icon': Icons.local_hospital, 'color': Colors.blue},
       {
         'id': 'Farmacia',
         'icon': Icons.local_pharmacy,
@@ -766,69 +734,6 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildMemberMarker(Map<String, dynamic> member) {
-    final String name = member['nombre_completo'] ?? "Usuario";
-    final String initial = name.isNotEmpty ? name[0].toUpperCase() : "U";
-
-    // Generar un color basado en el ID para que sea consistente
-    final String id = member['id'] ?? "";
-    final Color memberColor =
-        Colors.primaries[id.hashCode % Colors.primaries.length];
-
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        // Etiqueta de nombre (Glass)
-        Positioned(
-          top: 0,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              name.split(' ')[0], // Solo el primer nombre
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 8,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ),
-        // Avatar Circular
-        Container(
-          margin: const EdgeInsets.only(top: 12),
-          width: 35,
-          height: 35,
-          decoration: BoxDecoration(
-            color: memberColor.withValues(alpha: 0.2),
-            shape: BoxShape.circle,
-            border: Border.all(color: memberColor, width: 2),
-            boxShadow: [
-              BoxShadow(
-                color: memberColor.withValues(alpha: 0.3),
-                blurRadius: 8,
-                spreadRadius: 2,
-              ),
-            ],
-          ),
-          child: Center(
-            child: Text(
-              initial,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: memberColor,
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

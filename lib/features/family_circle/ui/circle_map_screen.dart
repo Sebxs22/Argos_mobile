@@ -486,6 +486,12 @@ class _CircleMapScreenState extends State<CircleMapScreen>
                   ),
                   child: Column(
                     children: [
+                      Text("ORIGEN ALERTA",
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 7,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1)),
                       Text(name.split(' ')[0],
                           style: const TextStyle(
                               color: Colors.white,
