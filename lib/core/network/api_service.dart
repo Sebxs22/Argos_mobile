@@ -366,60 +366,63 @@ class ApiService {
     String modo = 'foot',
   }) async {
     try {
-      // CONVERSIÓN A PERFILES CORRECTOS DE OSRM
-      String perfilOSRM;
-      switch (modo) {
-        case 'car':
-          perfilOSRM = 'driving';
-          break;
-        case 'foot':
-          perfilOSRM = 'foot'; // v2.13.1: More explicit profile for OSRM
-          break;
-        case 'bicycle':
-          perfilOSRM = 'bicycle';
-          break;
-        default:
-          perfilOSRM = 'foot';
+      final apiKey = dotenv.env['ORS_API_KEY'];
+      if (apiKey == null) {
+        return {'error': 'ORS_API_KEY no configurado en .env'};
       }
 
+      // CORRECCIÓN DE PERFILES ORS (v2.14.0)
+      String perfilORS;
+      switch (modo) {
+        case 'car':
+          perfilORS = 'driving-car';
+          break;
+        case 'foot':
+          perfilORS = 'foot-walking';
+          break;
+        case 'bicycle':
+          perfilORS = 'cycling-regular';
+          break;
+        default:
+          perfilORS = 'foot-walking';
+      }
+
+      // URL de OpenRouteService (v2)
+      // Formato: /v2/directions/{profile}?api_key={key}&start={lng,lat}&end={lng,lat}
       final url = Uri.parse(
-        'https://router.project-osrm.org/route/v1/$perfilOSRM/${origen.longitude},${origen.latitude};${destino.longitude},${destino.latitude}?overview=full&geometries=geojson',
+        'https://api.openrouteservice.org/v2/directions/$perfilORS?api_key=$apiKey&start=${origen.longitude},${origen.latitude}&end=${destino.longitude},${destino.latitude}',
       );
 
-      debugPrint("🚀 Consultando OSRM con perfil: $perfilOSRM");
-      debugPrint("📍 URL: $url");
-
+      debugPrint("🚀 Consultando OpenRouteService ($perfilORS)...");
       final response = await http.get(url);
 
       if (response.statusCode != 200) {
-        debugPrint("❌ Error HTTP ${response.statusCode}: ${response.body}");
+        debugPrint("❌ ORS Error ${response.statusCode}: ${response.body}");
         return {
-          'error': 'Error en servicio de mapas (HTTP ${response.statusCode})',
+          'error': 'Error en servicio ORS (HTTP ${response.statusCode})',
         };
       }
 
       final data = jsonDecode(response.body);
-
-      if (data['routes'] == null || data['routes'].isEmpty) {
-        debugPrint("❌ No se encontraron rutas en la respuesta");
+      final List<dynamic> features = data['features'] ?? [];
+      if (features.isEmpty) {
         return {'error': 'No se encontró una ruta válida'};
       }
 
-      final List<dynamic> coordinates =
-          data['routes'][0]['geometry']['coordinates'];
+      // Extraer geometría (GeoJSON line string)
+      final List<dynamic> coordinates = features[0]['geometry']['coordinates'];
       List<LatLng> points = coordinates
           .map(
               (c) => LatLng((c[1] as num).toDouble(), (c[0] as num).toDouble()))
           .toList();
 
-      final double duracion = (data['routes'][0]['duration'] ?? 0).toDouble();
-      final double distancia = (data['routes'][0]['distance'] ?? 0).toDouble();
+      // Extraer metadata
+      final dynamic properties = features[0]['properties']['summary'];
+      final double duracion = (properties['duration'] ?? 0).toDouble();
+      final double distancia = (properties['distance'] ?? 0).toDouble();
 
       debugPrint(
-        "⏱️ Duración: $duracion segundos (${(duracion / 60).toStringAsFixed(1)} min)",
-      );
-      debugPrint(
-        "📏 Distancia: $distancia metros (${(distancia / 1000).toStringAsFixed(2)} km)",
+        "⏱️ Duración ORS: $duracion seg | 📏 Distancia: $distancia m",
       );
 
       final alertas = await obtenerAlertas();
@@ -431,6 +434,7 @@ class ApiService {
           if (distance.as(LengthUnit.Meter, puntoRuta, zona.center) <
               zona.radius) {
             puntosDeRiesgo++;
+            break; // Una alerta por punto máximo
           }
         }
       }
@@ -439,7 +443,7 @@ class ApiService {
       if (score < 0) score = 0;
 
       debugPrint(
-        "✅ Ruta calculada - Score: $score, Puntos de riesgo: $puntosDeRiesgo",
+        "✅ Ruta calculada (ORS) - Score: $score, Puntos de riesgo: $puntosDeRiesgo",
       );
 
       return {
@@ -449,7 +453,7 @@ class ApiService {
         'distancia': distancia,
       };
     } catch (e) {
-      debugPrint("❌ Excepción en calcularRutaSegura: $e");
+      debugPrint("❌ Excepción en calcularRutaSegura (ORS): $e");
       return {'error': e.toString()};
     }
   }
