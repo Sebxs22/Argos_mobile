@@ -390,17 +390,25 @@ class _CircleMapScreenState extends State<CircleMapScreen>
                                                         .withValues(alpha: 0.1)
                                                     : Colors.grey.withValues(
                                                         alpha: 0.1)),
-                                            child: Text(
-                                                (m['nombre_completo'] ?? "U")[0]
-                                                    .toUpperCase(),
-                                                style: TextStyle(
-                                                    color: hasLocation
-                                                        ? (isFocused
-                                                            ? Colors.white
-                                                            : Colors.blue)
-                                                        : Colors.grey,
-                                                    fontWeight:
-                                                        FontWeight.bold)),
+                                            backgroundImage: m['avatar_url'] !=
+                                                    null
+                                                ? NetworkImage(m['avatar_url'])
+                                                : null,
+                                            child: m['avatar_url'] == null
+                                                ? Text(
+                                                    (m['nombre_completo'] ??
+                                                            "U")[0]
+                                                        .toUpperCase(),
+                                                    style: TextStyle(
+                                                        color: hasLocation
+                                                            ? (isFocused
+                                                                ? Colors.white
+                                                                : Colors.blue)
+                                                            : Colors.grey,
+                                                        fontWeight:
+                                                            FontWeight.bold),
+                                                  )
+                                                : null,
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
@@ -576,12 +584,29 @@ class _CircleMapScreenState extends State<CircleMapScreen>
                     spreadRadius: 2)
               ],
             ),
-            child: Center(
-              child: Text(initial,
-                  style: TextStyle(
-                      fontSize: isFocused ? 18 : 14,
-                      fontWeight: FontWeight.bold,
-                      color: isFocused ? Colors.blueAccent : memberColor)),
+            child: ClipOval(
+              child: member['avatar_url'] != null
+                  ? Image.network(
+                      member['avatar_url'],
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Center(
+                        child: Text(initial,
+                            style: TextStyle(
+                                fontSize: isFocused ? 18 : 14,
+                                fontWeight: FontWeight.bold,
+                                color: isFocused
+                                    ? Colors.blueAccent
+                                    : memberColor)),
+                      ),
+                    )
+                  : Center(
+                      child: Text(initial,
+                          style: TextStyle(
+                              fontSize: isFocused ? 18 : 14,
+                              fontWeight: FontWeight.bold,
+                              color:
+                                  isFocused ? Colors.blueAccent : memberColor)),
+                    ),
             ),
           ),
         ],

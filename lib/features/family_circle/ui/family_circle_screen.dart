@@ -401,13 +401,20 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
       child: Row(
         children: [
           CircleAvatar(
+            radius: 20,
             backgroundColor: isGuardian
                 ? Colors.green.withValues(alpha: 0.2)
                 : Colors.amber.withValues(alpha: 0.2),
-            child: Icon(
-              isGuardian ? Icons.shield : Icons.health_and_safety,
-              color: isGuardian ? Colors.greenAccent : Colors.amber,
-            ),
+            backgroundImage: user['avatar_url'] != null
+                ? NetworkImage(user['avatar_url'])
+                : null,
+            child: user['avatar_url'] == null
+                ? Icon(
+                    isGuardian ? Icons.shield : Icons.health_and_safety,
+                    color: isGuardian ? Colors.greenAccent : Colors.amber,
+                    size: 20,
+                  )
+                : null,
           ),
           const SizedBox(width: 15),
           Expanded(

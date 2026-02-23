@@ -386,20 +386,48 @@ class _MainNavigatorState extends State<MainNavigator> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              leading: const CircleAvatar(
-                backgroundColor: Colors.blue,
-                child: Icon(Icons.person, color: Colors.white),
-              ),
-              title: Text(
-                _perfilData?['nombre_completo'] ?? "Cargando...",
-                style: TextStyle(color: textColor),
-              ),
-              subtitle: Text(
-                "Código: ${_perfilData?['codigo_familia'] ?? '...'}",
-                style: TextStyle(color: secondaryTextColor, fontSize: 12),
+            // Avatar Destacado (v2.12.2 "Bonito")
+            Center(
+              child: Container(
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.blueAccent,
+                      Colors.blueAccent.withValues(alpha: 0.3)
+                    ],
+                  ),
+                ),
+                child: CircleAvatar(
+                  radius: 40,
+                  backgroundColor: isDark
+                      ? Colors.white10
+                      : Colors.black.withValues(alpha: 0.05),
+                  backgroundImage: _perfilData?['avatar_url'] != null
+                      ? NetworkImage(_perfilData!['avatar_url'])
+                      : null,
+                  child: _perfilData?['avatar_url'] == null
+                      ? Icon(Icons.person,
+                          size: 40,
+                          color: isDark ? Colors.white24 : Colors.grey)
+                      : null,
+                ),
               ),
             ),
+            const SizedBox(height: 15),
+            Text(
+              _perfilData?['nombre_completo'] ?? "Cargando...",
+              style: TextStyle(
+                  color: textColor, fontWeight: FontWeight.bold, fontSize: 18),
+              textAlign: TextAlign.center,
+            ),
+            Text(
+              "ID: ${_perfilData?['codigo_familia'] ?? '...'}",
+              style: TextStyle(
+                  color: secondaryTextColor, fontSize: 12, letterSpacing: 1.2),
+            ),
+            const SizedBox(height: 20),
             Divider(color: isDark ? Colors.white10 : Colors.black12),
             ListTile(
               onTap: () {
@@ -539,15 +567,28 @@ class _MainNavigatorState extends State<MainNavigator> {
         _showProfileMenu();
       },
       child: Container(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(2),
         decoration: BoxDecoration(
           color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
           shape: BoxShape.circle,
+          border: Border.all(
+            color: isDark ? Colors.white24 : Colors.black12,
+            width: 1,
+          ),
         ),
-        child: Icon(
-          Icons.person_outline,
-          color: isDark ? Colors.white70 : Colors.black54,
-          size: 26, // v2.8.7
+        child: CircleAvatar(
+          radius: 14,
+          backgroundColor: Colors.transparent,
+          backgroundImage: _perfilData?['avatar_url'] != null
+              ? NetworkImage(_perfilData!['avatar_url'])
+              : null,
+          child: _perfilData?['avatar_url'] == null
+              ? Icon(
+                  Icons.person_outline,
+                  color: isDark ? Colors.white70 : Colors.black54,
+                  size: 20,
+                )
+              : null,
         ),
       ),
     );
