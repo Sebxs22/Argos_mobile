@@ -5,11 +5,18 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../core/network/api_service.dart';
 import '../../../core/ui/glass_box.dart';
-import '../../../core/utils/ui_utils.dart';
 
 class CircleMapScreen extends StatefulWidget {
   final List<Map<String, dynamic>> initialMembers;
-  const CircleMapScreen({super.key, required this.initialMembers});
+  final LatLng? focusLocation;
+  final String? alertMemberId;
+
+  const CircleMapScreen({
+    super.key,
+    required this.initialMembers,
+    this.focusLocation,
+    this.alertMemberId,
+  });
 
   @override
   State<CircleMapScreen> createState() => _CircleMapScreenState();
@@ -23,16 +30,29 @@ class _CircleMapScreenState extends State<CircleMapScreen>
   Timer? _locationTimer;
 
   late Stream<List<Map<String, dynamic>>> _membersStream;
+  late Stream<List<Map<String, dynamic>>> _alertsStream; // v2.6.0
+
   List<Map<String, dynamic>> _currentMembers = [];
+  List<Map<String, dynamic>> _activeAlerts = []; // v2.6.0
+
   bool _hasCentered = false;
-  String? _focusedMemberId; // v2.5.0: Para "Seguir" a alguien
+  String? _focusedMemberId;
+
+  late AnimationController _pulseController; // v2.6.0: Efecto alerta
 
   @override
   void initState() {
     super.initState();
     _currentMembers = widget.initialMembers;
+    _focusedMemberId = widget.alertMemberId;
 
-    // Aseguramos IDs limpios (v2.5.0 Fix)
+    // Configurar pulso de alerta
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+
+    // Aseguramos IDs limpios
     final List<String> ids = widget.initialMembers
         .map((m) =>
             (m['id'] ?? m['usuario_id'] ?? m['guardian_id']) as String? ?? "")
@@ -40,7 +60,25 @@ class _CircleMapScreenState extends State<CircleMapScreen>
         .toList();
 
     _membersStream = _apiService.streamUbicacionesCirculo(ids);
+    _alertsStream = _apiService.streamAlertasRecientesCirculo(ids);
+
     _startLocationTracking();
+
+    // LÓGICA DE FOCO INICIAL
+    if (widget.focusLocation != null) {
+      _hasCentered = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _animatedMapMove(widget.focusLocation!, 16.0);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _locationTimer?.cancel();
+    _pulseController.dispose();
+    _mapController.dispose();
+    super.dispose();
   }
 
   void _animatedMapMove(LatLng destLocation, double destZoom) {
@@ -122,28 +160,22 @@ class _CircleMapScreenState extends State<CircleMapScreen>
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             final List<Map<String, dynamic>> updatedData = snapshot.data!;
-            debugPrint(
-                "Stream Círculo: Recibidos ${updatedData.length} perfiles");
-
-            // v2.5.2: Lógica de Mezcla Estable (Merge)
-            // No reemplazamos toda la lista, actualizamos solo lo que cambia
             for (var update in updatedData) {
-              final index =
-                  _currentMembers.indexWhere((m) => m['id'] == update['id']);
+              final index = _currentMembers.indexWhere((m) {
+                final mId = (m['id'] ?? m['usuario_id'] ?? m['guardian_id']);
+                return mId == update['id'];
+              });
               if (index != -1) {
-                // Preservamos los datos estáticos (nombres, etc) y actualizamos los dinámicos
-                _currentMembers[index] = {
-                  ..._currentMembers[index],
-                  ...update,
-                };
+                _currentMembers[index] = {..._currentMembers[index], ...update};
               }
             }
 
-            // LÓGICA DE SEGUIMIENTO (SNAP MAPS STYLE v2.5.0)
+            // Seguimiento dinámico
             if (_focusedMemberId != null) {
               final focused = _currentMembers.firstWhere(
                 (m) =>
-                    (m['id'] ?? m['usuario_id']) == _focusedMemberId &&
+                    (m['id'] ?? m['usuario_id'] ?? m['guardian_id']) ==
+                        _focusedMemberId &&
                     m['latitud'] != null,
                 orElse: () => {},
               );
@@ -158,219 +190,243 @@ class _CircleMapScreenState extends State<CircleMapScreen>
               }
             }
 
-            // Centrar automáticamente la primera vez
+            // Centro inicial
             if (!_hasCentered &&
                 _currentMembers.any((m) => m['latitud'] != null)) {
               _hasCentered = true;
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                final firstWithLoc =
+                final first =
                     _currentMembers.firstWhere((m) => m['latitud'] != null);
                 _animatedMapMove(
-                    LatLng((firstWithLoc['latitud'] as num).toDouble(),
-                        (firstWithLoc['longitud'] as num).toDouble()),
+                    LatLng((first['latitud'] as num).toDouble(),
+                        (first['longitud'] as num).toDouble()),
                     15.0);
               });
             }
           }
 
-          return Stack(
-            children: [
-              FlutterMap(
-                mapController: _mapController,
-                options: MapOptions(
-                  initialCenter: _getInitialCenter(),
-                  initialZoom: 13.0,
-                ),
+          return StreamBuilder<List<Map<String, dynamic>>>(
+            stream: _alertsStream,
+            builder: (context, alertSnapshot) {
+              if (alertSnapshot.hasData) {
+                _activeAlerts = alertSnapshot.data!;
+              }
+
+              return Stack(
                 children: [
-                  TileLayer(
-                    urlTemplate: isDark
-                        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-                        : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-                    subdomains: const ['a', 'b', 'c', 'd'],
+                  FlutterMap(
+                    mapController: _mapController,
+                    options: MapOptions(
+                      initialCenter: _getInitialCenter(),
+                      initialZoom: 13.0,
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate: isDark
+                            ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+                            : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+                        subdomains: const ['a', 'b', 'c', 'd'],
+                      ),
+                      // CAPA DE ALERTAS (v2.6.0)
+                      MarkerLayer(
+                        markers: _activeAlerts.map((a) {
+                          return Marker(
+                            point: LatLng(
+                              (a['latitud'] as num).toDouble(),
+                              (a['longitud'] as num).toDouble(),
+                            ),
+                            width: 80,
+                            height: 80,
+                            child: _buildAlertMarker(a),
+                          );
+                        }).toList(),
+                      ),
+                      // CAPA DE MIEMBROS
+                      MarkerLayer(
+                        markers: _currentMembers
+                            .where((m) =>
+                                m['latitud'] != null && m['longitud'] != null)
+                            .map((m) {
+                          final String id =
+                              (m['id'] ?? m['usuario_id'] ?? m['guardian_id']);
+                          final bool isFocused = _focusedMemberId == id;
+                          return Marker(
+                            point: LatLng(
+                              (m['latitud'] as num).toDouble(),
+                              (m['longitud'] as num).toDouble(),
+                            ),
+                            width: isFocused ? 75 : 60,
+                            height: isFocused ? 75 : 60,
+                            rotate: true,
+                            child: GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _focusedMemberId = isFocused ? null : id;
+                                });
+                                if (!isFocused) {
+                                  _animatedMapMove(
+                                    LatLng(
+                                      (m['latitud'] as num).toDouble(),
+                                      (m['longitud'] as num).toDouble(),
+                                    ),
+                                    17.0,
+                                  );
+                                }
+                              },
+                              child:
+                                  _buildMemberMarker(m, isFocused: isFocused),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
                   ),
-                  MarkerLayer(
-                    markers: _currentMembers
-                        .where((m) =>
-                            m['latitud'] != null && m['longitud'] != null)
-                        .map((m) {
-                      final bool isFocused = _focusedMemberId == m['id'];
-                      return Marker(
-                        point: LatLng(
-                          (m['latitud'] as num).toDouble(),
-                          (m['longitud'] as num).toDouble(),
-                        ),
-                        width: isFocused ? 70 : 55,
-                        height: isFocused ? 70 : 55,
-                        rotate: true,
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _focusedMemberId = isFocused ? null : m['id'];
-                            });
-                            if (!isFocused) {
-                              _animatedMapMove(
-                                LatLng(
-                                  (m['latitud'] as num).toDouble(),
-                                  (m['longitud'] as num).toDouble(),
-                                ),
-                                17.0,
-                              );
-                            }
-                          },
-                          child: _buildMemberMarker(m, isFocused: isFocused),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ],
-              ),
 
-              // BOTÓN CENTRAR TODO (v2.5.0)
-              Positioned(
-                right: 20,
-                bottom: 160,
-                child: FloatingActionButton(
-                  mini: true,
-                  onPressed: () {
-                    setState(() => _focusedMemberId = null);
-                    if (_currentMembers.any((m) => m['latitud'] != null)) {
-                      final first = _currentMembers
-                          .firstWhere((m) => m['latitud'] != null);
-                      _animatedMapMove(
-                        LatLng((first['latitud'] as num).toDouble(),
-                            (first['longitud'] as num).toDouble()),
-                        14.0,
-                      );
-                    }
-                  },
-                  backgroundColor: Colors.white.withValues(alpha: 0.9),
-                  child: const Icon(Icons.group_work_rounded,
-                      color: Colors.blueAccent),
-                ),
-              ),
-
-              // PANEL INFERIOR CON RESUMEN
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: GlassBox(
-                    borderRadius: 25,
-                    opacity: isDark ? 0.1 : 0.05,
-                    blur: 15,
-                    padding: const EdgeInsets.all(15),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          "MIEMBROS ACTIVOS",
-                          style: TextStyle(
-                            color: Colors.blueAccent,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        SizedBox(
-                          height: 60,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: _currentMembers.length,
-                            itemBuilder: (context, index) {
-                              final m = _currentMembers[index];
-                              final id = m['id'] ??
-                                  m['usuario_id'] ??
-                                  m['guardian_id'];
-                              final hasLocation = m['latitud'] != null;
-                              final isFocused = _focusedMemberId == id;
-
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 15),
-                                child: GestureDetector(
-                                  behavior: HitTestBehavior.opaque,
-                                  onTap: () {
-                                    if (hasLocation) {
-                                      setState(() {
-                                        _focusedMemberId =
-                                            isFocused ? null : id;
-                                      });
-                                      if (!isFocused) {
-                                        _animatedMapMove(
-                                          LatLng(
-                                            (m['latitud'] as num).toDouble(),
-                                            (m['longitud'] as num).toDouble(),
-                                          ),
-                                          17.0,
-                                        );
-                                      }
-                                    } else {
-                                      UiUtils.showWarning(
-                                          "${m['nombre_completo'] ?? 'El miembro'} no ha compartido su ubicación.");
-                                    }
-                                  },
-                                  child: Column(
-                                    children: [
-                                      AnimatedContainer(
-                                        duration:
-                                            const Duration(milliseconds: 300),
-                                        padding: const EdgeInsets.all(2),
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: isFocused
-                                                ? Colors.blueAccent
-                                                : Colors.transparent,
-                                            width: 2,
-                                          ),
-                                        ),
-                                        child: CircleAvatar(
-                                          radius: 18,
-                                          backgroundColor: hasLocation
-                                              ? Colors.blue
-                                                  .withValues(alpha: 0.2)
-                                              : Colors.grey
-                                                  .withValues(alpha: 0.2),
-                                          child: Text(
-                                            (m['nombre_completo'] as String? ??
-                                                    "U")[0]
-                                                .toUpperCase(),
-                                            style: TextStyle(
-                                              color: hasLocation
-                                                  ? Colors.blue
-                                                  : Colors.grey,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        (m['nombre_completo'] as String? ?? "")
-                                            .split(' ')[0],
-                                        style: TextStyle(
-                                            color: isFocused
-                                                ? Colors.blueAccent
-                                                : textColor,
-                                            fontSize: 8,
-                                            fontWeight: isFocused
-                                                ? FontWeight.bold
-                                                : FontWeight.normal),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
+                  // BOTÓN CENTRAR
+                  Positioned(
+                    right: 20,
+                    bottom: 160,
+                    child: FloatingActionButton(
+                      mini: true,
+                      onPressed: () {
+                        setState(() => _focusedMemberId = null);
+                        if (_currentMembers.any((m) => m['latitud'] != null)) {
+                          final first = _currentMembers
+                              .firstWhere((m) => m['latitud'] != null);
+                          _animatedMapMove(
+                              LatLng((first['latitud'] as num).toDouble(),
+                                  (first['longitud'] as num).toDouble()),
+                              15.0);
+                        }
+                      },
+                      backgroundColor: Colors.white,
+                      child: const Icon(Icons.my_location,
+                          color: Colors.blueAccent),
                     ),
                   ),
-                ),
-              ),
-            ],
+
+                  // PANEL DE MIEMBROS
+                  Positioned(
+                    bottom: 20,
+                    left: 20,
+                    right: 20,
+                    child: GlassBox(
+                      child: Container(
+                        height: 120,
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  "Miembros de tu Círculo",
+                                  style: TextStyle(
+                                      color: textColor,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12),
+                                ),
+                                if (_activeAlerts.isNotEmpty)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Text(
+                                      "¡EMERGENCIA!",
+                                      style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Expanded(
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: _currentMembers.length,
+                                itemBuilder: (context, index) {
+                                  final m = _currentMembers[index];
+                                  final id = (m['id'] ??
+                                      m['usuario_id'] ??
+                                      m['guardian_id']);
+                                  final bool isFocused = _focusedMemberId == id;
+                                  final bool hasLocation = m['latitud'] != null;
+
+                                  return GestureDetector(
+                                    onTap: () {
+                                      if (hasLocation) {
+                                        setState(() => _focusedMemberId = id);
+                                        _animatedMapMove(
+                                          LatLng(
+                                              (m['latitud'] as num).toDouble(),
+                                              (m['longitud'] as num)
+                                                  .toDouble()),
+                                          17.0,
+                                        );
+                                      } else {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(SnackBar(
+                                                content: Text(
+                                                    "${m['nombre_completo']} no está compartiendo ubicación")));
+                                      }
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(right: 15),
+                                      child: Column(
+                                        children: [
+                                          CircleAvatar(
+                                            radius: 20,
+                                            backgroundColor: isFocused
+                                                ? Colors.blueAccent
+                                                : (hasLocation
+                                                    ? Colors.blue
+                                                        .withValues(alpha: 0.1)
+                                                    : Colors.grey.withValues(
+                                                        alpha: 0.1)),
+                                            child: Text(
+                                                (m['nombre_completo'] ?? "U")[0]
+                                                    .toUpperCase(),
+                                                style: TextStyle(
+                                                    color: hasLocation
+                                                        ? (isFocused
+                                                            ? Colors.white
+                                                            : Colors.blue)
+                                                        : Colors.grey,
+                                                    fontWeight:
+                                                        FontWeight.bold)),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            (m['nombre_completo'] as String? ??
+                                                    "")
+                                                .split(' ')[0],
+                                            style: TextStyle(
+                                                color: isFocused
+                                                    ? Colors.blueAccent
+                                                    : textColor,
+                                                fontSize: 9),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           );
         },
       ),
@@ -386,26 +442,77 @@ class _CircleMapScreenState extends State<CircleMapScreen>
         );
       }
     }
-    return const LatLng(-1.67098, -78.64712); // Default Riobamba
+    return const LatLng(-1.67098, -78.64712); // Riobamba
   }
 
-  @override
-  void dispose() {
-    _locationTimer?.cancel();
-    _mapController.dispose();
-    super.dispose();
+  Widget _buildAlertMarker(Map<String, dynamic> alert) {
+    final String userId = alert['usuario_id'] ?? "";
+    final member = _currentMembers.firstWhere(
+      (m) => (m['id'] ?? m['usuario_id'] ?? m['guardian_id']) == userId,
+      orElse: () => {},
+    );
+    final String name = member['nombre_completo'] ?? "Alerta";
+    final String fechaStr = alert['fecha'] ?? "";
+    final String timeAgo = _apiService.calcularTiempoTranscurrido(fechaStr);
+
+    return AnimatedBuilder(
+      animation: _pulseController,
+      builder: (context, child) {
+        return Stack(
+          alignment: Alignment.center,
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: 40 + (40 * _pulseController.value),
+              height: 40 + (40 * _pulseController.value),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color:
+                    Colors.red.withValues(alpha: 1.0 - _pulseController.value),
+              ),
+            ),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: const [
+                      BoxShadow(color: Colors.black45, blurRadius: 4)
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Text(name.split(' ')[0],
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold)),
+                      Text(timeAgo,
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 8)),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.warning_rounded, color: Colors.red, size: 30),
+              ],
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget _buildMemberMarker(Map<String, dynamic> member,
       {bool isFocused = false}) {
     final String name = member['nombre_completo'] ?? "Usuario";
     final String initial = name.isNotEmpty ? name[0].toUpperCase() : "U";
-
-    // Generar un color basado en el ID para que sea consistente
     final String id = member['id'] ?? "";
     final Color memberColor =
         Colors.primaries[id.hashCode % Colors.primaries.length];
-
     final String lastConnect = member['ultima_conexion'] ?? "";
     final String timeAgo = _apiService.calcularTiempoTranscurrido(lastConnect);
 
@@ -416,7 +523,6 @@ class _CircleMapScreenState extends State<CircleMapScreen>
         alignment: Alignment.center,
         clipBehavior: Clip.none,
         children: [
-          // Etiqueta de nombre y tiempo (Sutil)
           Positioned(
             top: -25,
             child: Container(
@@ -424,7 +530,7 @@ class _CircleMapScreenState extends State<CircleMapScreen>
               decoration: BoxDecoration(
                 color: isFocused ? Colors.blueAccent : Colors.black87,
                 borderRadius: BorderRadius.circular(15),
-                boxShadow: [
+                boxShadow: const [
                   BoxShadow(
                       color: Colors.black26,
                       blurRadius: 4,
@@ -434,26 +540,19 @@ class _CircleMapScreenState extends State<CircleMapScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    name.split(' ')[0],
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    timeAgo,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.8),
-                      fontSize: 8,
-                    ),
-                  ),
+                  Text(name.split(' ')[0],
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold)),
+                  Text(timeAgo,
+                      style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          fontSize: 8)),
                 ],
               ),
             ),
           ),
-          // Avatar Circular
           Container(
             width: isFocused ? 50 : 40,
             height: isFocused ? 50 : 40,
@@ -464,22 +563,18 @@ class _CircleMapScreenState extends State<CircleMapScreen>
                   color: isFocused ? Colors.blueAccent : memberColor, width: 2),
               boxShadow: [
                 BoxShadow(
-                  color: (isFocused ? Colors.blueAccent : memberColor)
-                      .withValues(alpha: 0.4),
-                  blurRadius: 10,
-                  spreadRadius: 2,
-                ),
+                    color: (isFocused ? Colors.blueAccent : memberColor)
+                        .withValues(alpha: 0.4),
+                    blurRadius: 10,
+                    spreadRadius: 2)
               ],
             ),
             child: Center(
-              child: Text(
-                initial,
-                style: TextStyle(
-                  fontSize: isFocused ? 18 : 14,
-                  fontWeight: FontWeight.bold,
-                  color: isFocused ? Colors.blueAccent : memberColor,
-                ),
-              ),
+              child: Text(initial,
+                  style: TextStyle(
+                      fontSize: isFocused ? 18 : 14,
+                      fontWeight: FontWeight.bold,
+                      color: isFocused ? Colors.blueAccent : memberColor)),
             ),
           ),
         ],

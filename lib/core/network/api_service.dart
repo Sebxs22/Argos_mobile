@@ -590,4 +590,32 @@ class ApiService {
       debugPrint("Error en enviarNotificacionComunitaria: $e");
     }
   }
+
+  // 8. STREAM DE ALERTAS RECIENTES DEL CÍRCULO (v2.6.0)
+  // Escucha alertas de miembros específicos ocurridas en la última hora
+  Stream<List<Map<String, dynamic>>> streamAlertasRecientesCirculo(
+      List<String> ids) {
+    if (ids.isEmpty) return Stream.value([]);
+
+    final oneHourAgo = DateTime.now()
+        .toUtc()
+        .subtract(const Duration(hours: 1))
+        .toIso8601String();
+
+    return _supabase
+        .from('alertas')
+        .stream(primaryKey: ['id'])
+        .order('fecha', ascending: false)
+        .map((data) {
+          final idSet = ids.toSet();
+          return data.where((a) {
+            final String? userId = a['usuario_id'];
+            final String? fecha = a['fecha'];
+            if (userId == null || fecha == null) return false;
+
+            // Filtro por ID de miembro y por tiempo (1 hora)
+            return idSet.contains(userId) && fecha.compareTo(oneHourAgo) >= 0;
+          }).toList();
+        });
+  }
 }
