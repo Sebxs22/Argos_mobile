@@ -50,6 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = UiTokens.textColor(context);
     final secondaryTextColor = UiTokens.secondaryTextColor(context);
 
