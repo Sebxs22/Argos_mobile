@@ -144,7 +144,10 @@ class ApiService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('cached_danger_zones');
       await prefs.remove('pending_alert_id');
-      debugPrint("ARGOS: Alerta $idNum clasificada. Memoria liberada.");
+      await prefs
+          .remove('last_sos_timestamp'); // Override: Permitir alerta inmediata
+      debugPrint(
+          "ARGOS: Alerta $idNum clasificada. Memoria y Cooldown liberados.");
     } catch (e) {
       debugPrint("Error clasificando incidente: $e");
       throw Exception("Error al clasificar incidente");
@@ -171,9 +174,11 @@ class ApiService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('cached_danger_zones');
       await prefs.remove('pending_alert_id');
+      await prefs
+          .remove('last_sos_timestamp'); // Override: Permitir alerta inmediata
 
       debugPrint(
-          "ARGOS: Alerta $idNum borrada física y localmente. Memoria liberada.");
+          "ARGOS: Alerta $idNum borrada física y localmente. Memoria y Cooldown liberados.");
       UiUtils.showSuccess("Alerta cancelada. Mapa purgado.");
     } catch (e) {
       debugPrint("Error cancelando alerta: $e");
@@ -367,8 +372,11 @@ class ApiService {
   }) async {
     try {
       final apiKey = dotenv.env['ORS_API_KEY'];
-      if (apiKey == null) {
-        return {'error': 'ORS_API_KEY no configurado en .env'};
+      if (apiKey == null || apiKey.isEmpty) {
+        return {
+          'error':
+              'ORS_API_KEY NO CONFIGURADO EN EL .ENV. (Asegúrate de hacer un Hot Restart si acabas de agregarlo).'
+        };
       }
 
       // CORRECCIÓN DE PERFILES ORS (v2.14.0)

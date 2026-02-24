@@ -78,9 +78,11 @@ Future<void> _handlePanicAlert(
     return;
   }
 
-  // --- BLOQUEO DE DUPLICADOS (v2.4.8) ---
+  // --- BLOQUEO DE DUPLICADOS Y COOLDOWN (v2.14.4) ---
   final SharedPreferences prefs = await SharedPreferences.getInstance();
-  await prefs.reload(); // Sincronizar con el proceso principal (Main Isolate)
+  await prefs.reload(); // Sincronizar con el proceso principal
+
+  // 1. Bloqueo por Alerta Activa (No enviar si ya hay una pendiente)
   final String? existingAlertaId = prefs.getString('pending_alert_id');
   if (existingAlertaId != null) {
     developer.log(
@@ -88,25 +90,35 @@ Future<void> _handlePanicAlert(
     return;
   }
 
+  // 2. Bloqueo por Cooldown (3 minutos)
+  final int? lastSosMillis = prefs.getInt('last_sos_timestamp');
+  if (lastSosMillis != null) {
+    final lastSosTime = DateTime.fromMillisecondsSinceEpoch(lastSosMillis);
+    final diff = now.difference(lastSosTime);
+    if (diff < const Duration(minutes: 3)) {
+      developer.log(
+          "ARGOS: SOS ignorado por Cooldown. Faltan ${180 - diff.inSeconds}s.");
+      return;
+    }
+  }
+
   _lastAlertTime = now;
   developer.log("ARGOS: ¡SOS DETECTADO! Ejecutando protocolos...");
 
   // VIBRACIÓN INMEDIATA (Confirmación táctil para el usuario)
   try {
-    // Usamos el canal de notificación para forzar la vibración inmediata
-    // ya que flutter_vibrate puede ser inestable en Isolates de fondo.
     notifications.show(
       id: 999,
       title: '⚠️ ARRANCHÓN DETECTADO',
       body: 'Enviando alerta...',
       notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
-          'argos_urgent', 'ARGOS Urgente',
+          'argos_urgent',
+          'ARGOS Urgente',
           importance: Importance.max,
           priority: Priority.high,
           enableVibration: true,
-          vibrationPattern:
-              Int64List.fromList([0, 500, 200, 500]), // Vibración doble fuerte
+          vibrationPattern: Int64List.fromList([0, 500, 200, 500]),
           playSound: false,
         ),
       ),
@@ -116,26 +128,75 @@ Future<void> _handlePanicAlert(
   }
 
   try {
-    Position position;
+    // --- ESTRATEGIA DE UBICACIÓN RESILIENTE (v2.14.3: High-Precision Focus) ---
+    Position? position;
+    bool fastTrackSent = false;
+
     try {
-      // Intento 1: Alta Precisión (v2.6.3) con timeout de 5s
+      // 1. Intento Ultrarrápido: Última ubicación conocida
+      position = await Geolocator.getLastKnownPosition();
+      if (position != null) {
+        // Solo enviamos Fast-Track si la ubicación es "joven" (menos de 10 seg)
+        // o si es la única que tenemos disponible al inicio.
+        final age = DateTime.now().difference(position.timestamp);
+
+        developer.log("ARGOS: SOS Fast-Track. Antigüedad: ${age.inSeconds}s");
+
+        await _enviarYNotificarSOS(
+            apiService, service, notifications, position);
+        fastTrackSent = true;
+
+        // Si la posición es MUY fresca (menos de 8 seg), ya es bastante precisa.
+        if (age < const Duration(seconds: 8)) {
+          developer.log("ARGOS: Ubicación Fast-Track suficientemente precisa.");
+          return;
+        }
+      }
+    } catch (e) {
+      developer.log("Error obteniendo lastKnownPosition: $e");
+    }
+
+    try {
+      // 2. Intento de Alta Precisión (Siempre intentamos mejorar la puntería)
       position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 5),
+          timeLimit: Duration(
+              seconds: 4), // Damos un poco más de tiempo para fijar satélites
         ),
       );
-    } catch (e) {
-      developer
-          .log("ARGOS: Alta precisión falló/timeout. Usando alternativa...");
-      // Intento 2: Precisión Media (Más rápida/Antenas)
-      position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.medium,
-        ),
-      );
-    }
 
+      developer.log("ARGOS: ¡Ubicación de ALTA PRECISIÓN obtenida!");
+
+      // Si ya enviamos una Fast-Track, esta segunda señal ACTUALIZARÁ el mapa
+      // Como enviamos el mismo alertaId o simplemente creamos el evento preciso.
+      await _enviarYNotificarSOS(apiService, service, notifications, position);
+    } catch (e) {
+      developer.log("ARGOS: Alta precisión falló. Usando alternativa media...");
+      if (!fastTrackSent) {
+        // Solo si no enviamos nada antes, intentamos una media rápido
+        position = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.medium,
+          ),
+        );
+        await _enviarYNotificarSOS(
+            apiService, service, notifications, position);
+      }
+    }
+  } catch (e) {
+    developer.log("Error SOS Crítico: $e");
+  }
+}
+
+// Función auxiliar para centralizar el envío (v2.14.2)
+Future<void> _enviarYNotificarSOS(
+  ApiService apiService,
+  ServiceInstance service,
+  FlutterLocalNotificationsPlugin notifications,
+  Position position,
+) async {
+  try {
     final String? alertaId = await apiService.enviarAlertaEmergencia(
       position.latitude,
       position.longitude,
@@ -147,12 +208,11 @@ Future<void> _handlePanicAlert(
       "lng": position.longitude,
     });
 
-    // --- MEMORIA ARGOS (Persistencia para clasificación posterior) v2.3.0 ---
     if (alertaId != null) {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString('pending_alert_id', alertaId);
-      developer
-          .log("ARGOS MEMORY: Alerta guardada en SharedPreferences Isolate.");
+      await prefs.setInt(
+          'last_sos_timestamp', DateTime.now().millisecondsSinceEpoch);
     }
 
     final user = Supabase.instance.client.auth.currentUser;
@@ -166,7 +226,6 @@ Future<void> _handlePanicAlert(
           .enviarNotificacionEmergencia(res['nombre_completo'] ?? "Un usuario");
     }
 
-    // Notificación Local (Compatibilidad confirmada para v20+)
     await notifications.show(
       id: 888,
       title: 'ARGOS: SOS ENVIADO',
@@ -178,14 +237,13 @@ Future<void> _handlePanicAlert(
           importance: Importance.max,
           priority: Priority.high,
           enableVibration: true,
-          vibrationPattern: Int64List.fromList(
-              [0, 200, 100, 200, 100, 500]), // Vibración final triple
+          vibrationPattern: Int64List.fromList([0, 200, 100, 200, 100, 500]),
           playSound: false,
         ),
       ),
     );
   } catch (e) {
-    developer.log("Error SOS: $e");
+    developer.log("Error en _enviarYNotificarSOS: $e");
   }
 }
 
