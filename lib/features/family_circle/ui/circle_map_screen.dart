@@ -35,6 +35,7 @@ class _CircleMapScreenState extends State<CircleMapScreen>
 
   List<Map<String, dynamic>> _currentMembers = [];
   List<Map<String, dynamic>> _activeAlerts = []; // v2.6.0
+  List<Map<String, dynamic>> _safePlaces = []; // v2.14.6
 
   bool _hasCentered = false;
   String? _focusedMemberId;
@@ -63,6 +64,7 @@ class _CircleMapScreenState extends State<CircleMapScreen>
     _membersStream = _apiService.streamUbicacionesCirculo(ids);
     _alertsStream = _apiService.streamAlertasRecientesCirculo(ids);
 
+    _loadSafePlaces(); // v2.14.6
     _startLocationTracking();
 
     // LÓGICA DE FOCO INICIAL
@@ -119,6 +121,17 @@ class _CircleMapScreenState extends State<CircleMapScreen>
     _locationTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
       _updateMyLocation();
     });
+  }
+
+  Future<void> _loadSafePlaces() async {
+    try {
+      final places = await _apiService.obtenerMisLugaresSeguros();
+      if (mounted) {
+        setState(() => _safePlaces = places);
+      }
+    } catch (e) {
+      debugPrint("Error cargando geocercas en mapa: $e");
+    }
   }
 
   Future<void> _updateMyLocation() async {
@@ -228,6 +241,21 @@ class _CircleMapScreenState extends State<CircleMapScreen>
                             ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
                             : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
                         subdomains: const ['a', 'b', 'c', 'd'],
+                      ),
+                      // CAPA DE GEOCERCAS (v2.14.6)
+                      CircleLayer(
+                        circles: _safePlaces.map((p) {
+                          return CircleMarker(
+                            point: LatLng((p['latitud'] as num).toDouble(),
+                                (p['longitud'] as num).toDouble()),
+                            radius: (p['radio'] as num).toDouble(),
+                            useRadiusInMeter: true,
+                            color: Colors.blueAccent.withValues(alpha: 0.1),
+                            borderColor:
+                                Colors.blueAccent.withValues(alpha: 0.3),
+                            borderStrokeWidth: 1,
+                          );
+                        }).toList(),
                       ),
                       // CAPA DE ALERTAS (v2.6.0)
                       MarkerLayer(
@@ -533,6 +561,8 @@ class _CircleMapScreenState extends State<CircleMapScreen>
     final String lastConnect = member['ultima_conexion'] ?? "";
     final String timeAgo = _apiService.calcularTiempoTranscurrido(lastConnect);
 
+    final bool isMoving = member['is_accompaniment_active'] ?? false;
+
     return AnimatedScale(
       scale: isFocused ? 1.2 : 1.0,
       duration: const Duration(milliseconds: 300),
@@ -545,7 +575,9 @@ class _CircleMapScreenState extends State<CircleMapScreen>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: isFocused ? Colors.blueAccent : Colors.black87,
+                color: isFocused
+                    ? Colors.blueAccent
+                    : (isMoving ? Colors.green : Colors.black87),
                 borderRadius: BorderRadius.circular(15),
                 boxShadow: const [
                   BoxShadow(
@@ -557,15 +589,28 @@ class _CircleMapScreenState extends State<CircleMapScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(name.split(' ')[0],
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold)),
-                  Text(timeAgo,
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (isMoving)
+                        const Padding(
+                          padding: EdgeInsets.only(right: 4.0),
+                          child: Icon(Icons.directions_run,
+                              color: Colors.white, size: 10),
+                        ),
+                      Text(name.split(' ')[0],
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  Text(isMoving ? "EN CAMINO" : timeAgo,
                       style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.8),
-                          fontSize: 8)),
+                          fontSize: 8,
+                          fontWeight:
+                              isMoving ? FontWeight.bold : FontWeight.normal)),
                 ],
               ),
             ),

@@ -7,7 +7,9 @@ import '../../../core/network/auth_service.dart';
 import '../../../core/ui/glass_box.dart';
 import '../../../core/ui/argos_background.dart'; // Import v2.8.0
 import '../../../core/utils/ui_utils.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'circle_map_screen.dart';
+import 'places_screen.dart';
 
 class FamilyCircleScreen extends StatefulWidget {
   const FamilyCircleScreen({super.key});
@@ -250,7 +252,27 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
                               ],
                             ),
                           ),
-                          const SizedBox(height: 15),
+                          const SizedBox(height: 10),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const PlacesScreen())),
+                              icon: const Icon(Icons.home_work_outlined,
+                                  size: 16),
+                              label: const Text("Administrar Mis Lugares"),
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(
+                                    color: Colors.blueAccent
+                                        .withValues(alpha: 0.3)),
+                                foregroundColor: Colors.blueAccent,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 5),
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton.icon(
@@ -266,48 +288,106 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
                           const SizedBox(height: 10),
                           if (_misProtegidos.isNotEmpty ||
                               _misGuardianes.isNotEmpty)
-                            SizedBox(
-                              width: double.infinity,
-                              child: OutlinedButton.icon(
-                                onPressed: () {
-                                  // v2.5.3: Deduplicación proactiva (Evita dobles en mapa)
-                                  final Map<String, Map<String, dynamic>>
-                                      dedup = {};
+                            Column(
+                              children: [
+                                // v2.14.5: MODO ACOMPAÑAMIENTO
+                                FutureBuilder<bool>(
+                                  future: SharedPreferences.getInstance().then(
+                                      (p) =>
+                                          p.getBool(
+                                              'is_accompaniment_active') ??
+                                          false),
+                                  builder: (context, snapshot) {
+                                    final isActive = snapshot.data ?? false;
+                                    return SizedBox(
+                                      width: double.infinity,
+                                      child: ElevatedButton.icon(
+                                        onPressed: () async {
+                                          final p = await SharedPreferences
+                                              .getInstance();
+                                          final bool newStatus = !isActive;
+                                          await p.setBool(
+                                              'is_accompaniment_active',
+                                              newStatus);
 
-                                  for (var m in _misGuardianes) {
-                                    final id = (m['id'] ??
-                                        m['usuario_id'] ??
-                                        m['guardian_id']) as String;
-                                    dedup[id] = m;
-                                  }
-                                  for (var m in _misProtegidos) {
-                                    final id = (m['id'] ??
-                                        m['usuario_id'] ??
-                                        m['guardian_id']) as String;
-                                    dedup[id] = {
-                                      ...(dedup[id] ?? {}),
-                                      ...m,
-                                    };
-                                  }
+                                          // Sincronizar con base de datos (v2.14.5)
+                                          await ApiService()
+                                              .actualizarEstadoAcompanamiento(
+                                                  newStatus);
 
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => CircleMapScreen(
-                                        initialMembers: dedup.values.toList(),
+                                          setState(() {}); // Refrescar UI
+                                          if (!isActive) {
+                                            UiUtils.showSuccess(
+                                                "Modo Acompañamiento Activo. Tus guardianes verán tu movimiento fluido.");
+                                          }
+                                        },
+                                        icon: Icon(
+                                            isActive
+                                                ? Icons.accessibility_new
+                                                : Icons.directions_walk,
+                                            size: 16),
+                                        label: Text(isActive
+                                            ? "Detener Acompañamiento"
+                                            : "Voy de Camino (Alta Frecuencia)"),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: isActive
+                                              ? Colors.green
+                                              : Colors.blueAccent
+                                                  .withValues(alpha: 0.8),
+                                          foregroundColor: Colors.white,
+                                        ),
                                       ),
-                                    ),
-                                  );
-                                },
-                                icon: const Icon(Icons.map_rounded, size: 16),
-                                label: const Text("Ver Mapa en Tiempo Real"),
-                                style: OutlinedButton.styleFrom(
-                                  side: BorderSide(
-                                      color: Colors.blueAccent
-                                          .withValues(alpha: 0.5)),
-                                  foregroundColor: Colors.blueAccent,
+                                    );
+                                  },
                                 ),
-                              ),
+                                const SizedBox(height: 8),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: OutlinedButton.icon(
+                                    onPressed: () {
+                                      // v2.5.3: Deduplicación proactiva (Evita dobles en mapa)
+                                      final Map<String, Map<String, dynamic>>
+                                          dedup = {};
+
+                                      for (var m in _misGuardianes) {
+                                        final id = (m['id'] ??
+                                            m['usuario_id'] ??
+                                            m['guardian_id']) as String;
+                                        dedup[id] = m;
+                                      }
+                                      for (var m in _misProtegidos) {
+                                        final id = (m['id'] ??
+                                            m['usuario_id'] ??
+                                            m['guardian_id']) as String;
+                                        dedup[id] = {
+                                          ...(dedup[id] ?? {}),
+                                          ...m,
+                                        };
+                                      }
+
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => CircleMapScreen(
+                                            initialMembers:
+                                                dedup.values.toList(),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    icon:
+                                        const Icon(Icons.map_rounded, size: 16),
+                                    label:
+                                        const Text("Ver Mapa en Tiempo Real"),
+                                    style: OutlinedButton.styleFrom(
+                                      side: BorderSide(
+                                          color: Colors.blueAccent
+                                              .withValues(alpha: 0.5)),
+                                      foregroundColor: Colors.blueAccent,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                         ],
                       ),

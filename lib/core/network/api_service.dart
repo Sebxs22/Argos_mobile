@@ -107,6 +107,120 @@ class ApiService {
     }
   }
 
+  // 1.7. LUGRES SEGUROS Y GEOCERCAS (v2.14.6)
+
+  // Obtener mis lugares seguros
+  Future<List<Map<String, dynamic>>> obtenerMisLugaresSeguros() async {
+    try {
+      final user = _supabase.auth.currentUser;
+      if (user == null) return [];
+
+      final res = await _supabase
+          .from('lugares_seguros')
+          .select()
+          .eq('usuario_id', user.id);
+      return List<Map<String, dynamic>>.from(res);
+    } catch (e) {
+      debugPrint("Error obteniendo lugares seguros: $e");
+      return [];
+    }
+  }
+
+  // Registrar un nuevo lugar seguro
+  Future<void> registrarLugarSeguro(
+      String nombre, double lat, double long, double radio) async {
+    try {
+      final user = _supabase.auth.currentUser;
+      if (user == null) return;
+
+      await _supabase.from('lugares_seguros').insert({
+        'usuario_id': user.id,
+        'nombre': nombre,
+        'latitud': lat,
+        'longitud': long,
+        'radio': radio,
+      });
+    } catch (e) {
+      debugPrint("Error registrando lugar seguro: $e");
+    }
+  }
+
+  // ELIMINAR LUGAR SEGURO
+  Future<void> eliminarLugarSeguro(int id) async {
+    try {
+      await _supabase.from('lugares_seguros').delete().eq('id', id);
+    } catch (e) {
+      debugPrint("Error eliminando lugar seguro: $e");
+    }
+  }
+
+  // NOTIFICAR TRANSICIÓN DE GEOCERCA (Llegada/Salida)
+  Future<void> notificarTransicionGeocerca(
+      String nombreLugar, bool entrando) async {
+    try {
+      final user = _supabase.auth.currentUser;
+      if (user == null) return;
+
+      // 1. Obtener mis datos (para el nombre)
+      final perfil = await _supabase
+          .from('perfiles')
+          .select('nombre_completo')
+          .eq('id', user.id)
+          .single();
+      final String nombreUsuario = perfil['nombre_completo'] ?? "Un miembro";
+
+      // 2. Obtener IDs de mis guardianes para notificarles
+      final resGuardianes = await _supabase
+          .from('circulo_confianza')
+          .select('perfiles(onesignal_id)')
+          .eq('usuario_id', user.id);
+
+      final List<String> targetIds = (resGuardianes as List)
+          .map((e) => e['perfiles']['onesignal_id'] as String?)
+          .where((id) => id != null && id.isNotEmpty)
+          .cast<String>()
+          .toList();
+
+      if (targetIds.isEmpty) return;
+
+      final String statusMsg = entrando ? "HA LLEGADO A" : "HA SALIDO DE";
+      final String emoji = entrando ? "✅" : "⚠️";
+
+      await http.post(
+        Uri.parse('https://onesignal.com/api/v1/notifications'),
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Authorization': 'Basic ${dotenv.env['ONESIGNAL_REST_API_KEY']}',
+        },
+        body: jsonEncode({
+          'app_id': dotenv.env['ONESIGNAL_APP_ID'],
+          'include_player_ids': targetIds,
+          'contents': {'es': '$emoji $nombreUsuario $statusMsg $nombreLugar'},
+          'headings': {'es': 'ARGOS: Círculo de Confianza'},
+          'priority': 5,
+        }),
+      );
+
+      debugPrint("ARGOS: Notificado $statusMsg $nombreLugar a guardianes.");
+    } catch (e) {
+      debugPrint("Error notificando geocerca: $e");
+    }
+  }
+
+  // 1.6. ACTUALIZAR ESTADO DE ACOMPAÑAMIENTO (v2.14.5)
+  Future<void> actualizarEstadoAcompanamiento(bool activo) async {
+    try {
+      final user = _supabase.auth.currentUser;
+      if (user == null) return;
+
+      await _supabase.from('perfiles').update({
+        'is_accompaniment_active': activo,
+      }).eq('id', user.id);
+    } catch (e) {
+      debugPrint("Error actualizando estado acompañamiento: $e");
+    }
+  }
+
   // 1.5. ACTUALIZAR UBICACIÓN DE ALERTA EXISTENTE (v2.14.4)
   Future<void> actualizarAlertaUbicacion(
       String alertaId, double lat, double long) async {
