@@ -107,6 +107,26 @@ class ApiService {
     }
   }
 
+  // 1.5. ACTUALIZAR UBICACIÓN DE ALERTA EXISTENTE (v2.14.4)
+  Future<void> actualizarAlertaUbicacion(
+      String alertaId, double lat, double long) async {
+    try {
+      final int idNum = int.tryParse(alertaId) ?? 0;
+      if (idNum == 0) return;
+
+      await _supabase.from('alertas').update({
+        'latitud': lat,
+        'longitud': long,
+        'fecha': DateTime.now().toUtc().toIso8601String(),
+      }).eq('id', idNum);
+
+      debugPrint(
+          "ARGOS DATABASE: Alerta $idNum actualizada con alta precisión");
+    } catch (e) {
+      debugPrint("Error actualizando precisión de alerta: $e");
+    }
+  }
+
   // Método para clasificar el incidente
   Future<void> clasificarIncidente(String alertaId, String tipo) async {
     try {
