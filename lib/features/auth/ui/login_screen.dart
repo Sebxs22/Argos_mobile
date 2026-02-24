@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/network/auth_service.dart';
 import '../../../core/ui/glass_box.dart';
 import '../../../core/ui/argos_background.dart';
+import '../../../core/utils/ui_tokens.dart'; // v2.14.9
 import '../../../core/utils/ui_utils.dart'; // Import UiUtils
 import '../../../../main.dart'; // Para navegar al MainNavigator
 import 'register_screen.dart';
@@ -49,9 +50,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : Colors.black87;
-    final secondaryTextColor = isDark ? Colors.white38 : Colors.black45;
+    final textColor = UiTokens.textColor(context);
+    final secondaryTextColor = UiTokens.secondaryTextColor(context);
 
     return ArgosBackground(
       child: Center(
@@ -105,17 +105,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     _buildInputField(
                       controller: _emailController,
-                      hint: "Correo Electrónico",
-                      icon: Icons.alternate_email,
-                      isDark: isDark,
+                      hint: "Correo electrónico",
+                      icon: Icons.alternate_email_rounded,
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 15),
                     _buildInputField(
                       controller: _passController,
                       hint: "Contraseña",
-                      icon: Icons.lock_outline,
+                      icon: Icons.lock_outline_rounded,
                       isPassword: true,
-                      isDark: isDark,
                     ),
                     const SizedBox(height: 35),
                     _isLoading
@@ -186,14 +184,16 @@ class _LoginScreenState extends State<LoginScreen> {
     required String hint,
     required IconData icon,
     bool isPassword = false,
-    bool isDark = true,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? Colors.black26 : Colors.white.withValues(alpha: 0.3),
+        color: isDark
+            ? Colors.black.withValues(alpha: 0.26)
+            : Colors.white.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(15),
         border: Border.all(
-          color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.1),
+          color: UiTokens.glassBorder(context), // v2.14.9
           width: 0.5,
         ),
       ),
@@ -201,13 +201,13 @@ class _LoginScreenState extends State<LoginScreen> {
         controller: controller,
         obscureText: isPassword,
         style: TextStyle(
-          color: isDark ? Colors.white : Colors.black87,
+          color: UiTokens.textColor(context),
           fontSize: 15,
         ),
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(
-            color: isDark ? Colors.white24 : Colors.black38,
+            color: UiTokens.secondaryTextColor(context),
             fontSize: 14,
           ),
           prefixIcon: Icon(

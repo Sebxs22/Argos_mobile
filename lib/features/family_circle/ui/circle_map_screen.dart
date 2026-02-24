@@ -311,40 +311,46 @@ class _CircleMapScreenState extends State<CircleMapScreen>
                     ],
                   ),
 
-                  // --- BOTÓN FLOTANTE: ACOMPAÑAMIENTO (v2.14.7) ---
+                  // --- BOTÓN FLOTANTE: ACOMPAÑAMIENTO (v2.14.8: Movido y mejorado) ---
                   Positioned(
-                    bottom: 120,
+                    bottom: 160,
                     left: 20,
                     child: GestureDetector(
                       onTap: _toggleAccompaniment,
                       child: GlassBox(
                         borderRadius: 30,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
-                          child: Row(
-                            children: [
-                              Icon(
-                                _isAccompanimentActive
-                                    ? Icons.accessibility_new
-                                    : Icons.directions_walk,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _isAccompanimentActive
+                                  ? Icons.accessibility_new
+                                  : Icons.directions_walk,
+                              color: _isAccompanimentActive
+                                  ? (isDark
+                                      ? Colors.greenAccent
+                                      : Colors.green[700])
+                                  : textColor,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              _isAccompanimentActive
+                                  ? "EN CAMINO"
+                                  : "AVISAR TRAYECTO",
+                              style: TextStyle(
                                 color: _isAccompanimentActive
-                                    ? Colors.greenAccent
-                                    : Colors.white,
+                                    ? (isDark
+                                        ? Colors.greenAccent
+                                        : Colors.green[700])
+                                    : textColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                _isAccompanimentActive
-                                    ? "EN CAMINO"
-                                    : "AVISAR TRAYECTO",
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -374,47 +380,49 @@ class _CircleMapScreenState extends State<CircleMapScreen>
                     ),
                   ),
 
-                  // PANEL DE MIEMBROS
+                  // PANEL DE MIEMBROS (v2.14.8: Más esbelto)
                   Positioned(
                     bottom: 20,
                     left: 20,
                     right: 20,
                     child: GlassBox(
-                      child: Container(
-                        height: 120,
-                        padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 10),
+                      child: SizedBox(
+                        height: 95,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  "Miembros de tu Círculo",
+                                  "Tu Círculo",
                                   style: TextStyle(
                                       color: textColor,
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 12),
+                                      fontSize: 11),
                                 ),
                                 if (_activeAlerts.isNotEmpty)
                                   Container(
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 2),
+                                        horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
                                       color: Colors.red,
-                                      borderRadius: BorderRadius.circular(10),
+                                      borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: const Text(
-                                      "¡EMERGENCIA!",
+                                      "EMERGENCIA",
                                       style: TextStyle(
                                           color: Colors.white,
-                                          fontSize: 10,
+                                          fontSize: 9,
                                           fontWeight: FontWeight.bold),
                                     ),
                                   ),
                               ],
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 8),
                             Expanded(
                               child: ListView.builder(
                                 scrollDirection: Axis.horizontal,
@@ -447,48 +455,38 @@ class _CircleMapScreenState extends State<CircleMapScreen>
                                       }
                                     },
                                     child: Padding(
-                                      padding: const EdgeInsets.only(right: 15),
+                                      padding: const EdgeInsets.only(right: 12),
                                       child: Column(
                                         children: [
                                           CircleAvatar(
-                                            radius: 20,
+                                            radius: 18,
                                             backgroundColor: isFocused
                                                 ? Colors.blueAccent
-                                                : (hasLocation
-                                                    ? Colors.blue
-                                                        .withValues(alpha: 0.1)
-                                                    : Colors.grey.withValues(
-                                                        alpha: 0.1)),
+                                                : Colors.blueAccent
+                                                    .withValues(alpha: 0.1),
                                             backgroundImage: m['avatar_url'] !=
                                                     null
                                                 ? NetworkImage(m['avatar_url'])
                                                 : null,
                                             child: m['avatar_url'] == null
-                                                ? Text(
-                                                    (m['nombre_completo'] ??
-                                                            "U")[0]
-                                                        .toUpperCase(),
-                                                    style: TextStyle(
-                                                        color: hasLocation
-                                                            ? (isFocused
-                                                                ? Colors.white
-                                                                : Colors.blue)
-                                                            : Colors.grey,
-                                                        fontWeight:
-                                                            FontWeight.bold),
-                                                  )
+                                                ? Icon(Icons.person,
+                                                    size: 16,
+                                                    color: isFocused
+                                                        ? Colors.white
+                                                        : Colors.blueAccent)
                                                 : null,
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
                                             (m['nombre_completo'] as String? ??
-                                                    "")
+                                                    "U")
                                                 .split(' ')[0],
                                             style: TextStyle(
-                                                color: isFocused
-                                                    ? Colors.blueAccent
-                                                    : textColor,
-                                                fontSize: 9),
+                                                color: textColor,
+                                                fontSize: 9,
+                                                fontWeight: isFocused
+                                                    ? FontWeight.bold
+                                                    : FontWeight.normal),
                                           ),
                                         ],
                                       ),
@@ -600,7 +598,9 @@ class _CircleMapScreenState extends State<CircleMapScreen>
     final String lastConnect = member['ultima_conexion'] ?? "";
     final String timeAgo = _apiService.calcularTiempoTranscurrido(lastConnect);
 
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final bool isMoving = member['is_accompaniment_active'] ?? false;
+    final Color movingColor = isDark ? Colors.greenAccent : Colors.green[700]!;
 
     return AnimatedScale(
       scale: isFocused ? 1.2 : 1.0,
@@ -616,7 +616,7 @@ class _CircleMapScreenState extends State<CircleMapScreen>
               decoration: BoxDecoration(
                 color: isFocused
                     ? Colors.blueAccent
-                    : (isMoving ? Colors.green : Colors.black87),
+                    : (isMoving ? movingColor : Colors.black87),
                 borderRadius: BorderRadius.circular(15),
                 boxShadow: const [
                   BoxShadow(

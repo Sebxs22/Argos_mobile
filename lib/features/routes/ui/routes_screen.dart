@@ -9,6 +9,7 @@ import '../../../core/ui/glass_box.dart';
 import '../../../core/network/api_service.dart';
 import '../../../core/ui/argos_notifications.dart'; // v2.14.1
 import '../../sanctuaries/data/mock_sanctuaries_data.dart';
+import '../../../core/utils/ui_tokens.dart'; // v2.14.9
 import 'package:flutter_background_service/flutter_background_service.dart';
 
 class RoutesScreen extends StatefulWidget {
@@ -152,8 +153,7 @@ class _RoutesScreenState extends State<RoutesScreen> {
     final textColor = isDark ? Colors.white : Colors.black87;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF8FAFC),
+      backgroundColor: UiTokens.background(context),
       // Botón para re-centrar el mapa
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 95.0),
@@ -214,8 +214,7 @@ class _RoutesScreenState extends State<RoutesScreen> {
         initialCenter: _myLocation ?? const LatLng(-1.67, -78.64),
         initialZoom: 15.0,
         onTap: _onMapTap, // Captura el destino
-        backgroundColor:
-            isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF8FAFC),
+        backgroundColor: UiTokens.background(context),
       ),
       children: [
         TileLayer(
@@ -374,7 +373,7 @@ class _RoutesScreenState extends State<RoutesScreen> {
               icon,
               color: isSelected
                   ? activeColor
-                  : (isDark ? Colors.white54 : Colors.black45),
+                  : UiTokens.secondaryTextColor(context),
               size: 24,
             ),
             const SizedBox(height: 4),
@@ -423,9 +422,7 @@ class _RoutesScreenState extends State<RoutesScreen> {
                     Text(
                       "Distancia: $_distance",
                       style: TextStyle(
-                        color: isDark
-                            ? Colors.white54
-                            : Colors.black87, // Más oscuro en claro
+                        color: UiTokens.secondaryTextColor(context),
                         fontSize: 12,
                       ),
                     ),

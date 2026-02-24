@@ -4,6 +4,7 @@ import '../../../core/network/api_service.dart';
 import '../../../core/ui/glass_box.dart';
 import '../../../core/ui/argos_background.dart';
 import '../../../core/utils/ui_utils.dart';
+import '../../../core/utils/ui_tokens.dart'; // v2.14.9
 
 class PlacesScreen extends StatefulWidget {
   const PlacesScreen({super.key});
@@ -38,14 +39,13 @@ class _PlacesScreenState extends State<PlacesScreen> {
     String name = "";
     double radius = 200.0;
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : Colors.black87;
+    final textColor = UiTokens.textColor(context);
 
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: UiTokens.surface(context),
+        shape: UiTokens.dialogShape,
         title: Text("Nuevo Lugar Seguro", style: TextStyle(color: textColor)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -119,8 +119,7 @@ class _PlacesScreenState extends State<PlacesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : Colors.black87;
+    final textColor = UiTokens.textColor(context);
 
     return ArgosBackground(
       child: Scaffold(
@@ -163,9 +162,15 @@ class _PlacesScreenState extends State<PlacesScreen> {
                                 final confirm = await showDialog<bool>(
                                   context: context,
                                   builder: (context) => AlertDialog(
-                                    title: const Text("Eliminar"),
-                                    content: const Text(
-                                        "¿Estás seguro de eliminar este lugar?"),
+                                    backgroundColor: UiTokens.surface(context),
+                                    shape: UiTokens.dialogShape,
+                                    title: Text("Eliminar",
+                                        style: TextStyle(color: textColor)),
+                                    content: Text(
+                                        "¿Estás seguro de eliminar este lugar?",
+                                        style: TextStyle(
+                                            color: UiTokens.secondaryTextColor(
+                                                context))),
                                     actions: [
                                       TextButton(
                                           onPressed: () =>
@@ -207,18 +212,20 @@ class _PlacesScreenState extends State<PlacesScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.map_outlined,
-              size: 80, color: Colors.blueAccent.withValues(alpha: 0.2)),
+              size: 80, color: UiTokens.glacialBlue.withValues(alpha: 0.2)),
           const SizedBox(height: 20),
-          const Text("Aún no tienes lugares registrados",
-              style:
-                  TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+          Text("Aún no tienes lugares registrados",
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: UiTokens.secondaryTextColor(context))),
           const SizedBox(height: 10),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 40),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
             child: Text(
               "Registra tu casa o trabajo para avisar a tu círculo automáticamente cuando llegues o salgas.",
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey, fontSize: 12),
+              style: TextStyle(
+                  color: UiTokens.secondaryTextColor(context), fontSize: 12),
             ),
           ),
         ],

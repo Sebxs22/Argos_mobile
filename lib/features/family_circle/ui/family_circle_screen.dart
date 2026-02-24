@@ -231,7 +231,7 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
                                       const Text(
                                         "MI CÓDIGO ARGOS",
                                         style: TextStyle(
-                                            color: Colors.blueAccent,
+                                            color: Colors.blue, // v2.14.8
                                             fontSize: 10,
                                             fontWeight: FontWeight.bold,
                                             letterSpacing: 1.2),
@@ -430,70 +430,57 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
     final textColor = isDark ? Colors.white : Colors.black87;
     final secondaryTextColor = isDark ? Colors.white54 : Colors.black45;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isDark
-            ? Colors.white.withValues(alpha: 0.05)
-            : Colors.white.withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: isDark ? Colors.white10 : Colors.black12),
-        boxShadow: !isDark
-            ? [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                )
-              ]
-            : [],
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: isGuardian
-                ? Colors.green.withValues(alpha: 0.2)
-                : Colors.amber.withValues(alpha: 0.2),
-            backgroundImage: user['avatar_url'] != null
-                ? NetworkImage(user['avatar_url'])
-                : null,
-            child: user['avatar_url'] == null
-                ? Icon(
-                    isGuardian ? Icons.shield : Icons.health_and_safety,
-                    color: isGuardian ? Colors.greenAccent : Colors.amber,
-                    size: 20,
-                  )
-                : null,
-          ),
-          const SizedBox(width: 15),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  user['nombre_completo'] ?? "Usuario",
-                  style: TextStyle(
-                    color: textColor,
-                    fontWeight: FontWeight.bold,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: GlassBox(
+        borderRadius: 15,
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: isGuardian
+                  ? Colors.green.withValues(alpha: 0.2)
+                  : Colors.amber.withValues(alpha: 0.2),
+              backgroundImage: user['avatar_url'] != null
+                  ? NetworkImage(user['avatar_url'])
+                  : null,
+              child: user['avatar_url'] == null
+                  ? Icon(
+                      isGuardian ? Icons.shield : Icons.health_and_safety,
+                      color: isGuardian ? Colors.greenAccent : Colors.amber,
+                      size: 20,
+                    )
+                  : null,
+            ),
+            const SizedBox(width: 15),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    user['nombre_completo'] ?? "Usuario",
+                    style: TextStyle(
+                      color: textColor,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                Text(
-                  user['telefono'] ?? "Sin teléfono",
-                  style: TextStyle(color: secondaryTextColor, fontSize: 12),
-                ),
-              ],
+                  Text(
+                    user['telefono'] ?? "Sin teléfono",
+                    style: TextStyle(color: secondaryTextColor, fontSize: 12),
+                  ),
+                ],
+              ),
             ),
-          ),
-          if (isGuardian)
-            IconButton(
-              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-              onPressed: () {
-                //
-              },
-            ),
-        ],
+            if (isGuardian)
+              IconButton(
+                icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                onPressed: () {
+                  //
+                },
+              ),
+          ],
+        ),
       ),
     );
   }

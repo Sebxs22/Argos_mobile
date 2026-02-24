@@ -3,6 +3,7 @@ import 'package:flutter/services.dart'; // Import v2.7.0
 import 'package:flutter_background_service/flutter_background_service.dart';
 
 import '../../../core/ui/glass_box.dart';
+import '../../../core/utils/ui_tokens.dart'; // v2.14.9
 
 class EyeGuardianScreen extends StatefulWidget {
   const EyeGuardianScreen({super.key});
@@ -20,9 +21,6 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
 
   late AnimationController _pulseController;
   late AnimationController _rotateController;
-
-  // TU COLOR ROJO EXACTO
-  final Color _argosRed = const Color(0xFFE53935);
 
   @override
   void initState() {
@@ -65,13 +63,13 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
     String statusSubtext;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : Colors.black87;
-    final secondaryTextColor = isDark ? Colors.white38 : Colors.black45;
+    final textColor = UiTokens.textColor(context);
+    final secondaryTextColor = UiTokens.secondaryTextColor(context);
 
     switch (_currentState) {
       case GuardianState.sending:
-        mainColor = _argosRed;
-        glowColor = _argosRed;
+        mainColor = UiTokens.argosRed;
+        glowColor = UiTokens.argosRed;
         centerIcon = Icons.upload_rounded;
         statusSubtext = "ENVIANDO DATOS...";
         break;
@@ -82,11 +80,11 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
         statusSubtext = "ALERTA RECIBIDA";
         break;
       default:
-        // ESTILO ORIGINAL PERO MÁS AZULADO (Azul Glacial Premium)
-        mainColor = isDark ? const Color(0xFFB3E5FC) : Colors.blue.shade900;
+        // v2.14.9: Glacial Blue Premium adaptativo
+        mainColor = isDark ? const Color(0xFFB3E5FC) : UiTokens.glacialBlue;
         glowColor = isDark
             ? Colors.blueAccent.withValues(alpha: 0.8)
-            : Colors.blue.shade400;
+            : UiTokens.glacialBlue.withValues(alpha: 0.6);
         centerIcon = Icons.verified_user_sharp;
         statusSubtext = "SISTEMA PROTEGIDO";
         break;
@@ -237,7 +235,7 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
                                 color: _currentState == GuardianState.monitoring
                                     ? (isDark
                                         ? Colors.white
-                                        : Colors.blue.shade900)
+                                        : UiTokens.glacialBlue)
                                     : Colors.white,
                               ),
                             ),

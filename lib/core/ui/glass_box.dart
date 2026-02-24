@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../utils/ui_tokens.dart'; // v2.14.9
 
 class GlassBox extends StatelessWidget {
   final Widget child;
@@ -58,11 +59,9 @@ class GlassBox extends StatelessWidget {
               borderRadius: BorderRadius.circular(borderRadius),
               border: border ??
                   Border.all(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.15)
-                        : Colors.white.withValues(
-                            alpha: 0.4), // v2.8.7: Brillante en los bordes
-                    width: 0.8, // v2.8.7: Un poco más definido
+                    color:
+                        UiTokens.glassBorder(context), // v2.14.9: Centralizado
+                    width: 0.8,
                   ),
             ),
             child: child,

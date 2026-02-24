@@ -7,6 +7,7 @@ import '../../../core/ui/argos_background.dart';
 import '../../../core/utils/ui_utils.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../../core/network/version_service.dart';
+import '../../../core/utils/ui_tokens.dart'; // v2.14.9
 import 'package:image_picker/image_picker.dart';
 // import 'dart:io'; // v2.12.0: Removed unused
 // import 'dart:typed_data'; // v2.12.0: Removed unused
@@ -102,32 +103,32 @@ class _SettingsScreenState extends State<SettingsScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF0F172A),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text("🚀 NOVEDADES v2.8.7",
+        backgroundColor: UiTokens.surface(context),
+        shape: UiTokens.dialogShape,
+        title: Text("🚀 NOVEDADES v2.14.8",
             style: TextStyle(
-                color: Colors.white,
+                color: UiTokens.textColor(context),
                 fontSize: 18,
                 fontWeight: FontWeight.bold)),
-        content: const Column(
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text("• Diseño Premium 'Liquid Glass v2' (Bordes dinámicos).",
-                style: TextStyle(color: Colors.white70)),
-            SizedBox(height: 8),
+                style: TextStyle(color: UiTokens.secondaryTextColor(context))),
+            const SizedBox(height: 8),
             Text("• Navegación táctica y botones con mayor accesibilidad.",
-                style: TextStyle(color: Colors.white70)),
-            SizedBox(height: 8),
+                style: TextStyle(color: UiTokens.secondaryTextColor(context))),
+            const SizedBox(height: 8),
             Text("• Respuesta SOS optimizada (Reacción inmediata).",
-                style: TextStyle(color: Colors.white70)),
-            SizedBox(height: 8),
+                style: TextStyle(color: UiTokens.secondaryTextColor(context))),
+            const SizedBox(height: 8),
             Text(
                 "• Botón rojo de centrado inteligente en el mapa de Santuarios.",
-                style: TextStyle(color: Colors.white70)),
-            SizedBox(height: 8),
+                style: TextStyle(color: UiTokens.secondaryTextColor(context))),
+            const SizedBox(height: 8),
             Text("• Alertas OTA proactivas integradas en el sistema.",
-                style: TextStyle(color: Colors.white70)),
+                style: TextStyle(color: UiTokens.secondaryTextColor(context))),
           ],
         ),
         actions: [
@@ -172,8 +173,8 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   @override
   Widget build(BuildContext context) {
+    final textColor = UiTokens.textColor(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : Colors.black87;
 
     return ArgosBackground(
       child: Scaffold(
@@ -318,7 +319,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                             Text(
                               "Acuerdos y Compromisos",
                               style: TextStyle(
-                                color: isDark ? Colors.white70 : Colors.black87,
+                                color: UiTokens.textColor(context),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -442,7 +443,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                           ? " ESCANEANDO RED..."
                           : "SISTEMA AL DÍA",
                       style: TextStyle(
-                        color: isDark ? Colors.white : Colors.black87,
+                        color: UiTokens.textColor(context),
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
@@ -450,7 +451,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                     Text(
                       "VERSIÓN INSTALADA: $_appVersion",
                       style: TextStyle(
-                        color: isDark ? Colors.white54 : Colors.black54,
+                        color: UiTokens.secondaryTextColor(context),
                         fontSize: 10,
                       ),
                     ),
@@ -492,7 +493,7 @@ class _SettingsScreenState extends State<SettingsScreen>
     return Text(
       title,
       style: TextStyle(
-        color: isDark ? Colors.white38 : Colors.black38,
+        color: UiTokens.secondaryTextColor(context),
         fontSize: 12,
         fontWeight: FontWeight.bold,
         letterSpacing: 1.2,
@@ -508,13 +509,13 @@ class _SettingsScreenState extends State<SettingsScreen>
     TextInputType keyboardType = TextInputType.text,
     bool readOnly = false, // Nuevo parámetro
   }) {
-    final textColor = isDark ? Colors.white : Colors.black87;
+    final textColor = UiTokens.textColor(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label,
             style: TextStyle(
-                color: isDark ? Colors.white60 : Colors.black54, fontSize: 11)),
+                color: UiTokens.secondaryTextColor(context), fontSize: 11)),
         const SizedBox(height: 5),
         TextField(
           controller: controller,

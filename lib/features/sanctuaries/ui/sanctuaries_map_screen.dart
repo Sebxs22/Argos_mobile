@@ -10,6 +10,7 @@ import '../../../core/ui/glass_box.dart';
 import '../data/mock_sanctuaries_data.dart';
 import '../../../core/network/api_service.dart';
 import '../../family_circle/ui/family_circle_screen.dart'; // Import
+import '../../../core/utils/ui_tokens.dart'; // v2.14.9
 
 class SanctuariesMapScreen extends StatefulWidget {
   const SanctuariesMapScreen({super.key});
@@ -268,7 +269,7 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
 
   void _showSanctuaryDetails(SanctuaryModel site) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final panelColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final panelColor = UiTokens.surface(context);
 
     showModalBottomSheet(
       context: context,
@@ -317,7 +318,7 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
                                 ? site.address!
                                 : "DIRECCIÓN: UBICACIÓN DETECTADA POR ARGOS",
                             style: TextStyle(
-                              color: isDark ? Colors.white70 : Colors.black54,
+                              color: UiTokens.secondaryTextColor(context),
                               fontSize: 11,
                             ),
                           ),
@@ -356,9 +357,9 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
 
   void _showZoneDetails(DangerZoneModel zone) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : Colors.black87;
-    final secondaryTextColor = isDark ? Colors.white70 : Colors.black54;
-    final panelColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final textColor = UiTokens.textColor(context);
+    final secondaryTextColor = UiTokens.secondaryTextColor(context);
+    final panelColor = UiTokens.surface(context);
 
     showModalBottomSheet(
       context: context,
@@ -396,7 +397,7 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
                       style: TextStyle(
                         color: isDark
                             ? const Color(0xFFFFCDD2)
-                            : Colors.red.shade900,
+                            : UiTokens.argosRed,
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
                       ),
@@ -490,11 +491,9 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     super.build(context);
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF8FAFC),
+      backgroundColor: UiTokens.background(context),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(
             bottom: 110.0), // v2.7.0: Más alto para evitar el nav bar
@@ -601,9 +600,7 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
         initialZoom: 15.0,
         minZoom: 10.0,
         maxZoom: 18.0,
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1A1A1A)
-            : const Color(0xFFF8FAFC),
+        backgroundColor: UiTokens.background(context),
         onTap: _handleMapTap,
       ),
       children: [
