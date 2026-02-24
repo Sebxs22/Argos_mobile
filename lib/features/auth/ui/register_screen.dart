@@ -9,6 +9,7 @@ import 'package:intl_phone_field/country_picker_dialog.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/utils/ui_utils.dart'; // Import UiUtils
 import '../../../core/ui/argos_notifications.dart'; // v2.14.1
+import '../../../core/utils/ui_tokens.dart'; // v2.15.1
 import '../../profile/ui/agreements_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -168,15 +169,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     data: Theme.of(context).copyWith(
                       // Override para asegurar que los diálogos y buscadores se vean bien en negro
                       dialogTheme: DialogThemeData(
-                        backgroundColor:
-                            isDark ? const Color(0xFF0F172A) : Colors.white,
+                        backgroundColor: UiTokens.surface(context),
                       ),
                       colorScheme: ColorScheme.fromSeed(
-                        seedColor: const Color(0xFFE53935),
+                        seedColor: UiTokens.argosRed,
                         brightness: isDark ? Brightness.dark : Brightness.light,
-                        surface:
-                            isDark ? const Color(0xFF0F172A) : Colors.white,
-                        onSurface: isDark ? Colors.white : Colors.black87,
+                        surface: UiTokens.surface(context),
+                        onSurface: UiTokens.textColor(context),
                       ),
                       textTheme: TextTheme(
                         titleMedium: TextStyle(color: textColor),
@@ -234,9 +233,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               });
                             },
                             pickerDialogStyle: PickerDialogStyle(
-                              backgroundColor: isDark
-                                  ? const Color(0xFF0F172A)
-                                  : Colors.white,
+                              backgroundColor: UiTokens.surface(context),
                               countryNameStyle:
                                   TextStyle(color: textColor, fontSize: 14),
                               countryCodeStyle: TextStyle(
@@ -416,7 +413,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       style: TextStyle(
                                         color: isDark
                                             ? Colors.white
-                                            : const Color(0xFFE53935),
+                                            : UiTokens.argosRed,
                                         fontWeight: FontWeight.bold,
                                         decoration: TextDecoration.underline,
                                       ),
@@ -436,8 +433,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         const SizedBox(height: 25),
 
                         _isLoading
-                            ? const CircularProgressIndicator(
-                                color: Color(0xFFE53935),
+                            ? CircularProgressIndicator(
+                                color: UiTokens.argosRed,
                               )
                             : ElevatedButton(
                                 onPressed: _handleRegister,
@@ -513,8 +510,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   color: error
                       ? Colors.orange
                       : (isFocused
-                          ? const Color(0xFFE53935)
-                          : (isDark ? Colors.white54 : Colors.black45)),
+                          ? UiTokens.argosRed
+                          : UiTokens.secondaryTextColor(context)),
                   size: 20),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(vertical: 18),
@@ -537,7 +534,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (error) {
       borderColor = Colors.orange.withValues(alpha: 0.5);
     } else if (isFocused) {
-      borderColor = const Color(0xFFE53935);
+      borderColor = UiTokens.argosRed;
     }
 
     return AnimatedContainer(
@@ -545,12 +542,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       padding: padding,
       decoration: BoxDecoration(
         color: isFocused
-            ? (isDark
-                ? Colors.white.withValues(alpha: 0.08)
-                : Colors.black.withValues(alpha: 0.03))
-            : (isDark
-                ? Colors.white.withValues(alpha: 0.05)
-                : Colors.black.withValues(alpha: 0.01)),
+            ? UiTokens.surface(context).withValues(alpha: isDark ? 0.08 : 0.8)
+            : UiTokens.surface(context).withValues(alpha: isDark ? 0.05 : 0.5),
         borderRadius: BorderRadius.circular(15), // Mismo radio que Login
         border: Border.all(
           color: borderColor,
@@ -559,7 +552,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         boxShadow: (isFocused || error)
             ? [
                 BoxShadow(
-                    color: (error ? Colors.orange : const Color(0xFFE53935))
+                    color: (error ? Colors.orange : UiTokens.argosRed)
                         .withValues(alpha: 0.1),
                     blurRadius: 10)
               ]

@@ -9,6 +9,7 @@ import '../../../core/ui/argos_background.dart'; // Import v2.8.0
 import '../../../core/utils/ui_utils.dart';
 import 'circle_map_screen.dart';
 import 'places_screen.dart';
+import '../../../core/utils/ui_tokens.dart'; // v2.14.9
 
 class FamilyCircleScreen extends StatefulWidget {
   const FamilyCircleScreen({super.key});
@@ -91,15 +92,13 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
   Future<void> _agregarGuardian() async {
     String codigoInput = "";
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : Colors.black87;
-    final secondaryTextColor = isDark ? Colors.white70 : Colors.black54;
+    final textColor = UiTokens.textColor(context);
 
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: UiTokens.surface(context),
+        shape: UiTokens.dialogShape,
         title: Text(
           "Vincular Guardián",
           style: TextStyle(color: textColor),
@@ -109,7 +108,10 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
           children: [
             Text(
               "Ingresa el código de familiar de la persona que quieres que reciba tus alertas.",
-              style: TextStyle(color: secondaryTextColor, fontSize: 13),
+              style: TextStyle(
+                color: UiTokens.secondaryTextColor(context),
+                fontSize: 13,
+              ),
             ),
             const SizedBox(height: 15),
             TextField(
@@ -122,12 +124,12 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
               textAlign: TextAlign.center,
               decoration: InputDecoration(
                 hintText: "EJ: ARG-1234",
-                hintStyle:
-                    TextStyle(color: isDark ? Colors.white30 : Colors.black26),
+                hintStyle: TextStyle(
+                  color: UiTokens.secondaryTextColor(context)
+                      .withValues(alpha: 0.5),
+                ),
                 filled: true,
-                fillColor: isDark
-                    ? Colors.black26
-                    : Colors.black.withValues(alpha: 0.05),
+                fillColor: UiTokens.textColor(context).withValues(alpha: 0.05),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide.none,
@@ -181,8 +183,8 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : Colors.black87;
-    final secondaryTextColor = isDark ? Colors.white70 : Colors.black54;
+    final textColor = UiTokens.textColor(context);
+    final secondaryTextColor = UiTokens.secondaryTextColor(context);
 
     return ArgosBackground(
       child: Scaffold(
@@ -231,7 +233,7 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
                                       const Text(
                                         "MI CÓDIGO ARGOS",
                                         style: TextStyle(
-                                            color: Colors.blue, // v2.14.8
+                                            color: Colors.blueAccent,
                                             fontSize: 10,
                                             fontWeight: FontWeight.bold,
                                             letterSpacing: 1.2),
@@ -242,10 +244,13 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
                                         child: Text(
                                           _miPerfil?['codigo_familia'] ?? "...",
                                           style: TextStyle(
-                                              color: textColor,
-                                              fontSize: 22,
-                                              fontWeight: FontWeight.w900,
-                                              letterSpacing: 1),
+                                            color: isDark
+                                                ? const Color(0xFFFFCDD2)
+                                                : UiTokens.argosRed,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 18,
+                                            letterSpacing: 1,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -382,7 +387,8 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
               ),
               Text(
                 subtitle,
-                style: const TextStyle(color: Colors.grey, fontSize: 10),
+                style: TextStyle(
+                    color: UiTokens.secondaryTextColor(context), fontSize: 10),
               ),
             ],
           ),
@@ -403,7 +409,7 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
       padding: const EdgeInsets.symmetric(horizontal: 20),
       itemBuilder: (context, index) {
         final user = _misGuardianes[index];
-        return _buildUserCard(user, isGuardian: true, isDark: isDark);
+        return _buildUserCard(user, isGuardian: true);
       },
     );
   }
@@ -420,15 +426,14 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
       padding: const EdgeInsets.symmetric(horizontal: 20),
       itemBuilder: (context, index) {
         final user = _misProtegidos[index];
-        return _buildUserCard(user, isGuardian: false, isDark: isDark);
+        return _buildUserCard(user, isGuardian: false);
       },
     );
   }
 
-  Widget _buildUserCard(Map<String, dynamic> user,
-      {required bool isGuardian, required bool isDark}) {
-    final textColor = isDark ? Colors.white : Colors.black87;
-    final secondaryTextColor = isDark ? Colors.white54 : Colors.black45;
+  Widget _buildUserCard(Map<String, dynamic> user, {required bool isGuardian}) {
+    final textColor = UiTokens.textColor(context);
+    final secondaryTextColor = UiTokens.secondaryTextColor(context);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -486,8 +491,7 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
   }
 
   Widget _buildEmptyState(String title, String subtitle) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final secondaryTextColor = isDark ? Colors.white30 : Colors.black38;
+    final secondaryTextColor = UiTokens.secondaryTextColor(context);
 
     return Center(
       child: Padding(
@@ -495,12 +499,14 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
         child: Column(
           children: [
             Icon(Icons.group_off,
-                size: 50, color: isDark ? Colors.white12 : Colors.black12),
+                size: 50,
+                color: UiTokens.secondaryTextColor(context)
+                    .withValues(alpha: 0.2)),
             const SizedBox(height: 15),
             Text(
               title,
               style: TextStyle(
-                color: isDark ? Colors.white70 : Colors.black54,
+                color: UiTokens.textColor(context).withValues(alpha: 0.7),
                 fontWeight: FontWeight.bold,
               ),
             ),

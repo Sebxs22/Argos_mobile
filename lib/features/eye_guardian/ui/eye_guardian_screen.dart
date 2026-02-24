@@ -132,7 +132,7 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
               opacity: _sentAlertsCount > 0 ? 1.0 : 0.0,
               child: GlassBox(
                 borderRadius: 20,
-                opacity: isDark ? 0.1 : 0.05,
+                opacity: UiTokens.glassOpacity(context),
                 blur: 5,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 15,
@@ -272,12 +272,10 @@ class _EyeGuardianScreenState extends State<EyeGuardianScreen>
                 },
                 child: GlassBox(
                   borderRadius: 30,
-                  // v2.8.0: Refinamiento premium solicitado
+                  opacity: UiTokens.glassOpacity(context),
                   border: Border.all(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.2)
-                        : Colors.black.withValues(alpha: 0.2), // Más contraste
-                    width: 0.8,
+                    color: UiTokens.glassBorder(context),
+                    width: 1.2,
                   ),
                   child: Container(
                     decoration: isDark

@@ -368,7 +368,7 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
       builder: (context) {
         return GlassBox(
           borderRadius: 30,
-          opacity: isDark ? 0.1 : 0.05,
+          opacity: UiTokens.glassOpacity(context),
           blur: 20,
           child: Container(
             padding: const EdgeInsets.all(20),
@@ -515,7 +515,7 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
               heroTag: "btnCenter",
               mini: true,
               onPressed: _getCurrentLocation, // Centra y actualiza GPS
-              backgroundColor: const Color(0xFFE53935),
+              backgroundColor: UiTokens.argosRed,
               child: const Icon(Icons.my_location, color: Colors.white),
             ),
             const SizedBox(height: 10),
@@ -773,14 +773,12 @@ class _SanctuariesMapScreenState extends State<SanctuariesMapScreen>
                     decoration: BoxDecoration(
                       color: isActive
                           ? baseColor.withValues(alpha: isDark ? 0.2 : 0.15)
-                          : (isDark
-                              ? Colors.black.withValues(alpha: 0.4)
-                              : Colors.white.withValues(alpha: 0.9)),
+                          : UiTokens.surface(context),
                       borderRadius: BorderRadius.circular(30),
                       border: Border.all(
                         color: isActive
                             ? baseColor
-                            : (isDark ? Colors.white10 : Colors.black12),
+                            : UiTokens.glassBorder(context),
                         width: isActive ? 1.5 : 1,
                       ),
                       boxShadow: isActive || !isDark

@@ -28,6 +28,7 @@ import 'core/theme/theme_service.dart'; // Import ThemeService
 import 'features/profile/ui/settings_screen.dart'; // Import SettingsScreen
 import 'core/ui/connectivity_badge.dart'; // Import ConnectivityBadge
 import 'core/network/api_service.dart'; // Import ApiService
+import 'core/utils/ui_tokens.dart'; // v2.15.1
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -93,6 +94,12 @@ class ArgosApp extends StatelessWidget {
               primaryColor: const Color(0xFFE53935),
               useMaterial3: true,
               fontFamily: 'Roboto',
+              pageTransitionsTheme: const PageTransitionsTheme(
+                builders: {
+                  TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+                  TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+                },
+              ),
             ),
             // MODO OSCURO
             darkTheme: ThemeData(
@@ -101,6 +108,12 @@ class ArgosApp extends StatelessWidget {
               primaryColor: const Color(0xFFE53935),
               useMaterial3: true,
               fontFamily: 'Roboto',
+              pageTransitionsTheme: const PageTransitionsTheme(
+                builders: {
+                  TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+                  TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+                },
+              ),
             ),
             home: InitialCheckWrapper(
               child:
@@ -364,16 +377,13 @@ class _MainNavigatorState extends State<MainNavigator> {
   }
 
   void _showProfileMenu() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : Colors.black87;
-    final secondaryTextColor = isDark ? Colors.white54 : Colors.black54;
+    final textColor = UiTokens.textColor(context);
+    final secondaryTextColor = UiTokens.secondaryTextColor(context);
 
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: isDark
-            ? const Color(0xFF0F172A).withValues(alpha: 0.95)
-            : Colors.white,
+        backgroundColor: UiTokens.surface(context),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           "Perfil de Usuario",
@@ -401,16 +411,15 @@ class _MainNavigatorState extends State<MainNavigator> {
                 ),
                 child: CircleAvatar(
                   radius: 40,
-                  backgroundColor: isDark
-                      ? Colors.white10
-                      : Colors.black.withValues(alpha: 0.05),
+                  backgroundColor:
+                      UiTokens.surface(context).withValues(alpha: 0.5),
                   backgroundImage: _perfilData?['avatar_url'] != null
                       ? NetworkImage(_perfilData!['avatar_url'])
                       : null,
                   child: _perfilData?['avatar_url'] == null
                       ? Icon(Icons.person,
                           size: 40,
-                          color: isDark ? Colors.white24 : Colors.grey)
+                          color: secondaryTextColor.withValues(alpha: 0.5))
                       : null,
                 ),
               ),
@@ -428,7 +437,7 @@ class _MainNavigatorState extends State<MainNavigator> {
                   color: secondaryTextColor, fontSize: 12, letterSpacing: 1.2),
             ),
             const SizedBox(height: 20),
-            Divider(color: isDark ? Colors.white10 : Colors.black12),
+            Divider(color: secondaryTextColor.withValues(alpha: 0.2)),
             ListTile(
               onTap: () {
                 Navigator.pop(dialogContext);

@@ -161,7 +161,7 @@ class _RoutesScreenState extends State<RoutesScreen> {
           heroTag: "btnCenterRoute",
           mini: true,
           onPressed: _initGPS,
-          backgroundColor: const Color(0xFFE53935),
+          backgroundColor: UiTokens.argosRed,
           child: const Icon(Icons.my_location, color: Colors.white),
         ),
       ),
@@ -190,18 +190,6 @@ class _RoutesScreenState extends State<RoutesScreen> {
               ),
             ),
           if (_routePoints.isNotEmpty) _buildBottomDetails(isDark, textColor),
-          // Botón de Volver
-          Positioned(
-            top: 50,
-            left: 20,
-            child: FloatingActionButton.small(
-              heroTag: "btnBackRoute",
-              onPressed: () => Navigator.pop(context),
-              backgroundColor: isDark ? Colors.black54 : Colors.white,
-              child: Icon(Icons.arrow_back,
-                  color: isDark ? Colors.white : Colors.black87),
-            ),
-          ),
         ],
       ),
     );
@@ -323,7 +311,7 @@ class _RoutesScreenState extends State<RoutesScreen> {
       right: 20,
       child: GlassBox(
         borderRadius: 25,
-        opacity: isDark ? 0.15 : 0.08,
+        opacity: UiTokens.glassOpacity(context),
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 15),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -382,7 +370,7 @@ class _RoutesScreenState extends State<RoutesScreen> {
               style: TextStyle(
                 color: isSelected
                     ? activeColor
-                    : (isDark ? Colors.white38 : Colors.black38),
+                    : UiTokens.secondaryTextColor(context),
                 fontSize: 9,
                 fontWeight: FontWeight.bold,
               ),
@@ -400,7 +388,7 @@ class _RoutesScreenState extends State<RoutesScreen> {
       right: 20,
       child: GlassBox(
         borderRadius: 25,
-        opacity: isDark ? 0.2 : 0.2, // Aumentamos opacidad en claro
+        opacity: UiTokens.glassOpacity(context),
         blur: 20,
         padding: const EdgeInsets.all(22),
         child: Column(
@@ -509,7 +497,7 @@ class _RoutesScreenState extends State<RoutesScreen> {
                             "Argos rastrea tu ubicación en segundo plano y alertará a tu Círculo si detecta desviaciones o riesgos en la ruta.",
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: isDark ? Colors.white70 : Colors.black54,
+                              color: UiTokens.secondaryTextColor(context),
                               fontSize: 13,
                             ),
                           ),
@@ -534,7 +522,7 @@ class _RoutesScreenState extends State<RoutesScreen> {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE53935),
+                backgroundColor: UiTokens.argosRed,
                 foregroundColor:
                     Colors.white, // Aseguramos color de texto blanco
                 minimumSize: const Size(double.infinity, 55),
@@ -600,7 +588,7 @@ class _RoutesScreenState extends State<RoutesScreen> {
         child: Container(
           padding: const EdgeInsets.all(25),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+            color: UiTokens.surface(context),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
           ),
           child: Column(

@@ -4,7 +4,6 @@ class UiTokens {
   // --- PALETA DE MARCA (Fija) ---
   static const Color argosRed = Color(0xFFE53935);
   static const Color glacialBlue = Color(0xFF2962FF);
-  static const Color emeraldGreen = Color(0xFF2E7D32); // v2.14.9: Más elegante
   static const Color alertOrange = Color(0xFFFF9800);
 
   // --- COLORES ADAPTATIVOS ---
@@ -33,18 +32,24 @@ class UiTokens {
     return isDark ? Colors.white38 : Colors.black45;
   }
 
+  // Verde Esmeralda Adaptativo (NUEVO v2.15.0)
+  static Color emeraldGreen(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return isDark ? const Color(0xFF00E676) : const Color(0xFF2E7D32);
+  }
+
   // --- ESTILOS DE CRISTAL ---
 
   static double glassOpacity(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return isDark ? 0.1 : 0.08;
+    return isDark ? 0.1 : 0.12; // v2.15.1: Slightly more visible in Light Mode
   }
 
   static Color glassBorder(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return isDark
         ? Colors.white.withValues(alpha: 0.15)
-        : Colors.black.withValues(alpha: 0.08);
+        : Colors.black.withValues(alpha: 0.12); // v2.15.1: More definition
   }
 
   // --- ESTILOS DE DIÁLOGOS ---

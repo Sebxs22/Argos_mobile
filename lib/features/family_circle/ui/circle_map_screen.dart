@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 import '../../../core/network/api_service.dart';
 import '../../../core/ui/glass_box.dart';
 import '../../../core/ui/argos_notifications.dart'; // v2.14.1
+import '../../../core/utils/ui_tokens.dart'; // v2.14.9
 
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/utils/ui_utils.dart'; // v2.14.7
@@ -165,11 +166,10 @@ class _CircleMapScreenState extends State<CircleMapScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : Colors.black87;
+    final textColor = UiTokens.textColor(context);
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+      backgroundColor: UiTokens.background(context),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -329,9 +329,7 @@ class _CircleMapScreenState extends State<CircleMapScreen>
                                   ? Icons.accessibility_new
                                   : Icons.directions_walk,
                               color: _isAccompanimentActive
-                                  ? (isDark
-                                      ? Colors.greenAccent
-                                      : Colors.green[700])
+                                  ? UiTokens.emeraldGreen(context)
                                   : textColor,
                               size: 20,
                             ),
@@ -342,9 +340,7 @@ class _CircleMapScreenState extends State<CircleMapScreen>
                                   : "AVISAR TRAYECTO",
                               style: TextStyle(
                                 color: _isAccompanimentActive
-                                    ? (isDark
-                                        ? Colors.greenAccent
-                                        : Colors.green[700])
+                                    ? UiTokens.emeraldGreen(context)
                                     : textColor,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 12,
@@ -374,9 +370,11 @@ class _CircleMapScreenState extends State<CircleMapScreen>
                               15.0);
                         }
                       },
-                      backgroundColor: Colors.white,
-                      child: const Icon(Icons.my_location,
-                          color: Colors.blueAccent),
+                      backgroundColor: UiTokens.surface(context),
+                      child: Icon(Icons.my_location,
+                          color: isDark
+                              ? Colors.blueAccent
+                              : Colors.blue.shade700),
                     ),
                   ),
 
@@ -400,7 +398,7 @@ class _CircleMapScreenState extends State<CircleMapScreen>
                                 Text(
                                   "Tu Círculo",
                                   style: TextStyle(
-                                      color: textColor,
+                                      color: UiTokens.textColor(context),
                                       fontWeight: FontWeight.bold,
                                       fontSize: 11),
                                 ),
@@ -482,7 +480,8 @@ class _CircleMapScreenState extends State<CircleMapScreen>
                                                     "U")
                                                 .split(' ')[0],
                                             style: TextStyle(
-                                                color: textColor,
+                                                color:
+                                                    UiTokens.textColor(context),
                                                 fontSize: 9,
                                                 fontWeight: isFocused
                                                     ? FontWeight.bold
@@ -598,9 +597,8 @@ class _CircleMapScreenState extends State<CircleMapScreen>
     final String lastConnect = member['ultima_conexion'] ?? "";
     final String timeAgo = _apiService.calcularTiempoTranscurrido(lastConnect);
 
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final bool isMoving = member['is_accompaniment_active'] ?? false;
-    final Color movingColor = isDark ? Colors.greenAccent : Colors.green[700]!;
+    final isMoving = member['is_accompaniment_active'] ?? false;
+    final Color movingColor = UiTokens.emeraldGreen(context);
 
     return AnimatedScale(
       scale: isFocused ? 1.2 : 1.0,
@@ -616,7 +614,9 @@ class _CircleMapScreenState extends State<CircleMapScreen>
               decoration: BoxDecoration(
                 color: isFocused
                     ? Colors.blueAccent
-                    : (isMoving ? movingColor : Colors.black87),
+                    : (isMoving
+                        ? movingColor
+                        : UiTokens.textColor(context).withValues(alpha: 0.8)),
                 borderRadius: BorderRadius.circular(15),
                 boxShadow: const [
                   BoxShadow(

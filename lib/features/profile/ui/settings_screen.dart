@@ -364,7 +364,8 @@ class _SettingsScreenState extends State<SettingsScreen>
                   child: _avatarUrl == null
                       ? Icon(Icons.person,
                           size: 50,
-                          color: isDark ? Colors.white24 : Colors.grey)
+                          color: UiTokens.secondaryTextColor(context)
+                              .withValues(alpha: 0.5))
                       : null,
                 ),
               ),
@@ -392,7 +393,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                 ? "USUARIO ARGOS"
                 : _nombreController.text,
             style: TextStyle(
-              color: isDark ? Colors.white : Colors.black87,
+              color: UiTokens.textColor(context),
               fontWeight: FontWeight.bold,
               fontSize: 18,
             ),
@@ -532,9 +533,8 @@ class _SettingsScreenState extends State<SettingsScreen>
                     size: 16, color: Colors.blueGrey)
                 : null,
             filled: true,
-            fillColor: isDark
-                ? Colors.black12
-                : Colors.white.withValues(alpha: 0.2), // v2.8.0
+            fillColor: UiTokens.textColor(context)
+                .withValues(alpha: 0.05), // v2.15.1 Consistent
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide.none),

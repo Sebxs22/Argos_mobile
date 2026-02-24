@@ -74,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 child: Icon(
                   Icons.shield_moon_outlined,
-                  color: const Color(0xFFE53935),
+                  color: UiTokens.argosRed,
                   size: 50,
                 ),
               ),
@@ -118,13 +118,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 35),
                     _isLoading
-                        ? const CircularProgressIndicator(
-                            color: Color(0xFFE53935),
+                        ? CircularProgressIndicator(
+                            color: UiTokens.argosRed,
                           )
                         : ElevatedButton(
                             onPressed: _handleLogin,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFE53935),
+                              backgroundColor: UiTokens.argosRed,
                               foregroundColor: Colors.white,
                               minimumSize: const Size(double.infinity, 55),
                               elevation: 0,
@@ -164,7 +164,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       TextSpan(
                         text: "Regístrate",
                         style: TextStyle(
-                          color: Color(0xFFE53935),
+                          color: UiTokens.argosRed,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -189,13 +189,11 @@ class _LoginScreenState extends State<LoginScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: isDark
-            ? Colors.black.withValues(alpha: 0.26)
-            : Colors.white.withValues(alpha: 0.3),
+        color: UiTokens.surface(context).withValues(alpha: isDark ? 0.3 : 0.8),
         borderRadius: BorderRadius.circular(15),
         border: Border.all(
-          color: UiTokens.glassBorder(context), // v2.14.9
-          width: 0.5,
+          color: UiTokens.glassBorder(context),
+          width: 0.8,
         ),
       ),
       child: TextField(
@@ -213,7 +211,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           prefixIcon: Icon(
             icon,
-            color: isDark ? Colors.white54 : Colors.black45,
+            color: UiTokens.secondaryTextColor(context),
             size: 20,
           ),
           border: InputBorder.none,

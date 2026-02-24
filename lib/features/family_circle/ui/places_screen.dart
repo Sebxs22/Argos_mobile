@@ -146,15 +146,22 @@ class _PlacesScreenState extends State<PlacesScreen> {
                       return Container(
                         margin: const EdgeInsets.only(bottom: 15),
                         child: GlassBox(
+                          opacity: UiTokens.glassOpacity(context),
+                          border:
+                              Border.all(color: UiTokens.glassBorder(context)),
                           child: ListTile(
                             leading: const CircleAvatar(
                               backgroundColor: Colors.blueAccent,
                               child: Icon(Icons.home, color: Colors.white),
                             ),
                             title: Text(p['nombre'] ?? "Lugar",
-                                style: const TextStyle(
+                                style: TextStyle(
+                                    color: textColor,
                                     fontWeight: FontWeight.bold)),
-                            subtitle: Text("Radio: ${p['radio']}m"),
+                            subtitle: Text("Radio: ${p['radio']}m",
+                                style: TextStyle(
+                                    color:
+                                        UiTokens.secondaryTextColor(context))),
                             trailing: IconButton(
                               icon: const Icon(Icons.delete_outline,
                                   color: Colors.redAccent),
