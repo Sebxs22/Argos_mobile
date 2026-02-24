@@ -7,6 +7,9 @@ import '../../../core/network/api_service.dart';
 import '../../../core/ui/glass_box.dart';
 import '../../../core/ui/argos_notifications.dart'; // v2.14.1
 
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/utils/ui_utils.dart'; // v2.14.7
+
 class CircleMapScreen extends StatefulWidget {
   final List<Map<String, dynamic>> initialMembers;
   final LatLng? focusLocation;
@@ -35,7 +38,7 @@ class _CircleMapScreenState extends State<CircleMapScreen>
 
   List<Map<String, dynamic>> _currentMembers = [];
   List<Map<String, dynamic>> _activeAlerts = []; // v2.6.0
-  List<Map<String, dynamic>> _safePlaces = []; // v2.14.6
+  bool _isAccompanimentActive = false; // v2.14.7
 
   bool _hasCentered = false;
   String? _focusedMemberId;
@@ -64,7 +67,7 @@ class _CircleMapScreenState extends State<CircleMapScreen>
     _membersStream = _apiService.streamUbicacionesCirculo(ids);
     _alertsStream = _apiService.streamAlertasRecientesCirculo(ids);
 
-    _loadSafePlaces(); // v2.14.6
+    _loadAccompanimentStatus(); // v2.14.7
     _startLocationTracking();
 
     // LÓGICA DE FOCO INICIAL
@@ -123,14 +126,25 @@ class _CircleMapScreenState extends State<CircleMapScreen>
     });
   }
 
-  Future<void> _loadSafePlaces() async {
-    try {
-      final places = await _apiService.obtenerMisLugaresSeguros();
-      if (mounted) {
-        setState(() => _safePlaces = places);
-      }
-    } catch (e) {
-      debugPrint("Error cargando geocercas en mapa: $e");
+  Future<void> _loadAccompanimentStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() => _isAccompanimentActive =
+        prefs.getBool('is_accompaniment_active') ?? false);
+  }
+
+  Future<void> _toggleAccompaniment() async {
+    final prefs = await SharedPreferences.getInstance();
+    final newStatus = !_isAccompanimentActive;
+
+    await prefs.setBool('is_accompaniment_active', newStatus);
+    // Sincronizar con DB (v2.14.5)
+    await _apiService.actualizarEstadoAcompanamiento(newStatus);
+
+    setState(() => _isAccompanimentActive = newStatus);
+
+    if (newStatus) {
+      UiUtils.showSuccess(
+          "Modo Acompañamiento Activo. Tus guardianes verán tu movimiento fluido.");
     }
   }
 
@@ -242,21 +256,6 @@ class _CircleMapScreenState extends State<CircleMapScreen>
                             : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
                         subdomains: const ['a', 'b', 'c', 'd'],
                       ),
-                      // CAPA DE GEOCERCAS (v2.14.6)
-                      CircleLayer(
-                        circles: _safePlaces.map((p) {
-                          return CircleMarker(
-                            point: LatLng((p['latitud'] as num).toDouble(),
-                                (p['longitud'] as num).toDouble()),
-                            radius: (p['radio'] as num).toDouble(),
-                            useRadiusInMeter: true,
-                            color: Colors.blueAccent.withValues(alpha: 0.1),
-                            borderColor:
-                                Colors.blueAccent.withValues(alpha: 0.3),
-                            borderStrokeWidth: 1,
-                          );
-                        }).toList(),
-                      ),
                       // CAPA DE ALERTAS (v2.6.0)
                       MarkerLayer(
                         markers: _activeAlerts.map((a) {
@@ -312,7 +311,47 @@ class _CircleMapScreenState extends State<CircleMapScreen>
                     ],
                   ),
 
-                  // BOTÓN CENTRAR (v2.8.0: Más alto para evitar el panel de miembros)
+                  // --- BOTÓN FLOTANTE: ACOMPAÑAMIENTO (v2.14.7) ---
+                  Positioned(
+                    bottom: 120,
+                    left: 20,
+                    child: GestureDetector(
+                      onTap: _toggleAccompaniment,
+                      child: GlassBox(
+                        borderRadius: 30,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          child: Row(
+                            children: [
+                              Icon(
+                                _isAccompanimentActive
+                                    ? Icons.accessibility_new
+                                    : Icons.directions_walk,
+                                color: _isAccompanimentActive
+                                    ? Colors.greenAccent
+                                    : Colors.white,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                _isAccompanimentActive
+                                    ? "EN CAMINO"
+                                    : "AVISAR TRAYECTO",
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // --- BOTÓN FLOTANTE: MI UBICACIÓN ---
+// BOTÓN CENTRAR (v2.8.0: Más alto para evitar el panel de miembros)
                   Positioned(
                     right: 20,
                     bottom: 220,

@@ -7,7 +7,6 @@ import '../../../core/network/auth_service.dart';
 import '../../../core/ui/glass_box.dart';
 import '../../../core/ui/argos_background.dart'; // Import v2.8.0
 import '../../../core/utils/ui_utils.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'circle_map_screen.dart';
 import 'places_screen.dart';
 
@@ -211,190 +210,117 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
             ? const Center(child: CircularProgressIndicator())
             : Column(
                 children: [
-                  // --- MI CODIGO ---
-                  Container(
-                    margin: const EdgeInsets.all(20),
-                    child: GlassBox(
-                      borderRadius: 20,
-                      child: Column(
-                        children: [
-                          const Text(
-                            "TU CÓDIGO DE FAMILIA",
-                            style: TextStyle(
-                              color: Colors.blueAccent,
-                              fontSize: 10,
-                              letterSpacing: 1.5,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          GestureDetector(
-                            onTap: _copiarCodigo,
+                  // --- GLASS BENTO SECTION (v2.14.7) ---
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
+                    child: Column(
+                      children: [
+                        // Card 1: Mi Código (Ancha)
+                        GlassBox(
+                          borderRadius: 20,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
                             child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text(
-                                  _miPerfil?['codigo_familia'] ?? "...",
-                                  style: TextStyle(
-                                    color: textColor,
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 2,
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Icon(
-                                  Icons.copy,
-                                  color:
-                                      isDark ? Colors.white30 : Colors.black26,
-                                  size: 18,
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton.icon(
-                              onPressed: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          const PlacesScreen())),
-                              icon: const Icon(Icons.home_work_outlined,
-                                  size: 16),
-                              label: const Text("Administrar Mis Lugares"),
-                              style: OutlinedButton.styleFrom(
-                                side: BorderSide(
-                                    color: Colors.blueAccent
-                                        .withValues(alpha: 0.3)),
-                                foregroundColor: Colors.blueAccent,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 5),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              onPressed: _compartirCodigo,
-                              icon: const Icon(Icons.share, size: 16),
-                              label: const Text("Compartir Código"),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF2563EB),
-                                foregroundColor: Colors.white,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          if (_misProtegidos.isNotEmpty ||
-                              _misGuardianes.isNotEmpty)
-                            Column(
-                              children: [
-                                // v2.14.5: MODO ACOMPAÑAMIENTO
-                                FutureBuilder<bool>(
-                                  future: SharedPreferences.getInstance().then(
-                                      (p) =>
-                                          p.getBool(
-                                              'is_accompaniment_active') ??
-                                          false),
-                                  builder: (context, snapshot) {
-                                    final isActive = snapshot.data ?? false;
-                                    return SizedBox(
-                                      width: double.infinity,
-                                      child: ElevatedButton.icon(
-                                        onPressed: () async {
-                                          final p = await SharedPreferences
-                                              .getInstance();
-                                          final bool newStatus = !isActive;
-                                          await p.setBool(
-                                              'is_accompaniment_active',
-                                              newStatus);
-
-                                          // Sincronizar con base de datos (v2.14.5)
-                                          await ApiService()
-                                              .actualizarEstadoAcompanamiento(
-                                                  newStatus);
-
-                                          setState(() {}); // Refrescar UI
-                                          if (!isActive) {
-                                            UiUtils.showSuccess(
-                                                "Modo Acompañamiento Activo. Tus guardianes verán tu movimiento fluido.");
-                                          }
-                                        },
-                                        icon: Icon(
-                                            isActive
-                                                ? Icons.accessibility_new
-                                                : Icons.directions_walk,
-                                            size: 16),
-                                        label: Text(isActive
-                                            ? "Detener Acompañamiento"
-                                            : "Voy de Camino (Alta Frecuencia)"),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: isActive
-                                              ? Colors.green
-                                              : Colors.blueAccent
-                                                  .withValues(alpha: 0.8),
-                                          foregroundColor: Colors.white,
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        "MI CÓDIGO ARGOS",
+                                        style: TextStyle(
+                                            color: Colors.blueAccent,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 1.2),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      GestureDetector(
+                                        onTap: _copiarCodigo,
+                                        child: Text(
+                                          _miPerfil?['codigo_familia'] ?? "...",
+                                          style: TextStyle(
+                                              color: textColor,
+                                              fontSize: 22,
+                                              fontWeight: FontWeight.w900,
+                                              letterSpacing: 1),
                                         ),
                                       ),
-                                    );
-                                  },
+                                    ],
+                                  ),
                                 ),
-                                const SizedBox(height: 8),
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: OutlinedButton.icon(
-                                    onPressed: () {
-                                      // v2.5.3: Deduplicación proactiva (Evita dobles en mapa)
-                                      final Map<String, Map<String, dynamic>>
-                                          dedup = {};
-
-                                      for (var m in _misGuardianes) {
-                                        final id = (m['id'] ??
-                                            m['usuario_id'] ??
-                                            m['guardian_id']) as String;
-                                        dedup[id] = m;
-                                      }
-                                      for (var m in _misProtegidos) {
-                                        final id = (m['id'] ??
-                                            m['usuario_id'] ??
-                                            m['guardian_id']) as String;
-                                        dedup[id] = {
-                                          ...(dedup[id] ?? {}),
-                                          ...m,
-                                        };
-                                      }
-
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => CircleMapScreen(
-                                            initialMembers:
-                                                dedup.values.toList(),
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    icon:
-                                        const Icon(Icons.map_rounded, size: 16),
-                                    label:
-                                        const Text("Ver Mapa en Tiempo Real"),
-                                    style: OutlinedButton.styleFrom(
-                                      side: BorderSide(
-                                          color: Colors.blueAccent
-                                              .withValues(alpha: 0.5)),
-                                      foregroundColor: Colors.blueAccent,
-                                    ),
+                                IconButton(
+                                  onPressed: _compartirCodigo,
+                                  icon: const Icon(Icons.qr_code_scanner,
+                                      color: Colors.blueAccent),
+                                  style: IconButton.styleFrom(
+                                    backgroundColor: Colors.blueAccent
+                                        .withValues(alpha: 0.1),
                                   ),
                                 ),
                               ],
                             ),
-                        ],
-                      ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        // Fila 2: Dos tarjetas (Mapa y Lugares)
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildBentoAction(
+                                title: "MAPA",
+                                subtitle: "Ver Círculo",
+                                icon: Icons.map_rounded,
+                                color: Colors.indigoAccent,
+                                onTap: () {
+                                  final Map<String, Map<String, dynamic>>
+                                      dedup = {};
+                                  for (var m in _misGuardianes) {
+                                    final id = (m['id'] ??
+                                        m['usuario_id'] ??
+                                        m['guardian_id']) as String;
+                                    dedup[id] = m;
+                                  }
+                                  for (var m in _misProtegidos) {
+                                    final id = (m['id'] ??
+                                        m['usuario_id'] ??
+                                        m['guardian_id']) as String;
+                                    dedup[id] = {...(dedup[id] ?? {}), ...m};
+                                  }
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => CircleMapScreen(
+                                          initialMembers:
+                                              dedup.values.toList()),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildBentoAction(
+                                title: "LUGARES",
+                                subtitle: "Zonas Seguras",
+                                icon: Icons.home_work_rounded,
+                                color: Colors.tealAccent,
+                                onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const PlacesScreen())),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
 
-                  // --- LISTAS ---
+                  // --- TABS SECTION ---
                   Expanded(
                     child: TabBarView(
                       controller: _tabController,
@@ -407,13 +333,58 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
                 ],
               ),
         floatingActionButton: Padding(
-          padding: const EdgeInsets.only(
-              bottom: 95.0), // v2.8.7 Adjusted for larger Nav Bar
+          padding: const EdgeInsets.only(bottom: 95.0),
           child: FloatingActionButton(
             onPressed: _agregarGuardian,
             backgroundColor: Colors.blueAccent,
-            elevation: 8, // v2.8.7
+            elevation: 8,
             child: const Icon(Icons.person_add, color: Colors.white, size: 28),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBentoAction({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black87;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: GlassBox(
+        borderRadius: 20,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: TextStyle(
+                    color: textColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13),
+              ),
+              Text(
+                subtitle,
+                style: const TextStyle(color: Colors.grey, fontSize: 10),
+              ),
+            ],
           ),
         ),
       ),
