@@ -650,7 +650,6 @@ class _RoutesScreenState extends State<RoutesScreen> {
       transitionDuration: const Duration(milliseconds: 400),
       pageBuilder: (context, anim1, anim2) => const SizedBox(),
       transitionBuilder: (context, a1, a2, child) {
-        // v2.16.0: Si está cerrándose, salida inmediata (sin animación)
         if (a1.status == AnimationStatus.reverse) return child;
 
         final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -663,109 +662,101 @@ class _RoutesScreenState extends State<RoutesScreen> {
             child: Center(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 30),
-                child: GlassBox(
-                  borderRadius: 30,
-                  opacity: isDark
-                      ? 0.2
-                      : 0.8, // v2.15.8: Más sólido en modo claro para legibilidad
-                  blur: 20,
-                  border: Border.all(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.1)
-                        : Colors.white.withValues(
-                            alpha: 0.4), // Borde brillante en Light Mode
-                    width: 1.5,
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(35),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(18),
-                          decoration: BoxDecoration(
-                            color: Colors.redAccent.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.redAccent
-                                    .withValues(alpha: isDark ? 0.2 : 0.1),
-                                blurRadius: 20,
-                                spreadRadius: 2,
-                              )
-                            ],
-                          ),
-                          child: const Icon(Icons.shield_rounded,
-                              color: Colors.redAccent, size: 45),
-                        ),
-                        const SizedBox(height: 25),
-                        Text(
-                          "MODO TRAVESÍA ACTIVO",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: isDark
-                                ? UiTokens.argosRed
-                                : const Color(
-                                    0xFFC62828), // Rojo más profundo y sólido
-                            fontWeight:
-                                FontWeight.w800, // Menos extremo que w900
-                            fontSize:
-                                18, // Ligeramente más pequeño para balance
-                            letterSpacing: 1.2, // Más sutil
-                            decoration: TextDecoration.none,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          "Argos rastrea tu ubicación en tiempo real y alertará a tu Círculo si detecta desviaciones o riesgos en la ruta seleccionada.",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: isDark
-                                ? Colors.white70
-                                : Colors.black.withValues(alpha: 0.7),
-                            fontSize: 14,
-                            height: 1.5,
-                            fontWeight: FontWeight.w500,
-                            decoration: TextDecoration.none,
-                          ),
-                        ),
-                        const SizedBox(height: 35),
-                        GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: Container(
-                            width: double.infinity,
-                            height: 55,
+                child: Material(
+                  // v2.16.2: Essential to inherit correct typography and theme
+                  type: MaterialType.transparency,
+                  child: GlassBox(
+                    borderRadius: 30,
+                    opacity: UiTokens.glassOpacity(context),
+                    blur: 25,
+                    child: Padding(
+                      padding: const EdgeInsets.all(35),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(18),
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.redAccent,
-                                  Colors.redAccent.shade700
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(15),
+                              color: UiTokens.argosRed.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color:
-                                      Colors.redAccent.withValues(alpha: 0.3),
-                                  blurRadius: 15,
-                                  offset: const Offset(0, 5),
+                                  color: UiTokens.argosRed
+                                      .withValues(alpha: isDark ? 0.2 : 0.1),
+                                  blurRadius: 20,
+                                  spreadRadius: 2,
                                 )
                               ],
                             ),
-                            alignment: Alignment.center,
-                            child: const Text(
-                              "ENTENDIDO",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                                letterSpacing: 1.5,
-                                decoration: TextDecoration.none,
+                            child: const Icon(Icons.shield_rounded,
+                                color: UiTokens.argosRed, size: 45),
+                          ),
+                          const SizedBox(height: 25),
+                          Text(
+                            "MODO TRAVESÍA ACTIVO",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: UiTokens.textColor(context),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                              letterSpacing: 3.5, // Branded spacing
+                              shadows: [
+                                Shadow(
+                                  color: UiTokens.argosRed
+                                      .withValues(alpha: isDark ? 0.5 : 0.2),
+                                  blurRadius: 15,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            "Argos rastrea tu ubicación en tiempo real y alertará a tu Círculo si detecta desviaciones o riesgos en la ruta seleccionada.",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: UiTokens.secondaryTextColor(context),
+                              fontSize: 14,
+                              height: 1.5,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 35),
+                          GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: Container(
+                              width: double.infinity,
+                              height: 55,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    UiTokens.argosRed,
+                                    UiTokens.argosRed.withValues(alpha: 0.8),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(15),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: UiTokens.argosRed
+                                        .withValues(alpha: 0.3),
+                                    blurRadius: 15,
+                                    offset: const Offset(0, 5),
+                                  )
+                                ],
+                              ),
+                              alignment: Alignment.center,
+                              child: const Text(
+                                "ENTENDIDO",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                  letterSpacing: 1.5,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
