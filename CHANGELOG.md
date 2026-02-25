@@ -5,6 +5,14 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 
 ---
 
+## [2.15.4] - 2026-02-25
+### 🎨 Pulido Estético y Mantenimiento
+- **💅 Refinamiento en Rutas**: Mejorado el contraste y la visibilidad del diálogo de "Modo Travesía" en modo claro (Light Mode).
+- **🧹 Limpieza de Repositorio**: Depuración de etiquetas de versiones antiguas para mantener un historial de Releases limpio en GitHub.
+- **✨ UX mejorada**: Ajuste en las transparencias y bordes del sistema Liquid Glass para una experiencia más premium en condiciones de alta luminosidad.
+
+---
+
 ## [2.15.3] - 2026-02-25
 ### 🛡️ Estabilidad y Sincronización SOS
 - **🧵 Gestión de Memoria**: Corregido bug de múltiples listeners; ahora las suscripciones de alerta se limpian al salir de la app o cerrar sesión.

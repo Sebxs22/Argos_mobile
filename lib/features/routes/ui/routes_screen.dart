@@ -470,6 +470,11 @@ class _RoutesScreenState extends State<RoutesScreen> {
                     child: GlassBox(
                       borderRadius: 25,
                       padding: const EdgeInsets.all(30),
+                      opacity: isDark ? 0.2 : 0.08,
+                      border: Border.all(
+                        color: isDark ? Colors.white10 : Colors.black12,
+                        width: 1,
+                      ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -486,7 +491,10 @@ class _RoutesScreenState extends State<RoutesScreen> {
                           Text(
                             "MODO TRAVESÍA ACTIVO",
                             style: TextStyle(
-                              color: UiTokens.argosRed,
+                              color: isDark
+                                  ? UiTokens.argosRed
+                                  : const Color(
+                                      0xFFC62828), // Rojo más profundo para luz
                               fontWeight: FontWeight.bold,
                               fontSize: 18,
                               letterSpacing: 1.2,
@@ -497,8 +505,9 @@ class _RoutesScreenState extends State<RoutesScreen> {
                             "Argos rastrea tu ubicación en segundo plano y alertará a tu Círculo si detecta desviaciones o riesgos en la ruta.",
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: UiTokens.secondaryTextColor(context),
+                              color: isDark ? Colors.white70 : Colors.black87,
                               fontSize: 13,
+                              height: 1.4,
                             ),
                           ),
                           const SizedBox(height: 25),
@@ -509,10 +518,13 @@ class _RoutesScreenState extends State<RoutesScreen> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.redAccent,
                                 foregroundColor: Colors.white,
+                                elevation: 0,
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(15)),
                               ),
-                              child: const Text("ENTENDIDO"),
+                              child: const Text("ENTENDIDO",
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold)),
                             ),
                           ),
                         ],
