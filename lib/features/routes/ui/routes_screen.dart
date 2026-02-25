@@ -183,8 +183,8 @@ class _RoutesScreenState extends State<RoutesScreen> {
                     Text("TRAZANDO RUTA SEGURA...",
                         style: TextStyle(
                             color: textColor,
-                            fontSize: 10,
-                            letterSpacing: 1.5,
+                            fontSize: 11,
+                            letterSpacing: 1.0,
                             fontWeight: FontWeight.bold)),
                   ],
                 ),
@@ -650,6 +650,9 @@ class _RoutesScreenState extends State<RoutesScreen> {
       transitionDuration: const Duration(milliseconds: 400),
       pageBuilder: (context, anim1, anim2) => const SizedBox(),
       transitionBuilder: (context, a1, a2, child) {
+        // v2.16.0: Si está cerrándose, salida inmediata (sin animación)
+        if (a1.status == AnimationStatus.reverse) return child;
+
         final isDark = Theme.of(context).brightness == Brightness.dark;
         final curve = Curves.easeInOutBack.transform(a1.value);
 
@@ -702,10 +705,13 @@ class _RoutesScreenState extends State<RoutesScreen> {
                           style: TextStyle(
                             color: isDark
                                 ? UiTokens.argosRed
-                                : const Color(0xFFB71C1C),
-                            fontWeight: FontWeight.w900,
-                            fontSize: 20,
-                            letterSpacing: 2.0,
+                                : const Color(
+                                    0xFFC62828), // Rojo más profundo y sólido
+                            fontWeight:
+                                FontWeight.w800, // Menos extremo que w900
+                            fontSize:
+                                18, // Ligeramente más pequeño para balance
+                            letterSpacing: 1.2, // Más sutil
                             decoration: TextDecoration.none,
                           ),
                         ),

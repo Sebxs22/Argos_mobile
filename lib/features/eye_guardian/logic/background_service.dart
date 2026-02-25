@@ -129,12 +129,7 @@ Future<void> _handlePanicAlert(
     final String? existingAlertaId = prefs.getString('pending_alert_id');
     if (existingAlertaId != null) {
       developer.log(
-          "ARGOS: SOS ignorado. Alerta pendiente activa ($existingAlertaId). Re-invocando UI...");
-      // v2.15.2: Recuperación Visual - Si ya existe, forzamos a la UI a mostrar la pantalla
-      service.invoke('onShake', {
-        "alertaId": existingAlertaId,
-        "isRecovery": true,
-      });
+          "ARGOS: SOS ignorado. Alerta pendiente activa ($existingAlertaId). Bloqueando redundancia.");
       _isProcessingAlert = false;
       return;
     }

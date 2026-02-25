@@ -5,7 +5,20 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 
 ---
 
-## [2.15.9] - 2026-02-25
+## [2.16.1] - 2026-02-25
+### 🎨 Refinamiento Estético Final
+- **🔡 Consistencia Roboto**: Re-habilitada la tipografía `Roboto` de forma explícita para asegurar un renderizado limpio y profesional en todos los dispositivos.
+- **✨ Ajuste de Peso Visual**: Se redujeron los pesos de texto extremos (`w900` ➔ `w800`) y el espaciado excesivo en títulos y botones para evitar el aspecto "pixelado" en modo claro.
+- **🌓 Contraste en Modo Claro**: Reforzados los tonos rojos en el diálogo de acompañamiento para garantizar una lectura perfecta sobre el fondo de cristal sólido.
+
+---
+
+## [2.16.0] - 2026-02-25
+### 🛡️ Seguridad y Optimización Visual
+- **🚀 Cierre Inmediato**: Eliminado el efecto de salida en los diálogos de alerta y acompañamiento para una respuesta táctil instantánea tras la confirmación.
+- **🔡 Tipografía Nativa**: Unificada la fuente de toda la aplicación al estándar del sistema (nativo), eliminando inconsistencias en pantallas como "Lugares Securos".
+- **🔒 Bloqueo Airtight de SOS**: Reforzado el sistema anti-spam de alertas en segundo plano; ahora se bloquea cualquier re-invocación redundante si ya existe una alerta activa, evitando la acumulación visual de pantallas.
+- **🏠 Automatización de Lugares**: Radio automático de 200m y notificaciones dinámicas al círculo.
 ### 🏠 Automatización de Lugares
 - **🎯 Radio Inteligente**: Eliminado el selector manual de radio; ahora se asigna automáticamente **200 metros**, optimizando el geofencing para entornos urbanos.
 - **🔔 Notificaciones al Círculo**: Al registrar un nuevo lugar, todos los miembros del círculo de confianza reciben una notificación instantánea con el nombre del miembro y el lugar añadido.

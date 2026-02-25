@@ -57,7 +57,7 @@ class UiUtils {
                                   : Colors.black87,
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              fontFamily: 'Outfit',
+                              // fontFamily: 'Outfit',
                               letterSpacing: 0.5,
                             ),
                           ),

@@ -94,7 +94,8 @@ class ArgosApp extends StatelessWidget {
               scaffoldBackgroundColor: const Color(0xFFF8FAFC),
               primaryColor: const Color(0xFFE53935),
               useMaterial3: true,
-              fontFamily: 'Roboto',
+              fontFamily:
+                  'Roboto', // v2.16.1: Regresamos a Roboto para asegurar consistencia
               pageTransitionsTheme: const PageTransitionsTheme(
                 builders: {
                   TargetPlatform.android: CupertinoPageTransitionsBuilder(),
@@ -323,7 +324,8 @@ class _MainNavigatorState extends State<MainNavigator> {
             pageBuilder: (context, animation, secondaryAnimation) =>
                 AlertConfirmationScreen(alertaId: alertaId),
             transitionDuration: const Duration(milliseconds: 500),
-            reverseTransitionDuration: const Duration(milliseconds: 400),
+            reverseTransitionDuration:
+                Duration.zero, // v2.16.0: Salida inmediata
             transitionsBuilder:
                 (context, animation, secondaryAnimation, child) {
               const begin = 0.5;

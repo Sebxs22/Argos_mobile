@@ -402,8 +402,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   style: TextStyle(
                                     color: secondaryTextColor,
                                     fontSize: 11,
-                                    fontFamily:
-                                        'Outfit', // Usamos la fuente de la app
+                                    // fontFamily: 'Outfit', // v2.16.0: Limpieza
                                   ),
                                   children: [
                                     const TextSpan(text: "Acepto los "),
