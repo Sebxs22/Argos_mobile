@@ -14,6 +14,7 @@ import '../../../core/network/api_service.dart';
 // Variables de control de tráfico (Anti-Spam)
 DateTime? _lastAlertTime;
 DateTime? _lastProactiveTime;
+bool _isProcessingAlert = false; // Bloqueo de concurrencia
 
 @pragma('vm:entry-point')
 void onStart(ServiceInstance service) async {
@@ -71,65 +72,75 @@ Future<void> _handlePanicAlert(
   ServiceInstance service,
   FlutterLocalNotificationsPlugin notifications,
 ) async {
-  final now = DateTime.now();
-
-  // --- BLOQUEO DE CARRERA (v2.14.4: Race Condition Fix) ---
-  // Sellar el tiempo inmediatamente para que otros eventos simultáneos mueran aquí
-  if (_lastAlertTime != null &&
-      now.difference(_lastAlertTime!) < const Duration(seconds: 15)) {
+  // --- 1. BLOQUEO DE CONCURRENCIA (v2.15.1) ---
+  if (_isProcessingAlert) {
+    developer.log("ARGOS: SOS ignorado. Procesamiento en curso.");
     return;
   }
-  _lastAlertTime = now;
+  _isProcessingAlert = true;
 
-  // --- BLOQUEO DE DUPLICADOS Y COOLDOWN ---
-  final SharedPreferences prefs = await SharedPreferences.getInstance();
-  await prefs.reload();
+  try {
+    final now = DateTime.now();
 
-  final String? existingAlertaId = prefs.getString('pending_alert_id');
-  if (existingAlertaId != null) {
-    developer.log("ARGOS: SOS ignorado. Alerta pendiente activa.");
-    return;
-  }
-
-  final int? lastSosMillis = prefs.getInt('last_sos_timestamp');
-  if (lastSosMillis != null) {
-    final lastSosTime = DateTime.fromMillisecondsSinceEpoch(lastSosMillis);
-    final diff = now.difference(lastSosTime);
-    if (diff < const Duration(minutes: 3)) {
-      developer.log("ARGOS: SOS ignorado por Cooldown (${diff.inSeconds}s)");
+    // --- 2. BLOQUEO DE CARRERA (v2.14.4) ---
+    if (_lastAlertTime != null &&
+        now.difference(_lastAlertTime!) < const Duration(seconds: 15)) {
+      developer.log("ARGOS: SOS ignorado. Re-disparo muy rápido.");
+      _isProcessingAlert = false;
       return;
     }
-  }
 
-  developer.log("ARGOS: ¡SOS INICIADO! Ejecutando protocolos...");
+    // --- 3. BLOQUEO DE DUPLICADOS Y COOLDOWN ---
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.reload();
 
-  // VIBRACIÓN Y AVISO TÁCTIL (Solo una vez)
-  try {
-    notifications.show(
-      id: 999,
-      title: '⚠️ ARRANCHÓN DETECTADO',
-      body: 'Enviando alerta...',
-      notificationDetails: NotificationDetails(
-        android: AndroidNotificationDetails(
-          'argos_urgent',
-          'ARGOS Urgente',
-          importance: Importance.max,
-          priority: Priority.high,
-          enableVibration: true,
-          vibrationPattern: Int64List.fromList([0, 500, 200, 500]),
-          playSound: false,
+    final String? existingAlertaId = prefs.getString('pending_alert_id');
+    if (existingAlertaId != null) {
+      developer.log("ARGOS: SOS ignorado. Alerta pendiente activa.");
+      _isProcessingAlert = false;
+      return;
+    }
+
+    final int? lastSosMillis = prefs.getInt('last_sos_timestamp');
+    if (lastSosMillis != null) {
+      final lastSosTime = DateTime.fromMillisecondsSinceEpoch(lastSosMillis);
+      final diff = now.difference(lastSosTime);
+      if (diff < const Duration(minutes: 3)) {
+        developer.log("ARGOS: SOS ignorado por Cooldown (${diff.inSeconds}s)");
+        _isProcessingAlert = false;
+        return;
+      }
+    }
+
+    _lastAlertTime = now;
+    developer.log("ARGOS: ¡SOS INICIADO! Ejecutando protocolos...");
+
+    // VIBRACIÓN Y AVISO TÁCTIL (Solo una vez)
+    try {
+      notifications.show(
+        id: 999,
+        title: '⚠️ ARRANCHÓN DETECTADO',
+        body: 'Enviando alerta...',
+        notificationDetails: NotificationDetails(
+          android: AndroidNotificationDetails(
+            'argos_urgent',
+            'ARGOS Urgente',
+            importance: Importance.max,
+            priority: Priority.high,
+            enableVibration: true,
+            vibrationPattern: Int64List.fromList([0, 500, 200, 500]),
+            playSound: false,
+          ),
         ),
-      ),
-    );
-  } catch (e) {
-    developer.log("Error vibrando: $e");
-  }
+      );
+    } catch (e) {
+      developer.log("Error vibrando: $e");
+    }
 
-  try {
     Position? position;
     String? currentAlertaId;
 
-    // 1. SOS FAST-TRACK (Ubicación rápida)
+    // 4. SOS FAST-TRACK (Ubicación rápida)
     try {
       position = await Geolocator.getLastKnownPosition();
       if (position != null) {
@@ -139,14 +150,17 @@ Future<void> _handlePanicAlert(
         currentAlertaId = await _enviarSOSInicial(
             apiService, service, notifications, position);
 
-        // Si es muy fresca, terminamos aquí
-        if (age < const Duration(seconds: 8)) return;
+        // Si es muy fresca, terminamos aquí (pero liberamos bloqueo!)
+        if (age < const Duration(seconds: 8)) {
+          _isProcessingAlert = false;
+          return;
+        }
       }
     } catch (e) {
       developer.log("Error Fast-Track: $e");
     }
 
-    // 2. REFUERZO DE PRECISIÓN (Actualización silenciosa)
+    // 5. REFUERZO DE PRECISIÓN (Actualización silenciosa)
     try {
       position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
@@ -158,10 +172,8 @@ Future<void> _handlePanicAlert(
       developer.log("ARGOS: Actualizando con ALTA PRECISIÓN...");
 
       if (currentAlertaId == null) {
-        // Si falló el Fast-Track, este es el primer SOS
         await _enviarSOSInicial(apiService, service, notifications, position);
       } else {
-        // Si ya enviamos el SOS, SOLO actualizamos la ubicación sin disparar más Pushes/Notifs
         await apiService.actualizarAlertaUbicacion(
             currentAlertaId, position.latitude, position.longitude);
         await apiService.actualizarUbicacion(
@@ -178,6 +190,8 @@ Future<void> _handlePanicAlert(
     }
   } catch (e) {
     developer.log("Error SOS Crítico: $e");
+  } finally {
+    _isProcessingAlert = false;
   }
 }
 
