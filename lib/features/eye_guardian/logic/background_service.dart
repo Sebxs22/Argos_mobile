@@ -80,6 +80,14 @@ Future<void> _handlePanicAlert(
   _isProcessingAlert = true;
 
   try {
+    // --- 1.1 VALIDACIÓN DE AUTENTICACION (v2.15.2) ---
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) {
+      developer.log("ARGOS: SOS abortado. No hay sesión activa.");
+      _isProcessingAlert = false;
+      return;
+    }
+
     final now = DateTime.now();
 
     // --- 2. BLOQUEO DE CARRERA (v2.14.4) ---
@@ -96,7 +104,13 @@ Future<void> _handlePanicAlert(
 
     final String? existingAlertaId = prefs.getString('pending_alert_id');
     if (existingAlertaId != null) {
-      developer.log("ARGOS: SOS ignorado. Alerta pendiente activa.");
+      developer.log(
+          "ARGOS: SOS ignorado. Alerta pendiente activa ($existingAlertaId). Re-invocando UI...");
+      // v2.15.2: Recuperación Visual - Si ya existe, forzamos a la UI a mostrar la pantalla
+      service.invoke('onShake', {
+        "alertaId": existingAlertaId,
+        "isRecovery": true,
+      });
       _isProcessingAlert = false;
       return;
     }

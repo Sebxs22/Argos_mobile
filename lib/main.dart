@@ -309,12 +309,24 @@ class _MainNavigatorState extends State<MainNavigator> {
     FlutterBackgroundService().on('onShake').listen((event) {
       final String? alertaId = event?['alertaId'];
 
-      // Navegación Global Usando navigatorKey (Omnipresencial)
-      navigatorKey.currentState?.push(
-        MaterialPageRoute(
-          builder: (context) => AlertConfirmationScreen(alertaId: alertaId),
-        ),
-      );
+      // v2.15.2: Evitar stack infinito de pantallas de alerta
+      // Verificamos si la ruta actual ya es AlertConfirmationScreen (uso simple)
+      bool isAlreadyShowingAlert = false;
+      navigatorKey.currentState?.popUntil((route) {
+        if (route.settings.name == 'AlertConfirmationScreen') {
+          isAlreadyShowingAlert = true;
+        }
+        return true;
+      });
+
+      if (!isAlreadyShowingAlert) {
+        navigatorKey.currentState?.push(
+          MaterialPageRoute(
+            settings: const RouteSettings(name: 'AlertConfirmationScreen'),
+            builder: (context) => AlertConfirmationScreen(alertaId: alertaId),
+          ),
+        );
+      }
     });
   }
 
@@ -477,6 +489,8 @@ class _MainNavigatorState extends State<MainNavigator> {
           ),
           ElevatedButton.icon(
             onPressed: () async {
+              // v2.15.2: Detener Guardián antes de salir
+              BackgroundServiceManager().stop();
               await _auth.cerrarSesion();
               if (mounted) {
                 Navigator.pushAndRemoveUntil(

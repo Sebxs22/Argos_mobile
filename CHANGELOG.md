@@ -2,7 +2,15 @@
 
 Todos los cambios notables en este proyecto serán documentados en este archivo.
 
+
 ---
+
+## [2.15.2] - 2026-02-25
+### 🛡️ Refuerzo de Identidad y SOS
+- **🔐 Autenticación Mandatoria**: El sistema SOS ahora verifica la sesión activa antes de procesar cualquier alerta.
+- **🔄 Recuperación de Pantalla**: Si existe una alerta pendiente sin clasificar, el sistema forzará la reaparición de la pantalla de confirmación al detectar movimiento (Shake).
+- **🛑 Logout Seguro**: El servicio de protección de fondo se detiene automáticamente al cerrar sesión para garantizar la privacidad.
+- **🐛 Bugfix**: Corregido problema donde la app quedaba bloqueada si la pantalla de alerta se cerraba accidentalmente.
 
 ## [2.15.1] - 2026-02-24
 ### ✨ Refinamientos de Seguridad y UI
