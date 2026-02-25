@@ -63,6 +63,16 @@ void onStart(ServiceInstance service) async {
     developer.log("ARGOS BACKGROUND: Alerta MANUAL recibida.");
     _handlePanicAlert(apiService, service, notificationsPlugin);
   });
+
+  // --- ESCUCHA DE RESOLUCIÓN (v2.15.5) ---
+  service.on('onAlertResolved').listen((event) async {
+    developer
+        .log("ARGOS BACKGROUND: Alerta RESUELTA. Reseteando protectores...");
+    _lastAlertTime = null;
+    _isProcessingAlert = false;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.reload(); // Sincronizar con lo que la UI limpió
+  });
 }
 
 // --- PROTOCOLOS DE RESPUESTA ARGOS ---
@@ -97,9 +107,9 @@ Future<void> _handlePanicAlert(
 
     final now = DateTime.now();
 
-    // --- 2. BLOQUEO DE CARRERA (v2.14.4) ---
+    // --- 2. BLOQUEO DE CARRERA (v2.14.4 + v2.15.5 5s) ---
     if (_lastAlertTime != null &&
-        now.difference(_lastAlertTime!) < const Duration(seconds: 15)) {
+        now.difference(_lastAlertTime!) < const Duration(seconds: 5)) {
       developer.log("ARGOS: SOS ignorado. Re-disparo muy rápido.");
       _isProcessingAlert = false;
       return;

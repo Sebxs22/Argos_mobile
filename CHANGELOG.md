@@ -5,6 +5,14 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 
 ---
 
+## [2.15.5] - 2026-02-25
+### 🛡️ SOS Atómico y Bloqueo Inteligente
+- **🚫 Bloqueo Estricto**: Ahora es imposible enviar una segunda alerta SOS hasta que la actual sea clasificada o cancelada, garantizando un solo registro por incidente.
+- **⚡ Cooldown Dinámico**: Al clasificar un incidente o marcarlo como falsa alarma, el cooldown se elimina instantáneamente, permitiendo re-activar la protección sin esperas.
+- **🧵 Sync de Isolates**: Implementada comunicación bidireccional entre UI y Background para resetear la memoria del Isolate en tiempo real.
+
+---
+
 ## [2.15.4] - 2026-02-25
 ### 🎨 Pulido Estético y Mantenimiento
 - **💅 Refinamiento en Rutas**: Mejorado el contraste y la visibilidad del diálogo de "Modo Travesía" en modo claro (Light Mode).

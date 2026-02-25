@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // v2.13.1: Persistencia
+import 'package:flutter_background_service/flutter_background_service.dart'; // v2.15.5
 import 'package:flutter_dotenv/flutter_dotenv.dart'; // Import dotenv
 
 // --- IMPORTANTE: Asegúrate de que esta ruta sea correcta según tu proyecto ---
@@ -280,6 +281,10 @@ class ApiService {
       await prefs.remove('pending_alert_id');
       await prefs
           .remove('last_sos_timestamp'); // Override: Permitir alerta inmediata
+
+      // 3. Notificar al Isolate de Fondo para reset total (v2.15.5)
+      FlutterBackgroundService().invoke('onAlertResolved');
+
       debugPrint(
           "ARGOS: Alerta $idNum clasificada. Memoria y Cooldown liberados.");
     } catch (e) {
@@ -310,6 +315,9 @@ class ApiService {
       await prefs.remove('pending_alert_id');
       await prefs
           .remove('last_sos_timestamp'); // Override: Permitir alerta inmediata
+
+      // 3. Notificar al Isolate de Fondo para reset total (v2.15.5)
+      FlutterBackgroundService().invoke('onAlertResolved');
 
       debugPrint(
           "ARGOS: Alerta $idNum borrada física y localmente. Memoria y Cooldown liberados.");
