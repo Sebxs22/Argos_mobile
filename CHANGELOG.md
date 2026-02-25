@@ -5,6 +5,15 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 
 ---
 
+## [2.15.3] - 2026-02-25
+### 🛡️ Estabilidad y Sincronización SOS
+- **🧵 Gestión de Memoria**: Corregido bug de múltiples listeners; ahora las suscripciones de alerta se limpian al salir de la app o cerrar sesión.
+- **🧭 Navegación Segura**: Rediseñado el check de duplicados de pantalla para evitar interferencias con el Navigator.
+- **🔄 Sync de Sesión Isolate**: Implementado re-intento de lectura de sesión en el servicio de fondo para evitar fallos por latencia de persistencia.
+- **🧹 Limpieza Post-Logout**: Ahora se borran los IDs de alertas pendientes al cerrar sesión para evitar colisiones entre cuentas.
+
+---
+
 ## [2.15.2] - 2026-02-25
 ### 🛡️ Refuerzo de Identidad y SOS
 - **🔐 Autenticación Mandatoria**: El sistema SOS ahora verifica la sesión activa antes de procesar cualquier alerta.

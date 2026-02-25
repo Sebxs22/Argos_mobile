@@ -209,6 +209,8 @@ class _MainNavigatorState extends State<MainNavigator> {
   late PageController _pageController;
   final AuthService _auth = AuthService();
   Map<String, dynamic>? _perfilData;
+  StreamSubscription? _onShakeSubscription; // v2.15.3
+  bool _alertBeingShown = false; // v2.15.3: Flag de navegación atómico
 
   @override
   void initState() {
@@ -306,26 +308,24 @@ class _MainNavigatorState extends State<MainNavigator> {
   }
 
   void _listenToBackgroundGlobal() {
-    FlutterBackgroundService().on('onShake').listen((event) {
+    _onShakeSubscription?.cancel();
+    _onShakeSubscription =
+        FlutterBackgroundService().on('onShake').listen((event) {
       final String? alertaId = event?['alertaId'];
 
-      // v2.15.2: Evitar stack infinito de pantallas de alerta
-      // Verificamos si la ruta actual ya es AlertConfirmationScreen (uso simple)
-      bool isAlreadyShowingAlert = false;
-      navigatorKey.currentState?.popUntil((route) {
-        if (route.settings.name == 'AlertConfirmationScreen') {
-          isAlreadyShowingAlert = true;
-        }
-        return true;
-      });
-
-      if (!isAlreadyShowingAlert) {
-        navigatorKey.currentState?.push(
+      if (!_alertBeingShown) {
+        _alertBeingShown = true;
+        navigatorKey.currentState
+            ?.push(
           MaterialPageRoute(
             settings: const RouteSettings(name: 'AlertConfirmationScreen'),
             builder: (context) => AlertConfirmationScreen(alertaId: alertaId),
           ),
-        );
+        )
+            .then((_) {
+          // Resetear flag cuando se cierra la pantalla
+          _alertBeingShown = false;
+        });
       }
     });
   }
@@ -361,6 +361,7 @@ class _MainNavigatorState extends State<MainNavigator> {
 
   @override
   void dispose() {
+    _onShakeSubscription?.cancel();
     _pageController.dispose();
     super.dispose();
   }
@@ -491,6 +492,11 @@ class _MainNavigatorState extends State<MainNavigator> {
             onPressed: () async {
               // v2.15.2: Detener Guardián antes de salir
               BackgroundServiceManager().stop();
+
+              // v2.15.3: Limpiar memoria de SOS para no ver alertas de otros usuarios
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.remove('pending_alert_id');
+
               await _auth.cerrarSesion();
               if (mounted) {
                 Navigator.pushAndRemoveUntil(

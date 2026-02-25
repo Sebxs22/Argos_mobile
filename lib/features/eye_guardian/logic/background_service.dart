@@ -80,10 +80,17 @@ Future<void> _handlePanicAlert(
   _isProcessingAlert = true;
 
   try {
-    // --- 1.1 VALIDACIÓN DE AUTENTICACION (v2.15.2) ---
-    final user = Supabase.instance.client.auth.currentUser;
+    // --- 1.1 VALIDACIÓN DE AUTENTICACION (v2.15.2 + v2.15.3 Retry) ---
+    var user = Supabase.instance.client.auth.currentUser;
     if (user == null) {
-      developer.log("ARGOS: SOS abortado. No hay sesión activa.");
+      // Re-intento rápido para asegurar sync de sesión (v2.15.3)
+      await Future.delayed(const Duration(milliseconds: 500));
+      user = Supabase.instance.client.auth.currentUser;
+    }
+
+    if (user == null) {
+      developer
+          .log("ARGOS: SOS abortado. No hay sesión activa tras re-intento.");
       _isProcessingAlert = false;
       return;
     }
