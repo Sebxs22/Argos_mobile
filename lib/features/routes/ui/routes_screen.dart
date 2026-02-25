@@ -11,6 +11,7 @@ import '../../../core/ui/argos_notifications.dart'; // v2.14.1
 import '../../sanctuaries/data/mock_sanctuaries_data.dart';
 import '../../../core/utils/ui_tokens.dart'; // v2.14.9
 import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class RoutesScreen extends StatefulWidget {
   const RoutesScreen({super.key});
@@ -458,159 +459,69 @@ class _RoutesScreenState extends State<RoutesScreen> {
                   ),
                 ),
               ),
-            ElevatedButton(
-              onPressed: () {
-                FlutterBackgroundService().startService();
+            // v2.15.7: Botón dinámico (Iniciar / Finalizar)
+            FutureBuilder<bool>(
+              future: SharedPreferences.getInstance()
+                  .then((p) => p.getBool('is_accompaniment_active') ?? false),
+              builder: (context, snap) {
+                final bool isActive = snap.data ?? false;
 
-                // v2.15.6: Diálogo Liquid Glass Premium con showGeneralDialog
-                showGeneralDialog(
-                  context: context,
-                  barrierDismissible: true,
-                  barrierLabel: "Modo Travesia",
-                  barrierColor: Colors.black.withValues(alpha: 0.7),
-                  transitionDuration: const Duration(milliseconds: 400),
-                  pageBuilder: (context, anim1, anim2) => const SizedBox(),
-                  transitionBuilder: (context, a1, a2, child) {
-                    final isDark =
-                        Theme.of(context).brightness == Brightness.dark;
-                    final curve = Curves.easeInOutBack.transform(a1.value);
+                return ElevatedButton(
+                  onPressed: () async {
+                    final prefs = await SharedPreferences.getInstance();
+                    if (!isActive) {
+                      // INICIAR
+                      await prefs.setBool('is_accompaniment_active', true);
+                      await _apiService.actualizarEstadoAcompanamiento(true);
+                      FlutterBackgroundService().startService();
 
-                    return Transform.scale(
-                      scale: curve,
-                      child: Opacity(
-                        opacity: a1.value,
-                        child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 30),
-                            child: GlassBox(
-                              borderRadius: 30,
-                              opacity: isDark ? 0.2 : 0.05,
-                              blur: 20,
-                              border: Border.all(
-                                color: isDark
-                                    ? Colors.white.withValues(alpha: 0.1)
-                                    : Colors.black.withValues(alpha: 0.1),
-                                width: 1.5,
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(35),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(18),
-                                      decoration: BoxDecoration(
-                                        color: Colors.redAccent
-                                            .withValues(alpha: 0.1),
-                                        shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.redAccent.withValues(
-                                                alpha: isDark ? 0.2 : 0.1),
-                                            blurRadius: 20,
-                                            spreadRadius: 2,
-                                          )
-                                        ],
-                                      ),
-                                      child: const Icon(Icons.shield_rounded,
-                                          color: Colors.redAccent, size: 45),
-                                    ),
-                                    const SizedBox(height: 25),
-                                    Text(
-                                      "MODO TRAVESÍA ACTIVO",
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        color: isDark
-                                            ? UiTokens.argosRed
-                                            : const Color(0xFFB71C1C),
-                                        fontWeight: FontWeight.w900,
-                                        fontSize: 20,
-                                        letterSpacing: 2.0,
-                                        decoration: TextDecoration.none,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 20),
-                                    Text(
-                                      "Argos rastrea tu ubicación en tiempo real y alertará a tu Círculo si detecta desviaciones o riesgos en la ruta seleccionada.",
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        color: isDark
-                                            ? Colors.white70
-                                            : Colors.black87,
-                                        fontSize: 14,
-                                        height: 1.5,
-                                        fontWeight: FontWeight.w400,
-                                        decoration: TextDecoration.none,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 35),
-                                    GestureDetector(
-                                      onTap: () => Navigator.pop(context),
-                                      child: Container(
-                                        width: double.infinity,
-                                        height: 55,
-                                        decoration: BoxDecoration(
-                                          gradient: LinearGradient(
-                                            colors: [
-                                              Colors.redAccent,
-                                              Colors.redAccent.shade700
-                                            ],
-                                          ),
-                                          borderRadius:
-                                              BorderRadius.circular(15),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.redAccent
-                                                  .withValues(alpha: 0.3),
-                                              blurRadius: 15,
-                                              offset: const Offset(0, 5),
-                                            )
-                                          ],
-                                        ),
-                                        alignment: Alignment.center,
-                                        child: const Text(
-                                          "ENTENDIDO",
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 13,
-                                            letterSpacing: 1.5,
-                                            decoration: TextDecoration.none,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
+                      // Propagar cambio a background si ya está activo
+                      FlutterBackgroundService()
+                          .invoke("onAccompanimentChanged", {"active": true});
+
+                      // v2.15.6: Diálogo Liquid Glass Premium
+                      if (context.mounted) {
+                        _showModoTravesiaDialog(context);
+                        setState(() {}); // Forzar rebuild para cambiar botón
+                      }
+                    } else {
+                      // FINALIZAR
+                      await prefs.setBool('is_accompaniment_active', false);
+                      await _apiService.actualizarEstadoAcompanamiento(false);
+                      FlutterBackgroundService()
+                          .invoke("onAccompanimentChanged", {"active": false});
+
+                      if (context.mounted) {
+                        ArgosNotifications.show(
+                          context,
+                          "Modo Travesía Finalizado. Guardianes notificados.",
+                          type: ArgosNotificationType.success,
+                        );
+                        setState(() {});
+                      }
+                    }
                   },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        isActive ? Colors.blueGrey : UiTokens.argosRed,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 55),
+                    elevation: 10,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                  child: Text(
+                    isActive
+                        ? "FINALIZAR RECORRIDO"
+                        : "INICIAR RECORRIDO PROTEGIDO",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
                 );
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: UiTokens.argosRed,
-                foregroundColor:
-                    Colors.white, // Aseguramos color de texto blanco
-                minimumSize: const Size(double.infinity, 55),
-                elevation: 10,
-                shadowColor: isDark
-                    ? Colors.redAccent.withValues(alpha: 0.3)
-                    : Colors.black.withValues(alpha: 0.2),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-              ),
-              child: const Text(
-                "INICIAR RECORRIDO PROTEGIDO",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.8,
-                ),
-              ),
             ),
           ],
         ),
@@ -728,5 +639,135 @@ class _RoutesScreenState extends State<RoutesScreen> {
     // Mover con animación sutil (vía move con fitBounds indirecto o move directo)
     // Para simplificar sin controladores pesados, usamos move al centro con un zoom calculado
     _mapController.move(center, 14.5);
+  }
+
+  void _showModoTravesiaDialog(BuildContext context) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: "Modo Travesia",
+      barrierColor: Colors.black.withValues(alpha: 0.7),
+      transitionDuration: const Duration(milliseconds: 400),
+      pageBuilder: (context, anim1, anim2) => const SizedBox(),
+      transitionBuilder: (context, a1, a2, child) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final curve = Curves.easeInOutBack.transform(a1.value);
+
+        return Transform.scale(
+          scale: curve,
+          child: Opacity(
+            opacity: a1.value,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 30),
+                child: GlassBox(
+                  borderRadius: 30,
+                  opacity: isDark
+                      ? 0.2
+                      : 0.8, // v2.15.8: Más sólido en modo claro para legibilidad
+                  blur: 20,
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.white.withValues(
+                            alpha: 0.4), // Borde brillante en Light Mode
+                    width: 1.5,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(35),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(18),
+                          decoration: BoxDecoration(
+                            color: Colors.redAccent.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.redAccent
+                                    .withValues(alpha: isDark ? 0.2 : 0.1),
+                                blurRadius: 20,
+                                spreadRadius: 2,
+                              )
+                            ],
+                          ),
+                          child: const Icon(Icons.shield_rounded,
+                              color: Colors.redAccent, size: 45),
+                        ),
+                        const SizedBox(height: 25),
+                        Text(
+                          "MODO TRAVESÍA ACTIVO",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: isDark
+                                ? UiTokens.argosRed
+                                : const Color(0xFFB71C1C),
+                            fontWeight: FontWeight.w900,
+                            fontSize: 20,
+                            letterSpacing: 2.0,
+                            decoration: TextDecoration.none,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          "Argos rastrea tu ubicación en tiempo real y alertará a tu Círculo si detecta desviaciones o riesgos en la ruta seleccionada.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: isDark
+                                ? Colors.white70
+                                : Colors.black.withValues(alpha: 0.7),
+                            fontSize: 14,
+                            height: 1.5,
+                            fontWeight: FontWeight.w500,
+                            decoration: TextDecoration.none,
+                          ),
+                        ),
+                        const SizedBox(height: 35),
+                        GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: Container(
+                            width: double.infinity,
+                            height: 55,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.redAccent,
+                                  Colors.redAccent.shade700
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(15),
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                      Colors.redAccent.withValues(alpha: 0.3),
+                                  blurRadius: 15,
+                                  offset: const Offset(0, 5),
+                                )
+                              ],
+                            ),
+                            alignment: Alignment.center,
+                            child: const Text(
+                              "ENTENDIDO",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                letterSpacing: 1.5,
+                                decoration: TextDecoration.none,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 }

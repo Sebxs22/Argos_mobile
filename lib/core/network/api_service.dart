@@ -208,6 +208,58 @@ class ApiService {
     }
   }
 
+  // 1.5.2 NOTIFICAR NUEVO LUGAR SEGURO (v2.15.9)
+  Future<void> notificarNuevoLugarSeguro(String nombreLugar) async {
+    try {
+      final user = _supabase.auth.currentUser;
+      if (user == null) return;
+
+      // 1. Obtener mi nombre
+      final perfil = await _supabase
+          .from('perfiles')
+          .select('nombre_completo')
+          .eq('id', user.id)
+          .single();
+      final String nombreUsuario = perfil['nombre_completo'] ?? "Un miembro";
+
+      // 2. Obtener IDs de mis guardianes para notificarles
+      final resGuardianes = await _supabase
+          .from('circulo_confianza')
+          .select('perfiles(onesignal_id)')
+          .eq('usuario_id', user.id);
+
+      final List<String> targetIds = (resGuardianes as List)
+          .map((e) => e['perfiles']['onesignal_id'] as String?)
+          .where((id) => id != null && id.isNotEmpty)
+          .cast<String>()
+          .toList();
+
+      if (targetIds.isEmpty) return;
+
+      await http.post(
+        Uri.parse('https://onesignal.com/api/v1/notifications'),
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Authorization': 'Basic ${dotenv.env['ONESIGNAL_REST_API_KEY']}',
+        },
+        body: jsonEncode({
+          'app_id': dotenv.env['ONESIGNAL_APP_ID'],
+          'include_player_ids': targetIds,
+          'contents': {
+            'es':
+                '🏠 $nombreUsuario ha registrado un nuevo Lugar Seguro: $nombreLugar'
+          },
+          'headings': {'es': 'ARGOS: Nuevo Lugar Seguro'},
+          'priority': 5,
+        }),
+      );
+
+      debugPrint("ARGOS: Notificado nuevo lugar ($nombreLugar) a guardianes.");
+    } catch (e) {
+      debugPrint("Error notificando nuevo lugar: $e");
+    }
+  }
+
   // 1.6. ACTUALIZAR ESTADO DE ACOMPAÑAMIENTO (v2.14.5)
   Future<void> actualizarEstadoAcompanamiento(bool activo) async {
     try {

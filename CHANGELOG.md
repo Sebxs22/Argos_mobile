@@ -5,6 +5,28 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 
 ---
 
+## [2.15.9] - 2026-02-25
+### 🏠 Automatización de Lugares
+- **🎯 Radio Inteligente**: Eliminado el selector manual de radio; ahora se asigna automáticamente **200 metros**, optimizando el geofencing para entornos urbanos.
+- **🔔 Notificaciones al Círculo**: Al registrar un nuevo lugar, todos los miembros del círculo de confianza reciben una notificación instantánea con el nombre del miembro y el lugar añadido.
+- **⚡ Flujo Simplificado**: Registro de lugares más rápido y eficiente, permitiendo al usuario enfocarse solo en nombrar sus zonas seguras.
+
+---
+
+## [2.15.8] - 2026-02-25
+### 💎 Pulido de Interfaz y Rastreo 🛰️
+- **🌓 Contraste Premium**: Ajustada la opacidad del cristal en el diálogo "Modo Travesía" (de 5% a 80%) para una legibilidad perfecta en Modo Claro.
+- **✨ Detalles de Cristal**: Añadido borde brillante (rim light) al diálogo en Modo Claro para mejorar la profundidad y el aspecto premium.
+- **⚡ Frecuencia de 5 Segundos**: Optimizado el intervalo de rastreo de 10s a 5s durante el "Modo Travesía" para una experiencia de tiempo real absoluta.
+- **🔄 Sincronización Total**: Corregido bug donde el estado de acompañamiento no se sincronizaba con la base de datos al iniciar una ruta.
+### 🛰️ Rastreo en Tiempo Real (Círculo Familiar)
+- **⚡ Frecuencia de 5 Segundos**: Optimizado el intervalo de rastreo de 10s a 5s durante el "Modo Travesía" para una experiencia de tiempo real absoluta.
+- **🔄 Sincronización Total**: Corregido bug donde el estado de acompañamiento no se sincronizaba con la base de datos al iniciar una ruta.
+- **🏁 Gestión de Viaje**: Añadido botón "Finalizar Recorrido" en la pantalla de rutas para detener el rastreo de alta frecuencia manualmente.
+- **🛰️ Precisión Dinámica**: Ahora el sistema utiliza `LocationAccuracy.high` automáticamente cuando el usuario está en un trayecto protegido.
+
+---
+
 ## [2.15.6] - 2026-02-25
 ### 💎 Experiencia Premium y Transiciones
 - **🎬 Transiciones Cinematográficas**: El sistema SOS ahora emerge con un efecto de "Zoom Aero" desde el centro de la pantalla, eliminando la navegación estándar.

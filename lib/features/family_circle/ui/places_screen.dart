@@ -51,12 +51,13 @@ class _PlacesScreenState extends State<PlacesScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              "Se registrará tu ubicación actual como punto central.",
+              "Se registrará tu ubicación actual con un radio de protección automático de 200m.",
               style: TextStyle(color: Colors.grey, fontSize: 12),
             ),
             const SizedBox(height: 15),
             TextField(
               onChanged: (v) => name = v,
+              autofocus: true,
               style: TextStyle(color: textColor),
               decoration: InputDecoration(
                 labelText: "Nombre (Ej: Casa, Oficina)",
@@ -65,37 +66,19 @@ class _PlacesScreenState extends State<PlacesScreen> {
                     OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
             ),
-            const SizedBox(height: 15),
-            Row(
-              children: [
-                const Text("Radio: ", style: TextStyle(fontSize: 12)),
-                Expanded(
-                  child: Slider(
-                    value: radius,
-                    min: 100,
-                    max: 1000,
-                    divisions: 9,
-                    label: "${radius.round()}m",
-                    onChanged: (v) => setState(() => radius = v),
-                  ),
-                ),
-                Text("${radius.round()}m",
-                    style: const TextStyle(fontSize: 12)),
-              ],
-            ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Cancelar"),
+            child: const Text("Cancelar", style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () async {
               if (name.isEmpty) return;
               Navigator.pop(context);
 
-              UiUtils.showWarning("Obteniendo ubicación...");
+              UiUtils.showWarning("Analizando ubicación...");
               try {
                 Position pos = await Geolocator.getCurrentPosition(
                   locationSettings:
@@ -104,13 +87,19 @@ class _PlacesScreenState extends State<PlacesScreen> {
 
                 await _apiService.registrarLugarSeguro(
                     name, pos.latitude, pos.longitude, radius);
-                UiUtils.showSuccess("Lugar '$name' guardado.");
+
+                // v2.15.9: Notificar al círculo instantáneamente
+                await _apiService.notificarNuevoLugarSeguro(name);
+
+                UiUtils.showSuccess(
+                    "Lugar '$name' guardado y Círculo notificado.");
                 _loadPlaces();
               } catch (e) {
                 UiUtils.showError("No se pudo obtener la ubicación GPS.");
               }
             },
-            child: const Text("Guardar"),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
+            child: const Text("Guardar", style: TextStyle(color: Colors.white)),
           ),
         ],
       ),

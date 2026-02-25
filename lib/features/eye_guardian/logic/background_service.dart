@@ -73,6 +73,13 @@ void onStart(ServiceInstance service) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.reload(); // Sincronizar con lo que la UI limpió
   });
+
+  service.on('onAccompanimentChanged').listen((event) async {
+    final active = (event?['active'] as bool?) ?? false;
+    developer.log("ARGOS BACKGROUND: Modo Acompañamiento cambiado a: $active");
+    // Forzamos un refresco inmediato
+    _handleProactiveLocation(apiService);
+  });
 }
 
 // --- PROTOCOLOS DE RESPUESTA ARGOS ---
@@ -296,10 +303,10 @@ Future<void> _handleProactiveLocation(ApiService apiService) async {
   final SharedPreferences prefs = await SharedPreferences.getInstance();
   await prefs.reload();
 
-  // v2.14.5: Frecuencia dinámica (Acompañamiento vs Normal)
+  // v2.15.7: Frecuencia TIEMPO REAL (5s vs 30s)
   final bool isAccompaniment =
       prefs.getBool('is_accompaniment_active') ?? false;
-  final int cooldownSecs = isAccompaniment ? 10 : 30;
+  final int cooldownSecs = isAccompaniment ? 5 : 30;
 
   if (_lastProactiveTime != null &&
       now.difference(_lastProactiveTime!) < Duration(seconds: cooldownSecs)) {
@@ -309,9 +316,10 @@ Future<void> _handleProactiveLocation(ApiService apiService) async {
 
   try {
     Position position = await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.medium,
-        timeLimit: Duration(seconds: 5),
+      locationSettings: LocationSettings(
+        accuracy:
+            isAccompaniment ? LocationAccuracy.high : LocationAccuracy.medium,
+        timeLimit: const Duration(seconds: 5),
       ),
     );
     await apiService.actualizarUbicacion(position.latitude, position.longitude);
@@ -320,7 +328,7 @@ Future<void> _handleProactiveLocation(ApiService apiService) async {
     await _checkGeofences(apiService, position);
 
     developer.log(
-        "ARGOS: Ubicación proactiva (${isAccompaniment ? 'ALTA' : 'NORMAL'}).");
+        "ARGOS: Ubicación proactiva (${isAccompaniment ? 'TIEMPO REAL 5s' : 'NORMAL 30s'}).");
   } catch (e) {
     developer.log("Error rastreo: $e");
   }
