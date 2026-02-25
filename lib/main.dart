@@ -318,13 +318,33 @@ class _MainNavigatorState extends State<MainNavigator> {
         _alertBeingShown = true;
         navigatorKey.currentState
             ?.push(
-          MaterialPageRoute(
+          PageRouteBuilder(
             settings: const RouteSettings(name: 'AlertConfirmationScreen'),
-            builder: (context) => AlertConfirmationScreen(alertaId: alertaId),
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                AlertConfirmationScreen(alertaId: alertaId),
+            transitionDuration: const Duration(milliseconds: 500),
+            reverseTransitionDuration: const Duration(milliseconds: 400),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+              const begin = 0.5;
+              const end = 1.0;
+              const curve = Curves.elasticOut;
+
+              var tween =
+                  Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+              var scaleAnimation = animation.drive(tween);
+
+              return FadeTransition(
+                opacity: animation,
+                child: ScaleTransition(
+                  scale: scaleAnimation,
+                  child: child,
+                ),
+              );
+            },
           ),
         )
             .then((_) {
-          // Resetear flag cuando se cierra la pantalla
           _alertBeingShown = false;
         });
       }

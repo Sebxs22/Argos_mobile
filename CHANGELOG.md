@@ -5,6 +5,15 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 
 ---
 
+## [2.15.6] - 2026-02-25
+### 💎 Experiencia Premium y Transiciones
+- **🎬 Transiciones Cinematográficas**: El sistema SOS ahora emerge con un efecto de "Zoom Aero" desde el centro de la pantalla, eliminando la navegación estándar.
+- **🧊 Liquid Glass 2.5**: Rediseño total del diálogo de "Modo Travesía" con mayor profundidad, desenfoque de cristal (15px) y bordes reactivos.
+- **🔆 Optimización de Contraste**: El modo claro ahora utiliza tokens de contraste dinámico para garantizar la legibilidad en exteriores sin sacrificar la estética de vidrio.
+- **✨ Micro-animaciones**: Añadido feedback visual fluido al activar servicios de rastreo.
+
+---
+
 ## [2.15.5] - 2026-02-25
 ### 🛡️ SOS Atómico y Bloqueo Inteligente
 - **🚫 Bloqueo Estricto**: Ahora es imposible enviar una segunda alerta SOS hasta que la actual sea clasificada o cancelada, garantizando un solo registro por incidente.

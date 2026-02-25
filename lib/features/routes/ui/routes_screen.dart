@@ -462,75 +462,133 @@ class _RoutesScreenState extends State<RoutesScreen> {
               onPressed: () {
                 FlutterBackgroundService().startService();
 
-                // v2.13.1: Feedback Premium en lugar de SnackBar
-                showDialog(
+                // v2.15.6: Diálogo Liquid Glass Premium con showGeneralDialog
+                showGeneralDialog(
                   context: context,
-                  barrierColor: Colors.black.withValues(alpha: 0.8),
-                  builder: (context) => Center(
-                    child: GlassBox(
-                      borderRadius: 25,
-                      padding: const EdgeInsets.all(30),
-                      opacity: isDark ? 0.2 : 0.08,
-                      border: Border.all(
-                        color: isDark ? Colors.white10 : Colors.black12,
-                        width: 1,
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(15),
-                            decoration: BoxDecoration(
-                              color: Colors.redAccent.withValues(alpha: 0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.security,
-                                color: Colors.redAccent, size: 40),
-                          ),
-                          const SizedBox(height: 20),
-                          Text(
-                            "MODO TRAVESÍA ACTIVO",
-                            style: TextStyle(
-                              color: isDark
-                                  ? UiTokens.argosRed
-                                  : const Color(
-                                      0xFFC62828), // Rojo más profundo para luz
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                              letterSpacing: 1.2,
-                            ),
-                          ),
-                          const SizedBox(height: 15),
-                          Text(
-                            "Argos rastrea tu ubicación en segundo plano y alertará a tu Círculo si detecta desviaciones o riesgos en la ruta.",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: isDark ? Colors.white70 : Colors.black87,
-                              fontSize: 13,
-                              height: 1.4,
-                            ),
-                          ),
-                          const SizedBox(height: 25),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: () => Navigator.pop(context),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.redAccent,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(15)),
+                  barrierDismissible: true,
+                  barrierLabel: "Modo Travesia",
+                  barrierColor: Colors.black.withValues(alpha: 0.7),
+                  transitionDuration: const Duration(milliseconds: 400),
+                  pageBuilder: (context, anim1, anim2) => const SizedBox(),
+                  transitionBuilder: (context, a1, a2, child) {
+                    final isDark =
+                        Theme.of(context).brightness == Brightness.dark;
+                    final curve = Curves.easeInOutBack.transform(a1.value);
+
+                    return Transform.scale(
+                      scale: curve,
+                      child: Opacity(
+                        opacity: a1.value,
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 30),
+                            child: GlassBox(
+                              borderRadius: 30,
+                              opacity: isDark ? 0.2 : 0.05,
+                              blur: 20,
+                              border: Border.all(
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.1)
+                                    : Colors.black.withValues(alpha: 0.1),
+                                width: 1.5,
                               ),
-                              child: const Text("ENTENDIDO",
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold)),
+                              child: Padding(
+                                padding: const EdgeInsets.all(35),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(18),
+                                      decoration: BoxDecoration(
+                                        color: Colors.redAccent
+                                            .withValues(alpha: 0.1),
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.redAccent.withValues(
+                                                alpha: isDark ? 0.2 : 0.1),
+                                            blurRadius: 20,
+                                            spreadRadius: 2,
+                                          )
+                                        ],
+                                      ),
+                                      child: const Icon(Icons.shield_rounded,
+                                          color: Colors.redAccent, size: 45),
+                                    ),
+                                    const SizedBox(height: 25),
+                                    Text(
+                                      "MODO TRAVESÍA ACTIVO",
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: isDark
+                                            ? UiTokens.argosRed
+                                            : const Color(0xFFB71C1C),
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 20,
+                                        letterSpacing: 2.0,
+                                        decoration: TextDecoration.none,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 20),
+                                    Text(
+                                      "Argos rastrea tu ubicación en tiempo real y alertará a tu Círculo si detecta desviaciones o riesgos en la ruta seleccionada.",
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: isDark
+                                            ? Colors.white70
+                                            : Colors.black87,
+                                        fontSize: 14,
+                                        height: 1.5,
+                                        fontWeight: FontWeight.w400,
+                                        decoration: TextDecoration.none,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 35),
+                                    GestureDetector(
+                                      onTap: () => Navigator.pop(context),
+                                      child: Container(
+                                        width: double.infinity,
+                                        height: 55,
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              Colors.redAccent,
+                                              Colors.redAccent.shade700
+                                            ],
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(15),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.redAccent
+                                                  .withValues(alpha: 0.3),
+                                              blurRadius: 15,
+                                              offset: const Offset(0, 5),
+                                            )
+                                          ],
+                                        ),
+                                        alignment: Alignment.center,
+                                        child: const Text(
+                                          "ENTENDIDO",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                            letterSpacing: 1.5,
+                                            decoration: TextDecoration.none,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 );
               },
               style: ElevatedButton.styleFrom(
