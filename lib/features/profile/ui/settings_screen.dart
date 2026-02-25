@@ -105,7 +105,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       builder: (context) => AlertDialog(
         backgroundColor: UiTokens.surface(context),
         shape: UiTokens.dialogShape,
-        title: Text("🚀 NOVEDADES v2.14.8",
+        title: Text("🚀 NOVEDADES v2.15.1",
             style: TextStyle(
                 color: UiTokens.textColor(context),
                 fontSize: 18,
@@ -114,20 +114,19 @@ class _SettingsScreenState extends State<SettingsScreen>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("• Diseño Premium 'Liquid Glass v2' (Bordes dinámicos).",
-                style: TextStyle(color: UiTokens.secondaryTextColor(context))),
-            const SizedBox(height: 8),
-            Text("• Navegación táctica y botones con mayor accesibilidad.",
-                style: TextStyle(color: UiTokens.secondaryTextColor(context))),
-            const SizedBox(height: 8),
-            Text("• Respuesta SOS optimizada (Reacción inmediata).",
+            Text(
+                "• Bloqueo de navegación en pantallas de alerta (Seguridad total).",
                 style: TextStyle(color: UiTokens.secondaryTextColor(context))),
             const SizedBox(height: 8),
             Text(
-                "• Botón rojo de centrado inteligente en el mapa de Santuarios.",
+                "• Clasificación de incidentes mandatoria (Mejora comunitaria).",
                 style: TextStyle(color: UiTokens.secondaryTextColor(context))),
             const SizedBox(height: 8),
-            Text("• Alertas OTA proactivas integradas en el sistema.",
+            Text(
+                "• Visibilidad optimizada para Modo Claro (Perfil y Sistemas).",
+                style: TextStyle(color: UiTokens.secondaryTextColor(context))),
+            const SizedBox(height: 8),
+            Text("• Sistema anti-spam de alertas de fondo (v2.15.1).",
                 style: TextStyle(color: UiTokens.secondaryTextColor(context))),
           ],
         ),
@@ -398,10 +397,13 @@ class _SettingsScreenState extends State<SettingsScreen>
               fontSize: 18,
             ),
           ),
-          const Text(
+          Text(
             "ESTADO: PROTEGIDO",
             style: TextStyle(
-                color: Colors.greenAccent, fontSize: 10, letterSpacing: 1.5),
+                color: UiTokens.emeraldGreen(context),
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.5),
           ),
         ],
       ),

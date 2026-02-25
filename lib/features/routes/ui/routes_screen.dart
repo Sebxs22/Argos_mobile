@@ -486,7 +486,7 @@ class _RoutesScreenState extends State<RoutesScreen> {
                           Text(
                             "MODO TRAVESÍA ACTIVO",
                             style: TextStyle(
-                              color: textColor,
+                              color: UiTokens.argosRed,
                               fontWeight: FontWeight.bold,
                               fontSize: 18,
                               letterSpacing: 1.2,

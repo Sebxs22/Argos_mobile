@@ -1,18 +1,19 @@
 # 🛡️ ARGOS - Inteligencia Proactiva en Seguridad Personal
 
 [![Estado de Compilación](https://github.com/Sebxs22/Argos_mobile/actions/workflows/release.yml/badge.svg)](https://github.com/Sebxs22/Argos_mobile/actions/workflows/release.yml)
-[![Versión](https://img.shields.io/badge/Versi%C3%B3n-2.9.0-E53935.svg)](https://github.com/Sebxs22/Argos_mobile/releases/latest)
+[![Versión](https://img.shields.io/badge/Versi%C3%B3n-2.15.1-E53935.svg)](https://github.com/Sebxs22/Argos_mobile/releases/latest)
 [![Propietario](https://img.shields.io/badge/Propiedad-Privada-red.svg)](#-aviso-legal-y-propiedad-intelectual)
 
 **ARGOS** es un ecosistema de seguridad móvil de alto rendimiento que redefine la protección personal mediante detección inteligente de riesgos y redes de respuesta inmediata. Diseñado con una estética **Glassmorphism Premium**, ofrece una experiencia de usuario fluida y sofisticada.
 
 ---
 
-## 🚀 Zaz Flow: Automatización Total (v2.9.0)
+## 🚀 Zaz Flow: Automatización Total (v2.15.1)
 
 ARGOS incorpora un sistema de actualización **Seamless OTA** totalmente autónomo. 
 - **Detección en Tiempo Real**: La app sincroniza versiones mediante Supabase Streams.
-- **Broadcast Inteligente**: Cualquier actualización detectada en la nube dispara automáticamente una notificación Push global para todos los usuarios.
+- **Seguridad de Navegación (Nuevo)**: Las pantallas de emergencia ahora están blindadas; no se pueden cerrar sin clasificar o cancelar el evento.
+- **Visibilidad Adaptativa**: Interfaz optimizada para legibilidad total en modo claro y oscuro.
 
 [📥 **DESCARGAR ÚLTIMA VERSIÓN (APK OFICIAL)**](https://github.com/Sebxs22/Argos_mobile/releases/latest/download/app-release.apk)
 
@@ -20,14 +21,14 @@ ARGOS incorpora un sistema de actualización **Seamless OTA** totalmente autóno
 
 ## ⚡ Innovaciones Vanguardistas
 
-### 👁️ El Ojo Guardián 24/7
-Sensores de alta fidelidad que analizan patrones de riesgo. El sistema es capaz de mantener la protección incluso con la pantalla bloqueada o en segundo plano, optimizando el consumo de batería.
+### 👁️ El Ojo Guardián 24/7 (v2.15.1 Optimized)
+Sensores de alta fidelidad que analizan patrones de riesgo. El sistema ahora incluye candados de anti-spam para evitar falsos positivos y saturación de alertas ante un solo evento físico.
 
 ### 👪 Círculo de Guardianes
-Tu red de seguridad humana. Vincula a tus contactos para que reciban alertas SOS con geolocalización exacta en menos de 2 segundos.
+Tu red de seguridad humana. Vincula a tus contactos para que reciban alertas SOS con geolocalización exacta en tiempo real.
 
 ### 🛡️ Santuarios Automáticos (Powered by OSM)
-**Nuevo en v2.8.8**: El mapa ahora escanea dinámicamente tu entorno usando la **Overpass API**. Encuentra estaciones de policía, hospitales y refugios reales en cualquier ciudad del mundo, sin listas precargadas.
+El mapa escanea dinámicamente tu entorno usando la **Overpass API**. Encuentra estaciones de policía, hospitales y refugios reales en cualquier ciudad del mundo.
 
 ---
 
@@ -36,8 +37,7 @@ Tu red de seguridad humana. Vincula a tus contactos para que reciban alertas SOS
 - **Framework**: Flutter 3.x (Dart) - Arquitectura Atómica y escalable.
 - **Backend**: Supabase Realtime - Sincronización de milisegundos.
 - **Push Engine**: OneSignal REST API - Entrega crítica priorizada.
-- **Motor de Mapas**: Flutter Map + Overpass API + OSRM.
-- **Design System**: Liquid Glass UI - Estética premium con rendimiento optimizado.
+- **Design System**: Liquid Glass UI - Estética premium con tokens de contraste dinámicos.
 
 ---
 

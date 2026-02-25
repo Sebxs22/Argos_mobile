@@ -1,11 +1,11 @@
-# 🛡️ ARGOS: Manual de Arquitectura y Sistema de Seguridad (v2.9.0)
+# 🛡️ ARGOS: Manual de Arquitectura y Sistema de Seguridad (v2.15.1)
 
 > [!IMPORTANT]
 > Este documento es la "Fuente de Verdad" técnica de ARGOS. Explica no solo el **cómo**, sino el **por qué** detrás de cada decisión de ingeniería, desde la detección de sensores hasta el renderizado de vidrio líquido.
 
 ---
 
-## �️ 1. Filosofía de Arquitectura: "Atomic Features"
+## 🏗️ 1. Filosofía de Arquitectura: "Atomic Features"
 
 ARGOS no es una app monolítica. Se divide en **Silos de Responsabilidad** para garantizar que un fallo en el mapa no detenga la protección del "Ojo Guardián".
 
@@ -17,7 +17,7 @@ ARGOS no es una app monolítica. Se divide en **Silos de Responsabilidad** para 
 | `lib/features/auth/`          | **Identidad y Seguridad** | Registro, Login, Gestión de Permisos Críticos.             |
 | `lib/features/eye_guardian/`  | **El Centinela (24/7)**   | Acelerómetro, Isolate de Fondo, Lógica de Alertas.         |
 | `lib/features/family_circle/` | **Red Social de Auxilio** | Gestión de Guardianes, Mapas de Miembros, API del Círculo. |
-| `lib/features/sanctuaries/`   | **Navegación Táctica**    | Motor OSRM, Zonas de Peligro, Búsqueda OSM.                |
+| `lib/features/routes/`        | **Navegación Táctica**    | Motor OSRM, Zonas de Peligro, Búsqueda OSM.                |
 
 ---
 
@@ -25,20 +25,27 @@ ARGOS no es una app monolítica. Se divide en **Silos de Responsabilidad** para 
 
 El sistema de alerta es una coreografía perfecta entre hardware y nube.
 
+### 🔄 Protocolo de Seguridad Blindado (v2.15.1)
+En la versión 2.15.1, el protocolo SOS se ha reforzado con **Navigation Locks**:
+- **PopScope Blocking**: Las pantallas `AlertConfirmationScreen` e `IncidentClassificationScreen` ahora bloquean el botón físico/gestual de retroceso. El usuario **debe** clasificar el incidente o cancelar la alerta explícitamente.
+- **Mandatory Classification**: Se eliminó la opción de "Omitir" en la clasificación de incidentes para forzar la recolección de datos que alimentan las zonas de peligro comunitarias.
+
 ### 🔄 Diagrama de Flujo de Datos Vitales
 
 ```mermaid
 graph TB
     subgraph "Nivel Dispositivo (Capa 0)"
         Sensor[("Acelerómetro<br/>sensors_plus")]
-        BG["�️ Background Service<br/>(onStart Isolate)"]
+        BG["🛡️ Background Service<br/>(onStart Isolate)"]
         Sensor -- "Streams de 60Hz" --> BG
     end
 
     subgraph "Capa de Decisión (Capa 1)"
         Logic{"¿Es SOS Real?"}
+        AntiSpam["Candado de Concurrencia<br/>(_isProcessingAlert)"]
         BG -- "Magnitud Vectorial" --> Logic
-        Logic -- "Si (Acc > 15.0)" --> Proto["Protocolo SOS"]
+        Logic -- "Si (Acc > 15.0)" --> AntiSpam
+        AntiSpam -- "Lock: True" --> Proto["Protocolo SOS"]
         Logic -- "No (Acc > 12.0)" --> Track["Rastreo Proactivo"]
     end
 
@@ -60,7 +67,7 @@ graph TB
     classDef cloud fill:#7c2d12,stroke:#ea580c,color:#fff;
     
     class Sensor,BG hardware;
-    class Logic,Proto,Track logic;
+    class Logic,AntiSpam,Proto,Track logic;
     class Supa,OneS,G1,G2,MapView cloud;
 ```
 
@@ -70,53 +77,43 @@ graph TB
 
 Nuestra UI no es solo estética; es **funcionalidad emocional**. El uso de `Glassmorphism` reduce la carga cognitiva al mantener el contexto visual del fondo.
 
-### 🎨 Tokens de Diseño
-- **Blur**: `25.0 sigma` (Profundidad Atmosférica).
-- **Opacidad**: `0.1` a `0.15` (Equilibrio de Visibilidad).
-- **Bordes**: `LinearGradient` con brillo en `topLeft`.
-
-> [!TIP]
-> El componente `GlassBox` ahora inyecta automáticamente un `BackdropFilter` que purga el renderizado subyacente, optimizando el rendimiento en pantallas OLED.
+### 🎨 Optimización de Visibilidad (v2.15.1)
+Se han ajustado los tokens de diseño para garantizar accesibilidad en **Modo Claro**:
+- **Contrast enhancement**: El texto "ESTADO: PROTEGIDO" y "MODO TRAVESÍA" ahora utilizan `emeraldGreen` y `argosRed` respectivamente para destacar sobre fondos claros.
+- **Glass Definition**: Se incrementó la opacidad (`0.12`) y el contraste del borde en `GlassBox` cuando se detecta `Brightness.light`.
 
 ---
 
 ## 📡 4. Integraciones y Servicios Externos
 
 ### 🗄️ Supabase (BaaS)
-- **Realtime**: Habilitado en las tablas `perfiles` y `alertas`. Permite que los guardianes vean el movimiento del protegido cada 10 metros sin recargar la app.
-- **RLS (Row Level Security)**: Las reglas están configuradas para que solo los guardianes vinculados puedan ver la ubicación de sus protegidos.
+- **Realtime**: Habilitado en las tablas `perfiles` y `alertas`.
+- **Anti-Spam Logic**: El servicio de fondo ahora utiliza un timestamp persistente para imponer un cooldown de 3 minutos entre alertas SOS automáticas.
 
 ### 🗺️ Motor de Mapas y Rutas
 1. **OSRM (Open Source Routing Machine)**: Calculamos la ruta más rápida.
-2. **Análisis de Capas**: Si la ruta pasa por una `Danger Zone` (marcada por una alerta previa), el sistema resta puntos al `Safety Score`.
-3. **Nominatim**: Traduce coordenadas GPS a direcciones legibles por humanos.
+2. **Análisis de Capas**: Si la ruta pasa por una `Danger Zone`, el sistema resta puntos al `Safety Score`.
 
 ---
 
-## �️ 5. Guía de Mantenimiento y Evolución
+## 🛠️ 5. Guía de Mantenimiento y Evolución
 
 ### Cómo añadir una nueva "Feature"
 1. Crea una carpeta en `lib/features/nombre_feature`.
 2. Define el estado en esa feature.
 3. Si requiere comunicación con la nube, añade los métodos a `ApiService`.
-4. Registra los UI Components usando `GlassBox` para mantener la fidelidad visual.
 
 ### Consideraciones de Rendimiento
-- **Battery Optimization**: Se eliminó el plugin invasivo. Ahora usamos instrucciones manuales en `PermissionExplanationScreen` para que Android no "mate" el servicio.
-- **Haptics**: Cada acción crítica (SOS, Cancelar) dispara un `HapticFeedback` para comunicación táctil instantánea.
+- **Concurrency Control**: Siempre usa flags booleanos (`_isProcessingAlert`) en los Isolates de fondo para evitar carreras de datos (Race Conditions).
 
 ---
 
-### 4. Notificaciones OTA (Over-The-Air)
-- **Detección Automática**: El sistema compara la versión local contra la tabla `app_config` de Supabase.
-- **Push Broadcast**: Al detectar una nueva versión, ARGOS dispara una notificación Push global vía OneSignal para alertar a todos los dispositivos.
-- **Descarga Silenciosa**: Se integra con `ota_update` para facilitar la instalación del nuevo APK sin fricciones.
-
-> [!CAUTION]
-> Nunca hagas un deploy con `debugPrint` habilitado en los Isolates, ya que esto consume recursos innecesarios durante el SOS.
+### 🚀 Despliegue y Versión
+- **Versión Actual**: 2.15.1+110
+- **Build**: Siempre usar `--split-per-abi` para minimizar el tamaño del APK descargado vía OTA.
 
 ```bash
-# Versión Actual: 2.9.0+84
+# Versión Actual: 2.15.1+110
 # 1. Limpieza
 flutter clean
 # 2. Obtener dependencias
