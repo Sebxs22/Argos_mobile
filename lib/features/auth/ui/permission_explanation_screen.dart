@@ -95,7 +95,7 @@ class _PermissionExplanationScreenState
                 const SizedBox(height: 20),
 
                 Text(
-                  "Para que ARGOS pueda protegerte y avisar a tu círculo de confianza en tiempo real, necesitamos los siguientes accesos críticos:",
+                  "Para protegerte, ARGOS recopila datos de ubicación en segundo plano incluso cuando la aplicación está cerrada o no se está utilizando. Esto permite alertar a tu círculo de confianza en tiempo real en caso de emergencia mediante la función 'Ojo Guardián'.",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: textColor.withValues(alpha: 0.7),
@@ -109,9 +109,9 @@ class _PermissionExplanationScreenState
                 // Lista de Permisos
                 _buildPermissionRule(
                   icon: Icons.location_on_rounded,
-                  title: "Ubicación 'Siempre'",
+                  title: "Ubicación Todo el Tiempo",
                   desc:
-                      "Permite rastrearte incluso si la app está cerrada o el teléfono bloqueado.",
+                      "Necesario para enviar tu ubicación contínua a tus guardianes si ocurre un accidente, incluso si tu teléfono está bloqueado en tu bolsillo.",
                   isDark: isDark,
                 ),
                 const SizedBox(height: 15),

@@ -65,6 +65,22 @@ android {
             isShrinkResources = false
         }
     }
+
+    flavorDimensions += "channel"
+
+    productFlavors {
+        create("argos_direct") {
+            dimension = "channel"
+            applicationIdSuffix = ".direct"
+            resValue("string", "app_name", "ARGOS")
+        }
+        create("argos_store") {
+            dimension = "channel"
+            // ID Comercial para Play Store
+            applicationId = "com.zentauri.argos" 
+            resValue("string", "app_name", "ARGOS")
+        }
+    }
 }
 
 

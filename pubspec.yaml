@@ -69,6 +69,7 @@ dependencies:
   # Selectores dinámicos y teléfonos internacionales
   csc_picker_plus: ^0.0.3
   intl_phone_field: ^3.2.0
+  in_app_update: ^4.2.5
 dev_dependencies:
   flutter_test:
     sdk: flutter

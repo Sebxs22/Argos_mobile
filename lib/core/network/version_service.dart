@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import '../ui/update_progress_dialog.dart';
 import '../utils/ui_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:in_app_update/in_app_update.dart'; // MODO PLAY STORE
+import '../config/flavor_config.dart'; // MODO FLAVOR
 
 class VersionService {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -11,8 +13,22 @@ class VersionService {
   Future<void> checkForUpdates(BuildContext context,
       {bool manual = false}) async {
     try {
-      debugPrint("📡 ARGOS OTA: Iniciando chequeo manual=$manual");
+      debugPrint("📡 ARGOS UPDATE: Iniciando chequeo manual=$manual");
 
+      // LOGICA PARA GOOGLE PLAY STORE
+      if (FlavorConfig.instance.isStoreFlavor) {
+        final info = await InAppUpdate.checkForUpdate();
+        if (info.updateAvailability == UpdateAvailability.updateAvailable) {
+          debugPrint("🔔 ARGOS STORE: Hay versión en Google Play.");
+          // Mostrar el UI nativo de Google Play
+          await InAppUpdate.performImmediateUpdate();
+        } else if (manual && context.mounted) {
+          UiUtils.showSuccess("Argos está al día en la Play Store");
+        }
+        return; // Terminamos aquí, no consultamos a Supabase para la versión OTA
+      }
+
+      // LOGICA PARA VERSIÓN DIRECTA (SIDELOADING / OTA)
       final response =
           await _supabase.from('app_config').select().eq('id', 1).maybeSingle();
 
@@ -27,7 +43,7 @@ class VersionService {
       if (!context.mounted) return;
       await _processUpdate(context, response, manual: manual);
     } catch (e) {
-      debugPrint("❌ ARGOS OTA Error: $e");
+      debugPrint("❌ ARGOS UPDATE Error: $e");
       if (manual && context.mounted) {
         UiUtils.showError("Error al verificar versión: $e");
       }
@@ -35,6 +51,12 @@ class VersionService {
   }
 
   void listenForUpdates(BuildContext context) {
+    if (FlavorConfig.instance.isStoreFlavor) {
+      // Las versiones de la Play Store no escuchan streams en tiempo real de Supabase
+      // para forzar actualizaciones, dependen de la tienda de Google.
+      return;
+    }
+
     try {
       _supabase
           .from('app_config')
