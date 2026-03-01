@@ -5,6 +5,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'glass_box.dart';
 import 'argos_notifications.dart'; // v2.14.1
+import '../config/flavor_config.dart'; // MODO FLAVOR
 
 class UpdateProgressDialog extends StatefulWidget {
   final String downloadUrl;
@@ -35,7 +36,19 @@ class _UpdateProgressDialogState extends State<UpdateProgressDialog> {
   }
 
   Future<void> _startDownload() async {
-    // Proactively check for installation permission on Android
+    // Si estamos en versión Store, no podemos descargar un APK, solo avisar o abrir en navegador.
+    if (!FlavorConfig.instance.isDirectFlavor) {
+      if (mounted) {
+        ArgosNotifications.show(
+          context,
+          "Buscando actualizaciones en la tienda de aplicaciones...",
+          type: ArgosNotificationType.info,
+        );
+      }
+      return;
+    }
+
+    // Proactively check for installation permission on Android (solo en Direct)
     final status = await Permission.requestInstallPackages.status;
     if (!status.isGranted) {
       setState(() {
