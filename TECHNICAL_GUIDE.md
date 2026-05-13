@@ -1,4 +1,4 @@
-# 🛡️ ARGOS: Manual de Arquitectura y Sistema de Seguridad (v2.15.1)
+# 🛡️ ARGOS: Manual de Arquitectura y Sistema de Seguridad (v2.16.6)
 
 > [!IMPORTANT]
 > Este documento es la "Fuente de Verdad" técnica de ARGOS. Explica no solo el **cómo**, sino el **por qué** detrás de cada decisión de ingeniería, desde la detección de sensores hasta el renderizado de vidrio líquido.
@@ -109,7 +109,7 @@ Se han ajustado los tokens de diseño para garantizar accesibilidad en **Modo Cl
 ---
 
 ### 🚀 Despliegue y Versión
-- **Versión Actual**: 2.15.1+110
+- **Versión Actual**: 2.16.6+125
 - **Build**: Siempre usar `--split-per-abi` para minimizar el tamaño del APK descargado vía OTA.
 
 ```bash

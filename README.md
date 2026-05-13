@@ -1,7 +1,7 @@
 # 🛡️ ARGOS - Inteligencia Proactiva en Seguridad Personal
 
 [![Estado de Compilación](https://github.com/Sebxs22/Argos_mobile/actions/workflows/release.yml/badge.svg)](https://github.com/Sebxs22/Argos_mobile/actions/workflows/release.yml)
-[![Versión](https://img.shields.io/badge/Versi%C3%B3n-2.15.1-E53935.svg)](https://github.com/Sebxs22/Argos_mobile/releases/latest)
+[![Versión](https://img.shields.io/badge/Versi%C3%B3n-2.16.6-E53935.svg)](https://github.com/Sebxs22/Argos_mobile/releases/latest)
 [![Propietario](https://img.shields.io/badge/Propiedad-Privada-red.svg)](#-aviso-legal-y-propiedad-intelectual)
 
 **ARGOS** es un ecosistema de seguridad móvil de alto rendimiento que redefine la protección personal mediante detección inteligente de riesgos y redes de respuesta inmediata. Diseñado con una estética **Glassmorphism Premium**, ofrece una experiencia de usuario fluida y sofisticada.

@@ -105,7 +105,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       builder: (context) => AlertDialog(
         backgroundColor: UiTokens.surface(context),
         shape: UiTokens.dialogShape,
-        title: Text("🚀 NOVEDADES v2.15.1",
+        title: Text("🚀 NOVEDADES v2.16.6",
             style: TextStyle(
                 color: UiTokens.textColor(context),
                 fontSize: 18,
@@ -115,18 +115,18 @@ class _SettingsScreenState extends State<SettingsScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-                "• Bloqueo de navegación en pantallas de alerta (Seguridad total).",
+                "• Robustecimiento del flujo de actualización (OTA Sync).",
                 style: TextStyle(color: UiTokens.secondaryTextColor(context))),
             const SizedBox(height: 8),
             Text(
-                "• Clasificación de incidentes mandatoria (Mejora comunitaria).",
+                "• Sincronización automática de APK y Base de Datos.",
                 style: TextStyle(color: UiTokens.secondaryTextColor(context))),
             const SizedBox(height: 8),
             Text(
-                "• Visibilidad optimizada para Modo Claro (Perfil y Sistemas).",
+                "• Corrección de inconsistencias en el número de versión.",
                 style: TextStyle(color: UiTokens.secondaryTextColor(context))),
             const SizedBox(height: 8),
-            Text("• Sistema anti-spam de alertas de fondo (v2.15.1).",
+            Text("• Sistema de protección ARGOS v2.16.6 (Build Estable).",
                 style: TextStyle(color: UiTokens.secondaryTextColor(context))),
           ],
         ),

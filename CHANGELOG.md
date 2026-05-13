@@ -5,6 +5,14 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 
 ---
 
+## [2.16.6] - 2026-05-13
+### 🔄 Sincronización y Flujo de Actualización
+- **📡 Robustecimiento OTA**: Corregido el flujo de actualización automática. Ahora el sistema asegura que la base de datos de Supabase y el APK descargable estén siempre en sincronía total con la última compilación.
+- **🛠️ Fix de Versión**: Solucionado el problema donde se notificaba una versión superior a la instalada pero el APK descargado seguía siendo antiguo.
+- **✨ Consistencia Visual**: Actualizada la información de la aplicación para reflejar la versión real de compilación.
+
+---
+
 ## [2.16.1] - 2026-02-25
 ### 🎨 Refinamiento Estético Final
 - **🔡 Consistencia Roboto**: Re-habilitada la tipografía `Roboto` de forma explícita para asegurar un renderizado limpio y profesional en todos los dispositivos.
