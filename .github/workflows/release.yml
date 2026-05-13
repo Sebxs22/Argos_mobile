@@ -92,4 +92,4 @@ jobs:
           -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
           -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
           -H "Content-Type: application/json" \
-          -d "{\"version_actual\": \"$VERSION_CLEAN\", \"link_descarga\": \"https://github.com/Sebxs22/Argos_mobile/releases/download/latest/app-argos_direct-release.apk\"}"
+          -d "{\"version_actual\": \"$VERSION_CLEAN\", \"link_descarga\": \"https://github.com/itssebxs/Argos_mobile/releases/download/latest/app-argos_direct-release.apk\"}"
