@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - feature/playstore-flavors
     tags:
       - 'v*'
   workflow_dispatch:
