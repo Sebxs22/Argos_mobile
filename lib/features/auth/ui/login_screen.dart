@@ -6,6 +6,7 @@ import '../../../core/utils/ui_tokens.dart'; // v2.14.9
 import '../../../core/utils/ui_utils.dart'; // Import UiUtils
 import '../../../../main.dart'; // Para navegar al MainNavigator
 import 'register_screen.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -140,6 +141,25 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                           ),
+                    const SizedBox(height: 15),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ForgotPasswordScreen(),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        "¿Olvidaste tu contraseña?",
+                        style: TextStyle(
+                          color: secondaryTextColor,
+                          fontSize: 13,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),

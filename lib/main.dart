@@ -16,8 +16,8 @@ import 'features/routes/ui/routes_screen.dart';
 import 'features/sanctuaries/ui/sanctuaries_map_screen.dart';
 import 'features/auth/ui/login_screen.dart';
 import 'features/auth/ui/permission_explanation_screen.dart'; // Import v2.6.5
-import 'features/eye_guardian/ui/alert_confirmation_screen.dart'; // AlertConfirmation
 import 'core/network/auth_service.dart';
+import 'features/auth/ui/reset_password_screen.dart'; // Import ResetPasswordScreen
 import 'core/ui/glass_box.dart';
 import 'core/utils/connectivity_service.dart'; // Import connectivity service
 import 'features/eye_guardian/logic/background_service.dart'; // Import REAL background service
@@ -139,11 +139,32 @@ class InitialCheckWrapper extends StatefulWidget {
 class _InitialCheckWrapperState extends State<InitialCheckWrapper> {
   bool _needsPermissions = false;
   bool _isLoading = true;
+  StreamSubscription<AuthState>? _authSubscription;
 
   @override
   void initState() {
     super.initState();
     _initializeApp();
+    _setupAuthListener();
+  }
+
+  void _setupAuthListener() {
+    _authSubscription =
+        Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      final AuthChangeEvent event = data.event;
+      if (event == AuthChangeEvent.passwordRecovery) {
+        debugPrint("🔐 ARGOS: Evento de recuperación de contraseña detectado");
+        navigatorKey.currentState?.pushReplacement(
+          MaterialPageRoute(builder: (context) => const ResetPasswordScreen()),
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _initializeApp() async {

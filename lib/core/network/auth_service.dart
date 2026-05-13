@@ -130,6 +130,30 @@ class AuthService {
     });
   }
 
+  // Desvincular: Eliminar a alguien de mi círculo (Yo lo agregué)
+  Future<void> desvincularFamiliar(String idFamiliar) async {
+    final yo = usuarioActual;
+    if (yo == null) return;
+
+    await _supabase
+        .from('circulo_confianza')
+        .delete()
+        .eq('usuario_id', yo.id)
+        .eq('guardian_id', idFamiliar);
+  }
+
+  // Dejar de proteger: Eliminarme del círculo de alguien (Él me agregó)
+  Future<void> dejarDeProteger(String idUsuario) async {
+    final yo = usuarioActual;
+    if (yo == null) return;
+
+    await _supabase
+        .from('circulo_confianza')
+        .delete()
+        .eq('usuario_id', idUsuario)
+        .eq('guardian_id', yo.id);
+  }
+
   // Ver quiénes están en mi círculo (Mis Guardianes)
   Future<List<Map<String, dynamic>>> obtenerMisGuardianes() async {
     final yo = usuarioActual;
@@ -273,5 +297,36 @@ class AuthService {
     await _supabase
         .from('perfiles')
         .update({'avatar_url': url}).eq('id', yo.id);
+  }
+
+  // --- 9. RECUPERACIÓN DE CONTRASEÑA ---
+
+  /// Envía un correo de recuperación
+  Future<String?> enviarCorreoRecuperacion(String email) async {
+    try {
+      await _supabase.auth.resetPasswordForEmail(
+        email,
+        redirectTo: 'io.supabase.flutter://reset-callback/',
+      );
+      return null;
+    } on AuthException catch (e) {
+      return e.message;
+    } catch (e) {
+      return "Error inesperado al enviar el correo";
+    }
+  }
+
+  /// Actualiza la contraseña una vez el usuario ha vuelto con el enlace
+  Future<String?> actualizarContrasena(String nuevaContrasena) async {
+    try {
+      await _supabase.auth.updateUser(
+        UserAttributes(password: nuevaContrasena),
+      );
+      return null;
+    } on AuthException catch (e) {
+      return e.message;
+    } catch (e) {
+      return "Error al actualizar la contraseña";
+    }
   }
 }

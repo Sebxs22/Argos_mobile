@@ -477,13 +477,53 @@ class _FamilyCircleScreenState extends State<FamilyCircleScreen>
                 ],
               ),
             ),
-            if (isGuardian)
-              IconButton(
-                icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                onPressed: () {
-                  //
-                },
-              ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+              onPressed: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    backgroundColor: UiTokens.surface(context),
+                    title: Text(isGuardian ? "Eliminar Guardián" : "Dejar de Proteger"),
+                    content: Text(
+                      isGuardian
+                          ? "¿Estás seguro de que quieres eliminar a ${user['nombre_completo']} de tus guardianes?"
+                          : "¿Estás seguro de que quieres dejar de recibir las alertas de ${user['nombre_completo']}?",
+                      style: TextStyle(
+                          color: UiTokens.secondaryTextColor(context)),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text("Cancelar"),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: Text(isGuardian ? "Eliminar" : "Confirmar",
+                            style: const TextStyle(color: Colors.redAccent)),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirm == true) {
+                  try {
+                    final id = (user['id'] ??
+                        user['usuario_id'] ??
+                        user['guardian_id']) as String;
+                    if (isGuardian) {
+                      await _authService.desvincularFamiliar(id);
+                    } else {
+                      await _authService.dejarDeProteger(id);
+                    }
+                    UiUtils.showSuccess(isGuardian ? "Guardián eliminado" : "Vínculo eliminado");
+                    _cargarDatos();
+                  } catch (e) {
+                    UiUtils.showError("No se pudo procesar la solicitud");
+                  }
+                }
+              },
+            ),
           ],
         ),
       ),
