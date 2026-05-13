@@ -71,7 +71,7 @@ jobs:
 
       - name: Update 'latest' release tag
         uses: softprops/action-gh-release@v2
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/playstore-flavors'
         with:
           files: build/app/outputs/flutter-apk/app-argos_direct-release.apk
           name: Latest Build
@@ -81,8 +81,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Clean legacy assets
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/playstore-flavors'
+        run: |
+          gh release delete-asset latest app-release.apk --yes || true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Update Supabase Version
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/playstore-flavors'
         run: |
           VERSION=$(grep 'version: ' pubspec.yaml | sed 's/version: //')
           VERSION_CLEAN=$(echo $VERSION | cut -d '+' -f 1 | xargs)
