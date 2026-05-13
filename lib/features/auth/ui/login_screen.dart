@@ -154,9 +154,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Text(
                         "¿Olvidaste tu contraseña?",
                         style: TextStyle(
-                          color: secondaryTextColor,
+                          color: UiTokens.argosRed,
                           fontSize: 13,
-                          decoration: TextDecoration.underline,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
