@@ -16,6 +16,7 @@ import 'features/routes/ui/routes_screen.dart';
 import 'features/sanctuaries/ui/sanctuaries_map_screen.dart';
 import 'features/auth/ui/login_screen.dart';
 import 'features/auth/ui/permission_explanation_screen.dart'; // Import v2.6.5
+import 'features/eye_guardian/ui/alert_confirmation_screen.dart'; // AlertConfirmation
 import 'core/network/auth_service.dart';
 import 'features/auth/ui/reset_password_screen.dart'; // Import ResetPasswordScreen
 import 'core/ui/glass_box.dart';
